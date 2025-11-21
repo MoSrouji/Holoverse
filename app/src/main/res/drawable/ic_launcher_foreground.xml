@@ -1,0 +1,132 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+  <group android:scaleX="0.65"
+      android:scaleY="0.65"
+      android:translateX="35"
+      android:translateY="35">
+
+      <!-- 1. The Core Glow (Behind everything) -->
+      <path
+          android:pathData="M100,100 m-50,0 a50,50 0,1 0,100 0 a50,50 0,1 0,-100 0">
+          <aapt:attr name="android:fillColor">
+              <gradient
+                  android:centerX="100"
+                  android:centerY="100"
+                  android:gradientRadius="60"
+                  android:type="radial">
+                  <item android:offset="0" android:color="#4006B6D4"/> <!-- Low opacity Cyan -->
+                  <item android:offset="1" android:color="#0006B6D4"/> <!-- Transparent -->
+              </gradient>
+          </aapt:attr>
+      </path>
+
+      <!-- 2. The Hypercube (Central geometric structure) -->
+      <!-- Outer Cube Hexagon Shape -->
+      <path
+          android:strokeColor="#06B6D4"
+          android:strokeWidth="3"
+          android:strokeLineJoin="round"
+          android:pathData="M100,135 L65,115 L65,75 L100,55 L135,75 L135,115 Z" />
+
+      <!-- Inner Cube Lines (Creating 3D effect) -->
+      <path
+          android:strokeColor="#06B6D4"
+          android:strokeWidth="2"
+          android:pathData="M65,75 L100,95 M135,75 L100,95 M100,135 L100,95" />
+
+      <!--     The "Core" Cube (Solid floating center)-->
+      <path
+          android:fillColor="#4F46E5"
+          android:pathData="M100,85 L110,90 L110,100 L100,105 L90,100 L90,90 Z" />
+      <!--    <path-->
+      <!--        android:pathData="M100,40 L125,100 L100,160 L75,100 Z">-->
+      <!--        <aapt:attr name="android:fillColor">-->
+      <!--            <gradient-->
+      <!--                android:centerX="100"-->
+      <!--                android:centerY="100"-->
+      <!--                android:gradientRadius="60"-->
+      <!--                android:type="radial">-->
+      <!--                <item android:offset="0" android:color="#FFFFFF"/> &lt;!&ndash; Hot White Center &ndash;&gt;-->
+      <!--                <item android:offset="0.5" android:color="#06B6D4"/> &lt;!&ndash; Cyan Core &ndash;&gt;-->
+      <!--                <item android:offset="1" android:color="#4F46E5"/> &lt;!&ndash; Purple Edge &ndash;&gt;-->
+      <!--            </gradient>-->
+      <!--        </aapt:attr>-->
+      <!--    </path>-->
+
+      <!-- 3. Vertical Data Hologram (Shooting up) -->
+      <path
+          android:pathData="M100,55 L115,20 H85 L100,55 Z">
+          <aapt:attr name="android:fillColor">
+              <gradient
+                  android:startX="100"
+                  android:startY="55"
+                  android:endX="100"
+                  android:endY="20"
+                  android:type="linear">
+                  <item android:offset="0" android:color="#80A855F7"/> <!-- Purple Semi-transparent -->
+                  <item android:offset="1" android:color="#00A855F7"/> <!-- Transparent -->
+              </gradient>
+          </aapt:attr>
+      </path>
+
+      <!-- 4. Segmented Data Rings (Asymmetrical Orbits) -->
+      <!-- Ring 1: Horizontal-ish -->
+      <path
+          android:strokeColor="#A855F7"
+          android:strokeWidth="3"
+          android:strokeLineCap="round"
+          android:pathData="M40,100 Q100,140 160,100" />
+
+      <!-- Ring 2: Vertical-ish (Broken segments) -->
+      <path
+          android:strokeColor="#06B6D4"
+          android:strokeWidth="3"
+          android:strokeLineCap="round"
+          android:pathData="M140,40 Q180,100 140,160" />
+
+      <path
+          android:strokeColor="#06B6D4"
+          android:strokeWidth="3"
+          android:strokeLineCap="round"
+          android:pathData="M60,40 Q20,100 60,160"
+          android:strokeAlpha="0.5"/>
+
+      <!-- 5. Floating "Future" Particles (Pixels) -->
+      <path android:fillColor="#FFFFFF" android:pathData="M150,50 h4 v4 h-4 z" />
+      <path android:fillColor="#FFFFFF" android:pathData="M50,150 h3 v3 h-3 z" />
+      <path android:fillColor="#06B6D4" android:pathData="M170,100 h2 v2 h-2 z" />
+
+      <path
+          android:pathData="M0,200 Q100,140 200,200 L200,220 L0,220 Z">
+          <aapt:attr name="android:fillColor">
+              <gradient
+                  android:startX="100"
+                  android:startY="140"
+                  android:endX="100"
+                  android:endY="200"
+                  android:type="linear">
+                  <item android:offset="0" android:color="#804F46E5"/> <!-- Indigo Glow -->
+                  <item android:offset="1" android:color="#00000000"/> <!-- Fade Out -->
+              </gradient>
+          </aapt:attr>
+      </path>
+      <!-- Horizon Line (Sharp Edge) -->
+      <path
+          android:strokeColor="#06B6D4"
+          android:strokeWidth="2"
+          android:pathData="M0,200 Q100,140 200,200" />
+      <path
+          android:fillColor="#FFFFFF"
+          android:pathData="M20,40 L22,45 L27,47 L22,49 L20,54 L18,49 L13,47 L18,45 Z" /> <!-- Top Left Star -->
+
+      <path
+          android:fillColor="#FFFFFF"
+          android:pathData="M180,160 L182,165 L187,167 L182,169 L180,174 L178,169 L173,167 L178,165 Z" /> <!-- Bottom Right Star -->
+
+
+  </group>
+</vector>
