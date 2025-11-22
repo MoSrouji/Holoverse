@@ -6,5 +6,8 @@ plugins {
     kotlin("plugin.serialization") version "1.8.22" apply false
     id("com.google.dagger.hilt.android") version "2.57.2" apply false
     kotlin("kapt") version "1.8.21" apply false
+    alias(libs.plugins.google.gms.google.services) apply false
+    alias(libs.plugins.google.firebase.crashlytics) apply false
+    alias(libs.plugins.google.firebase.firebase.perf) apply false
 
 }
