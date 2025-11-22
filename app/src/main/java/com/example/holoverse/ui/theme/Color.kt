@@ -1,6 +1,18 @@
 package com.example.holoverse.ui.theme
 import androidx.compose.ui.graphics.Color
 
+
+val ColorGunmetal = Color(0xFF2C2B3F)
+val ColorGunmetal50 = Color(0x802C2B3F)
+val ColorVerdigris = Color(0xFF38DED2)
+val ColorGraniteGray = Color(0xFF8E8E8E)
+val ColorPlatinum = Color(0xFFE1E6E3)
+val ColorAmericanPurple = Color(0xFF473FC4)
+val ColorRed = Color(0xFFF51506)
+
+
+
+
 val primaryLight = Color(0xFF006875)
 val onPrimaryLight = Color(0xFFFFFFFF)
 val primaryContainerLight = Color(0xFF9EEFFE)
@@ -98,7 +110,7 @@ val onSurfaceVariantLightHighContrast = Color(0xFF000000)
 val outlineLightHighContrast = Color(0xFF252E2F)
 val outlineVariantLightHighContrast = Color(0xFF414B4C)
 val scrimLightHighContrast = Color(0xFF000000)
-val inverseSurfaceLightHighContrast = Color(0xFF303036)
+val inverseSurfaceLightHighContrast = Color(0x80303036)
 val inverseOnSurfaceLightHighContrast = Color(0xFFFFFFFF)
 val inversePrimaryLightHighContrast = Color(0xFF82D3E1)
 val surfaceDimLightHighContrast = Color(0xFFBAB7BF)

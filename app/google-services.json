@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "491553156292",
+    "project_id": "holoversev1",
+    "storage_bucket": "holoversev1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:491553156292:android:f84e0d36eccb6b51032d91",
+        "android_client_info": {
+          "package_name": "com.example.holoverse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDR5SocBelq8mlOGs3DjjZDVbWYpjQAejk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

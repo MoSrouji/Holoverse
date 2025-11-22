@@ -4,15 +4,22 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    kotlin("kapt")
+    //  kotlin("kapt")
     kotlin("plugin.serialization") version "1.8.22"
     id("com.google.dagger.hilt.android") version "2.57.2"
+    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.google.firebase.crashlytics)
+    alias(libs.plugins.google.firebase.firebase.perf)
+    id("com.google.devtools.ksp")
 }
 
 android {
     namespace = "com.example.holoverse"
     compileSdk {
         version = release(36)
+    }
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.add("-Xlint:deprecation")
     }
 
     defaultConfig {
@@ -46,10 +53,10 @@ android {
     buildFeatures {
         compose = true
     }
-    kapt {
-        correctErrorTypes = true
-
-    }
+//    kapt {
+//        correctErrorTypes = true
+//
+//    }
 
 }
 
@@ -62,6 +69,18 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.firebase.auth)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.perf)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.material3)
+    implementation(libs.compose.material3)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.espresso.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -74,8 +93,8 @@ dependencies {
     //Hilt Impl
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation)
-    kapt (libs.hilt.compiler)
-
+    //kapt (libs.hilt.compiler)
+    ksp(libs.hilt.compiler.v248)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
@@ -87,8 +106,9 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-
-
-
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.core.splashscreen) // Add this line
+    implementation("com.airbnb.android:lottie:6.1.0")
 
 }
