@@ -3,6 +3,7 @@ package com.example.holoverse.ui.auth.presentaiton.authentication.signin
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,10 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.example.holoverse.ui.auth.validation.event.ValidationResultEvent
 import com.example.holoverse.ui.auth.util.TextFieldType
 import com.example.holoverse.ui.auth.validation.event.ValidationEvent
@@ -23,13 +25,16 @@ import com.example.holoverse.ui.auth.widget.button.AuthenticationButton
 import com.example.holoverse.ui.auth.widget.loading.LoadingScreen
 import com.example.holoverse.ui.auth.widget.textfield.AuthenticationTextField
 import com.example.holoverse.R
+import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.navigation.AppScreen
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
+import com.example.holoverse.ui.theme.rubik_glitch_pop
 
 @Composable
 fun SignInScreen(
-    navController: NavController,
+    navController: AppNavigator,
     navToHomeScreen: () -> Unit,
-    viewModel: SignInViewModel = hiltViewModel()
+     viewModel: SignInViewModel = hiltViewModel()
 ) {
 
     val context = LocalContext.current
@@ -94,9 +99,26 @@ fun SignInScreen(
                 .fillMaxSize()
         ) {
 
+
             Spacer(modifier = Modifier.padding(bottom = 60.dp))
-
-
+            Column() {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(R.string.Holo),
+                    fontFamily = rubik_glitch_pop,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 70.sp
+                )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(R.string.Verse),
+                    fontFamily = rubik_glitch_pop,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 70.sp
+                )
+            }
             Spacer(modifier = Modifier.height(10.dp))
 
             //Login Text
@@ -178,7 +200,7 @@ fun SignInScreen(
 
             Row(modifier = Modifier.clickable {
 
-                //  navController.navigate(AppScreen.SignUpScreen().route)
+                navController.navigateTo(AppScreen.SignUp)
 
             }) {
 
@@ -204,13 +226,7 @@ fun SignInScreen(
                     .width(10.dp)
                     .padding(bottom = 10.dp)
             )
-            Text(
-                text = "Or Continue As Guest", modifier = Modifier.clickable {
-                    navToHomeScreen()
-                    viewModel.restUser()
-                }, color = colorResource(R.color.white)
 
-            )
 
         }
 

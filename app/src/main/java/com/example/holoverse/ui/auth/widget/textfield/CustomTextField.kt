@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
@@ -41,7 +43,8 @@ fun CustomTextField(
     onValueChange: (String) -> Unit,
     color: Color,
     cornerRadius: Dp = 0.dp,
-    type: TextFieldType
+    type: TextFieldType,
+    keyboardOptions: KeyboardOptions
 
 ) {
 
@@ -70,7 +73,11 @@ fun CustomTextField(
         TextField(
             modifier = modifier
                 .fillMaxWidth()
-                .background(color = color, shape = RoundedCornerShape(cornerRadius)),
+                .background(
+                    color = color, shape = RoundedCornerShape(cornerRadius)
+                ),
+            keyboardOptions = keyboardOptions,
+
 
             value = state.text,
             textStyle = textStyle,
@@ -88,11 +95,11 @@ fun CustomTextField(
                 disabledContainerColor = color,
             ),
             visualTransformation =
-            if (type == TextFieldType.Password) {
+                if (type == TextFieldType.Password) {
 
-                if (passwordVisible) PasswordVisualTransformation() else VisualTransformation.None
+                    if (passwordVisible) PasswordVisualTransformation() else VisualTransformation.None
 
-            } else VisualTransformation.None,
+                } else VisualTransformation.None,
             trailingIcon = {
 
                 if (trailingId != null) {
@@ -106,6 +113,7 @@ fun CustomTextField(
                     )
                 }
             }
+
         )
 
         if (state.hasError && state.errorMessageId != null) {

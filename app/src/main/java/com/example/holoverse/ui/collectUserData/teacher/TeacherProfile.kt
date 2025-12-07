@@ -1,14 +1,12 @@
-package com.example.holoverse.ui.auth.presentaiton.authentication.signup
+package com.example.holoverse.ui.collectUserData.teacher
 
 
-import android.widget.Toast
-import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -26,92 +25,35 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 import com.example.holoverse.ui.auth.util.TextFieldType
 import com.example.holoverse.ui.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.auth.validation.event.ValidationResultEvent
 import com.example.holoverse.utils.Response
 import com.example.holoverse.ui.auth.widget.button.AuthenticationButton
 import com.example.holoverse.ui.auth.widget.loading.LoadingScreen
 import com.example.holoverse.ui.auth.widget.textfield.AuthenticationTextField
 import com.example.holoverse.R
-import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.navigation.AppScreen
+import com.example.holoverse.ui.auth.presentaiton.authentication.signup.SignUpTextFieldId
 import com.example.holoverse.ui.auth.widget.ExpandableMenu
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
 
 @Composable
-fun SignUpScreen(
+fun TeacherProfileInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
-    viewModel: SignUpViewModel = hiltViewModel()
+    viewModel: TeacherProfileViewModel = hiltViewModel()
 
 
 ) {
-    val menuItems = listOf("Teacher", "Student")
+    val genderItems = listOf("Male", "Female")
 
-    val signUpState = viewModel.signUpState.value
+
+    val signUpState = viewModel.signUpState
 
     val context = LocalContext.current
 
     var isMenuExpanded by remember { mutableStateOf(false) }
-
-
-    LaunchedEffect(key1 = context) {
-
-
-        viewModel.validationEvent.collect { event ->
-
-
-            when (event) {
-                ValidationResultEvent.Success -> {
-
-                    val userState = User(
-                        userId = null,
-                        fullName = viewModel.forms[SignUpTextFieldId.FULL_NAME]!!.text,
-                        email = viewModel.forms[SignUpTextFieldId.EMAIL]!!.text,
-                        accountType = viewModel.getUserType()
-                        //                        when(viewModel.forms[SignUpTextFieldId.ACCOUNT_TYPE]!!.text){
-//                            "student" -> UserType.Student
-//                            "teacher" -> UserType.Teacher
-//                            else -> UserType.Student
-//                        }
-                    )
-
-                    viewModel.firebaseSingUp(
-                        userDto = userState,
-                        password = viewModel.forms[SignUpTextFieldId.PASSWORD]!!.text
-                    )
-                }
-
-            }
-
-        }
-    }
-
-
-    LaunchedEffect(signUpState) {
-
-        when (signUpState) {
-
-            is Response.Success -> {
-                if (signUpState.data) {
-                    Toast.makeText(context, R.string.fill_the_form, Toast.LENGTH_LONG).show()
-                    navController.navigateTo(AppScreen.SignUpTeacherProfile)
-
-                }
-            }
-
-            is Response.Error -> {
-                Toast.makeText(context, signUpState.massage, Toast.LENGTH_LONG).show()
-            }
-
-            is Response.Loading -> {
-                // Toast.makeText(context, "Loading ", Toast.LENGTH_LONG).show()
-
-            }
-        }
-    }
 
 
 
@@ -126,7 +68,6 @@ fun SignUpScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
 
 
@@ -139,34 +80,34 @@ fun SignUpScreen(
 
             //Create Account Text
             Text(
-                text = stringResource(id = R.string.create_account),
+                text = stringResource(id = com.example.holoverse.R.string.create_account),
                 style = IbarraNovaBoldPlatinum25,
-                color = colorResource(R.color.white)
+                color = colorResource(com.example.holoverse.R.color.white)
             )
 
             Spacer(modifier = Modifier.height(5.dp))
 
             //Please Fill Text
             Text(
-                text = stringResource(id = R.string.please_sign_in_to_continue),
+                text = stringResource(id = com.example.holoverse.R.string.please_complete_you_auth_to_continue),
                 style = IbarraNovaBoldPlatinum18,
-                color = colorResource(R.color.white)
+                color = colorResource(com.example.holoverse.R.color.white)
 
 
             )
-
             Spacer(modifier = Modifier.height(40.dp))
 
-            //FullName TextField
+
+
             AuthenticationTextField(
                 modifier = Modifier.fillMaxWidth(0.85f),
-                state = viewModel.forms[SignUpTextFieldId.FULL_NAME]!!,
-                hint = R.string.full_name,
+                state = viewModel.forms[SignUpTextFieldId.Bio]!!,
+                hint = R.string.bio,
                 onValueChange = {
                     viewModel.onEvent(
 
                         ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextFieldId.FULL_NAME]!!.copy(
+                            viewModel.forms[SignUpTextFieldId.Bio]!!.copy(
                                 text = it
                             )
                         )
@@ -176,43 +117,69 @@ fun SignUpScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
 
-            //Email TextField
+
+
             AuthenticationTextField(
                 modifier = Modifier.fillMaxWidth(0.85f),
-                state = viewModel.forms[SignUpTextFieldId.EMAIL]!!,
-                hint = R.string.email,
+                state = viewModel.forms[SignUpTextFieldId.PHONE_NUMBER]!!,
+                hint = R.string.phoneNumber,
                 onValueChange = {
-
                     viewModel.onEvent(
-                        ValidationEvent.TextFieldValueChange(
 
-                            viewModel.forms[SignUpTextFieldId.EMAIL]!!.copy(text = it)
+                        ValidationEvent.TextFieldValueChange(
+                            viewModel.forms[SignUpTextFieldId.PHONE_NUMBER]!!.copy(
+                                text = it
+                            )
                         )
                     )
-
                 },
-                type = TextFieldType.Email
+                type = TextFieldType.PhoneNumber,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             Spacer(modifier = Modifier.height(20.dp))
 
 
-            //Password TextField
             AuthenticationTextField(
                 modifier = Modifier.fillMaxWidth(0.85f),
-                state = viewModel.forms[SignUpTextFieldId.PASSWORD]!!,
-                hint = R.string.password,
+                state = viewModel.forms[SignUpTextFieldId.ADDRESS]!!,
+                hint = R.string.address,
                 onValueChange = {
-
-
                     viewModel.onEvent(
+
                         ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextFieldId.PASSWORD]!!.copy(text = it)
+                            viewModel.forms[SignUpTextFieldId.ADDRESS]!!.copy(
+                                text = it
+                            )
                         )
                     )
                 },
-                type = TextFieldType.Password
+                type = TextFieldType.Text
             )
             Spacer(modifier = Modifier.height(20.dp))
+
+
+
+            AuthenticationTextField(
+                modifier = Modifier.fillMaxWidth(0.85f),
+                state = viewModel.forms[SignUpTextFieldId.DATE_OF_BIRTH]!!,
+                hint = R.string.dateOfBirth,
+                onValueChange = {
+                    viewModel.onEvent(
+                        ValidationEvent.TextFieldValueChange(
+                            viewModel.forms[SignUpTextFieldId.DATE_OF_BIRTH]!!.copy(
+                                text = it
+                            )
+                        )
+                    )
+                },
+                type = TextFieldType.Text
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+
+
+
+
+
 
             ExpandableMenu(
                 isExpanded = isMenuExpanded,
@@ -223,17 +190,14 @@ fun SignUpScreen(
                     isMenuExpanded = false
                     viewModel.onEvent(
                         ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextFieldId.ACCOUNT_TYPE]!!.copy(text = item)
+                            viewModel.forms[SignUpTextFieldId.Gender]!!.copy(text = item)
                         )
                     )
 
                 },
-                state = viewModel.forms[SignUpTextFieldId.ACCOUNT_TYPE]!!,
-                menuItems = menuItems
+                state = viewModel.forms[SignUpTextFieldId.Gender]!!,
+                menuItems = genderItems
             )
-
-
-
 
 
 
@@ -245,8 +209,10 @@ fun SignUpScreen(
                     .height(50.dp),
                 textId = R.string.sign_up,
                 onClick = {
-               //     viewModel.onEvent(ValidationEvent.Submit)
-                    navController.navigateTo(AppScreen.SignUpTeacherProfile)
+                    //     viewModel.onEvent(ValidationEvent.Submit)
+                    //     navController.navigateTo(AppScreen.SignUpTeacher)
+                    navController.navigateTo(AppScreen.SignUpTeacherProfessional)
+
 
                 },
 
@@ -262,4 +228,3 @@ fun SignUpScreen(
 
 
 }
-

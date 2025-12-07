@@ -1,11 +1,14 @@
 <resources>
     <string name="app_name">Holoverse</string>
+    <string name="Holo">Holo</string>
+    <string name="Verse">verse</string>
 
 
     <!-- Authentication -->
     <string name="login">Login</string>
     <string name="create_account">Create Account</string>
     <string name="please_sign_in_to_continue">Please sign in to continue</string>
+    <string name="please_complete_you_auth_to_continue">Please Complete your auth to continue</string>
     <string name="login_capital">LOGIN</string>
     <string name="signup_capital">SIGN UP</string>
     <string name="password">Password</string>
@@ -16,10 +19,10 @@
     <string name="full_name">Full Name</string>
 
 
-
     <!-- Validation -->
     <string name="the_field_can_not_be_blank">The field can\'t be blank</string>
     <string name="that_is_not_a_valid_email">That\'s not a valid email</string>
+    <string name="that_is_not_a_valid_phone_number">That\'s not a valid phone number</string>
     <string name="the_password_needs_to_contain_at_least_one_letter_and_digit">
         The password needs to contain at least one letter and digit</string>
     <string name="the_password_needs_to_consist_of_at_least_8_characters">
@@ -27,6 +30,24 @@
     <string name="must_be_from_9_to_12_digits">Must be from 9 to 12 digits</string>
     <string name="validation_successfully">Validation Successfully</string>
     <string name="sign_up_successfully">Sign Up Successfully\n</string>
+    <string name="fill_the_form">Please Fill The Form \n</string>
     <string name="sign_in_successfully">Sign in successfully\n</string>
     <string name="select_role">Select User Type</string>
+<!-- Profile -->
+    <string name="bio">BIO</string>
+    <string name="dateOfBirth">date of birth</string>
+    <string name="phoneNumber">phone number</string>
+    <string name="address">address</string>
+    <string name="gender">gender</string>
+
+    <string name="yearsOfExperience">years of experience</string>
+    <string name="languagesSpoken">languages spoken</string>
+    <string name="certifications">certifications</string>
+
+    <string name="specialization">specialization</string>
+    <string name="subjects">subjects</string>
+
+    <string name="hourlyRate">hourly rate</string>
+
+
 </resources>

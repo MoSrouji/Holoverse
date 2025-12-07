@@ -8,9 +8,9 @@ import com.example.holoverse.ui.auth.validation.event.ValidationEvent
 import com.example.holoverse.ui.auth.validation.event.ValidationResultEvent
 import com.example.holoverse.ui.auth.validation.interfaces.TextFieldId
 import com.example.holoverse.ui.auth.validation.state.ValidationState
-import com.example.holoverse.ui.auth.validation.use_case.ValidateAccountType
 import com.example.holoverse.ui.auth.validation.use_case.ValidateEmail
 import com.example.holoverse.ui.auth.validation.use_case.ValidatePassword
+import com.example.holoverse.ui.auth.validation.use_case.ValidatePhone
 import com.example.holoverse.ui.auth.validation.use_case.ValidateText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -45,6 +45,7 @@ open class BaseValidationViewModel @Inject constructor() : ViewModel() {
                     TextFieldType.Email -> ValidateEmail()
                     TextFieldType.Password -> ValidatePassword()
                     TextFieldType.AccountType -> ValidateText()
+                    TextFieldType.PhoneNumber -> ValidatePhone()
 
                 }
 

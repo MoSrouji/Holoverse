@@ -40,9 +40,7 @@ class SignUpViewModel @Inject constructor(
         ValidationState(type = TextFieldType.AccountType, id = SignUpTextFieldId.ACCOUNT_TYPE)
 
 
-  var selectedItem by mutableStateOf("Select User Type")
-
-
+    var selectedItem by mutableStateOf("Select User Type")
 
 
     fun getUserType(): UserType {
@@ -59,7 +57,7 @@ class SignUpViewModel @Inject constructor(
         forms[SignUpTextFieldId.FULL_NAME] = fullNameValidationState
         forms[SignUpTextFieldId.EMAIL] = emailValidationState
         forms[SignUpTextFieldId.PASSWORD] = passwordValidationState
-        forms[SignUpTextFieldId.ACCOUNT_TYPE] =accountValidationState
+        forms[SignUpTextFieldId.ACCOUNT_TYPE] = accountValidationState
     }
 
 
@@ -86,5 +84,6 @@ class SignUpViewModel @Inject constructor(
 }
 
 enum class SignUpTextFieldId : TextFieldId {
-    FULL_NAME, EMAIL, PASSWORD,ACCOUNT_TYPE
+    FULL_NAME, EMAIL, PASSWORD, ACCOUNT_TYPE, PHONE_NUMBER, ADDRESS, DATE_OF_BIRTH, Bio, Gender,
+    YEARS_OF_EXPERIENCE, SPECIALIZATION, SUBJECTS, CERTIFICATION, LANGUAGE_SPOKEN, HOURLY_RATE,
 }

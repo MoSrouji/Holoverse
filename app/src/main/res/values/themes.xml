@@ -2,5 +2,4 @@
 <resources>
 
     <style name="Theme.Holoverse" parent="android:Theme.Material.Light.NoActionBar" />
-
 </resources>

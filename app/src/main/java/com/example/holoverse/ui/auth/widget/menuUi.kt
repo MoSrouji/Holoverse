@@ -1,11 +1,13 @@
 package com.example.holoverse.ui.auth.widget
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -17,16 +19,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,8 +47,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.holoverse.ui.auth.presentaiton.authentication.signup.SignUpTextFieldId
+import com.example.holoverse.ui.auth.validation.interfaces.TextFieldId
 
 import com.example.holoverse.ui.auth.validation.state.ValidationState
 import com.example.holoverse.ui.theme.IbarraNovaNormalError13
@@ -53,6 +67,7 @@ fun ExpandableMenuScreen(
 ) {
     var isMenuExpanded by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf("Select User Type") }
+    val menuItems = listOf("Teacher", "Student")
 
     Column(
         modifier = Modifier
@@ -77,7 +92,8 @@ fun ExpandableMenuScreen(
                 selectedItem = item
                 isMenuExpanded = false
             },
-            state = state
+            state = state,
+            menuItems = menuItems
 
         )
 
@@ -99,9 +115,11 @@ fun ExpandableMenu(
     onToggle: () -> Unit,
     selectedItem: String,
     onItemSelected: (String) -> Unit,
-    state: ValidationState
-    ) {
-    val menuItems = listOf("Teacher", "Student")
+    state: ValidationState = ValidationState(id = SignUpTextFieldId.FULL_NAME),
+    menuItems: List<String>,
+    showIcon: Boolean = true
+) {
+
 
     Column(
         modifier = Modifier
@@ -112,7 +130,8 @@ fun ExpandableMenu(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background).height(56.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .height(56.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple()
@@ -127,18 +146,20 @@ fun ExpandableMenu(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "User type",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(end = 12.dp)
-                    )
+                    if (showIcon) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "User type",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(end = 12.dp)
+                        )
+                    }
                     Text(
                         text = selectedItem,
                         style = IbarraNovaNormalGray14,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                       // color =  ColorPlatinum
+                        // color =  ColorPlatinum
                     )
                 }
 
@@ -175,7 +196,7 @@ fun ExpandableMenu(
 
         }
 
-        }
+    }
     Column() {
         if (state.hasError && state.errorMessageId != null) {
 
@@ -188,8 +209,214 @@ fun ExpandableMenu(
             )
         }
     }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CompactExpandableMenu(
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    selectedItem: String,
+    onItemSelected: (String) -> Unit,
+    state: ValidationState = ValidationState(id = SignUpTextFieldId.FULL_NAME),
+    menuItems: List<String>
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth(0.85f)
+            .clip(RoundedCornerShape(5.dp))
+    ) {
+        // Compact menu header
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+                .height(48.dp)
+                .clickable { onToggle() }
+                .padding(horizontal = 12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = selectedItem,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // Menu items
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                menuItems.forEach { item ->
+                    Text(
+                        text = item,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onItemSelected(item) }
+                            .padding(vertical = 10.dp, horizontal = 12.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
     }
 
+    // Error message
+    if (state.hasError && state.errorMessageId != null) {
+        Text(
+            text = stringResource(id = state.errorMessageId),
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .padding(top = 4.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error
+        )
+    }
+}
+
+
+//@Composable
+//fun CompactMultiSelectMenu(
+//    isExpanded: Boolean,
+//    onToggle: () -> Unit,
+//    selectedItems: Set<String>,
+//    onItemSelected: (String) -> Unit, // Just toggles selection
+//    menuItems: List<String>
+//) {
+//    Column(
+//        modifier = Modifier
+//            .fillMaxWidth(0.85f)
+//            .clip(RoundedCornerShape(5.dp))
+//    ) {
+//        // Header with chip preview
+//        Box(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .background(MaterialTheme.colorScheme.background)
+//                .height(56.dp)
+//                .clickable { onToggle() }
+//                .padding(horizontal = 12.dp)
+//        ) {
+//            Row(
+//                modifier = Modifier.fillMaxSize(),
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                if (selectedItems.isEmpty()) {
+//                    Text("Select options", style = MaterialTheme.typography.bodyMedium)
+//                } else {
+//                    // Show first selected item as preview
+//                    Text(
+//                        text = selectedItems.first(),
+//                        style = MaterialTheme.typography.bodyMedium,
+//                        maxLines = 1,
+//                        overflow = TextOverflow.Ellipsis
+//                    )
+//
+//                    // Show "+X more" if more items selected
+//                    if (selectedItems.size > 1 ) {
+//                        Text(
+//                            text = " +${selectedItems.size - 1} more",
+//                            style = MaterialTheme.typography.bodySmall,
+//                            color = MaterialTheme.colorScheme.primary
+//                        )
+//                    }
+//                }
+//
+//                Spacer(modifier = Modifier.weight(1f))
+//
+//                Icon(
+//                    imageVector = Icons.Default.ArrowDropDown,
+//                    contentDescription = null,
+//                    modifier = Modifier.size(20.dp)
+//                )
+//            }
+//        }
+//
+//        // Dropdown items with selection indicator
+//        AnimatedVisibility(visible = isExpanded) {
+//            Column(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .background(MaterialTheme.colorScheme.surfaceVariant)
+//            ) {
+//                menuItems.forEach { item ->
+//                    val isSelected = selectedItems.contains(item)
+//
+//                    Row(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .clickable { onItemSelected(item) }
+//                            .padding(12.dp),
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
+//                        // Selection indicator dot
+//                        Box(
+//                            modifier = Modifier
+//                                .size(8.dp)
+//                                .background(
+//                                    color = if (isSelected) MaterialTheme.colorScheme.primary
+//                                    else Color.Transparent,
+//                                    shape = CircleShape
+//                                )
+//                                .border(
+//                                    width = 1.dp,
+//                                    color = if (isSelected) MaterialTheme.colorScheme.primary
+//                                    else MaterialTheme.colorScheme.outline,
+//                                    shape = CircleShape
+//                                )
+//                        )
+//
+//                        Spacer(modifier = Modifier.width(12.dp))
+//
+//                        Text(
+//                            text = item,
+//                            style = MaterialTheme.typography.bodyMedium,
+//                            color = if (isSelected) MaterialTheme.colorScheme.primary
+//                            else MaterialTheme.colorScheme.onSurface
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+//
+
+//@Preview
+//@Composable
+//fun ExpandableMenuPreview() {
+//
+//CompactMultiSelectMenu(
+//    isExpanded = true,
+//    onToggle = {},
+//    selectedItems = setOf("Option 1", "Option 2"),
+//    onItemSelected = {},
+//    menuItems = listOf("Option 1", "Option 2", "Option 3")
+//)
+//}
+//
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -224,5 +451,217 @@ fun MenuItem(
                 .height(1.dp)
                 .background(Color.LightGray.copy(alpha = 0.3f))
         )
+    }
+}
+
+
+@Composable
+fun CompactMultiSelectMenu(
+    ifItEmptyText: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    selectedItems: Set<String>,
+    onItemSelected: (String) -> Unit,
+    menuItems: List<String>,
+    modifier: Modifier = Modifier,
+    maxPreviewItems: Int = 1,
+    labelText: String,
+    selectedDotColor: Color = MaterialTheme.colorScheme.primary,
+    unselectedDotColor: Color = Color.Transparent,
+    dotBorderColor: Color = MaterialTheme.colorScheme.outline,
+    selectedTextColor: Color = MaterialTheme.colorScheme.primary,
+    unselectedTextColor: Color = MaterialTheme.colorScheme.onSurface
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth(0.85f)
+            .clip(RoundedCornerShape(5.dp))
+    ) {
+        // Header with chip preview
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+                .height(56.dp)
+                .clickable { onToggle() }
+                .padding(horizontal = 12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (selectedItems.isEmpty()) {
+                    Text(
+                        text = ifItEmptyText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = IbarraNovaSemiBoldPlatinum16
+                    )
+                } else {
+
+
+                    // Show selected items preview
+                    val previewItems = selectedItems.take(maxPreviewItems)
+                    previewItems.forEachIndexed { index, item ->
+                        Text(
+                            text = if (index == previewItems.lastIndex) "$labelText $item" else " $item, ",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = IbarraNovaSemiBoldPlatinum16,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+//
+//                    Row(
+//                        modifier = Modifier,
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
+//                        Text(
+//                            text = labelText,
+//                            style = MaterialTheme.typography.bodyLarge
+//                        )
+                    // Show "+X more" if more items selected
+                    if (selectedItems.size > maxPreviewItems) {
+
+                        Text(
+                            text = " +${selectedItems.size - maxPreviewItems} more",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = IbarraNovaSemiBoldPlatinum16,
+                            //  color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.weight(1f))
+
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                    contentDescription = if (isExpanded) "Collapse menu" else "Expand menu",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+
+
+                )
+            }
+        }
+
+        // Dropdown items with improved selection indicator
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        shape = RoundedCornerShape(bottomStart = 5.dp, bottomEnd = 5.dp)
+                    )
+            ) {
+                menuItems.forEach { item ->
+                    val isSelected = selectedItems.contains(item)
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onItemSelected(item) }
+                            .padding(vertical = 14.dp, horizontal = 16.dp)
+                            .animateContentSize(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Improved selection indicator dot with animation
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    color = if (isSelected) selectedDotColor else unselectedDotColor,
+                                    shape = CircleShape
+                                )
+                                .border(
+                                    width = if (isSelected) 0.dp else 1.5.dp,
+                                    color = if (isSelected) selectedDotColor else dotBorderColor,
+                                    shape = CircleShape
+                                )
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Text(
+                            text = item,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isSelected) selectedTextColor else unselectedTextColor,
+                            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
+                        )
+
+                        if (isSelected) {
+                            Spacer(modifier = Modifier.weight(1f))
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = selectedDotColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    // Divider between items
+                    if (item != menuItems.last()) {
+                        Divider(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            thickness = 0.5.dp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Preview Composable for testing
+@Composable
+@Preview
+fun CompactMultiSelectMenuPreview() {
+    MaterialTheme {
+        var isExpanded by remember { mutableStateOf(false) }
+        var selectedItems by remember { mutableStateOf(setOf<String>()) }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CompactMultiSelectMenu(
+                isExpanded = isExpanded,
+                onToggle = { isExpanded = !isExpanded },
+                selectedItems = selectedItems,
+                onItemSelected = { item ->
+                    selectedItems = if (selectedItems.contains(item)) {
+                        selectedItems - item
+                    } else {
+                        selectedItems + item
+                    }
+                },
+                menuItems = listOf("Option 1", "Option 2", "Option 3", "Option 4", "Option 5"),
+                selectedDotColor = Color.Green,
+                unselectedDotColor = Color.Transparent,
+                dotBorderColor = Color.Gray,
+                ifItEmptyText = " Select Option ",
+                labelText = " label "
+
+            )
+        }
     }
 }

@@ -1,6 +1,8 @@
 package com.example.holoverse.ui.auth.widget.textfield
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,9 +20,11 @@ fun AuthenticationTextField(
     state: ValidationState,
     @StringRes hint: Int,
     onValueChange: (String) -> Unit,
-    type: TextFieldType
+    type: TextFieldType,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 
 ) {
+    val darkTheme = isSystemInDarkTheme()
 
     CustomTextField(
         modifier = modifier,
@@ -29,9 +33,10 @@ fun AuthenticationTextField(
         onValueChange = onValueChange,
         textStyle = IbarraNovaSemiBoldPlatinum16,
         hintTextStyle = IbarraNovaNormalGray14,
-        color = MaterialTheme.colorScheme.background,
+        color = MaterialTheme.colorScheme.surface,
         cornerRadius = 15.dp,
         type = type,
+        keyboardOptions = keyboardOptions
 
 
         )

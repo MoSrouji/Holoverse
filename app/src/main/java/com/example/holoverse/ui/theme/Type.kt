@@ -1,12 +1,15 @@
 package com.example.holoverse.ui.theme
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.ui.res.fontResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.holoverse.R
+
 
 // Set of Material typography styles to start with
 val Typography = Typography(
@@ -43,8 +46,15 @@ val IbarraNovaFont = FontFamily(
     Font(R.font.ibarra_real_nova_semi_bold, weight = FontWeight.SemiBold),
 
     )
+val rubik_glitch_pop = FontFamily(
+    Font(R.font.rubik_glitch_pop, weight = FontWeight.Bold)
+)
 
-
+val rubik_glitch_pop16 = TextStyle(
+    fontFamily = rubik_glitch_pop,
+    fontSize = 100.sp,
+    fontWeight = FontWeight.Bold,
+)
 val IbarraNovaBoldPlatinum25 =
     TextStyle(
         fontFamily = IbarraNovaFont,
@@ -68,15 +78,16 @@ val IbarraNovaSemiBoldPlatinum16 =
         fontFamily = IbarraNovaFont,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
-        //     color = ColorPlatinum
+        //color = secondaryLight
     )
+
 
 val IbarraNovaNormalGray14 =
     TextStyle(
         fontFamily = IbarraNovaFont,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
-        //  color = ColorGraniteGray
+        //color = secondaryDark
     )
 
 val IbarraNovaSemiBoldPlatinum17 =

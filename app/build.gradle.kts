@@ -81,6 +81,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.compose.ui.text)
+    implementation(libs.androidx.compose.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -108,7 +110,6 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.core.splashscreen) // Add this line
-    implementation("com.airbnb.android:lottie:6.1.0")
+   // implementation(libs.androidx.core.splashscreen) // Add this line
 
 }
