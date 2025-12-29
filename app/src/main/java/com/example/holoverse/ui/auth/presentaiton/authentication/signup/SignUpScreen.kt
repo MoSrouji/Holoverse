@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 
 import androidx.compose.ui.unit.dp
@@ -35,7 +36,7 @@ import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.navigation.AppScreen
-import com.example.holoverse.ui.auth.widget.ExpandableMenu
+import com.example.holoverse.ui.auth.widget.RadioButtonMenu
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
@@ -44,7 +45,8 @@ import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
 fun SignUpScreen(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
-    viewModel: SignUpViewModel = hiltViewModel()
+    viewModel: SignUpViewModel = hiltViewModel(),
+
 
 
 ) {
@@ -71,11 +73,6 @@ fun SignUpScreen(
                         fullName = viewModel.forms[SignUpTextFieldId.FULL_NAME]!!.text,
                         email = viewModel.forms[SignUpTextFieldId.EMAIL]!!.text,
                         accountType = viewModel.getUserType()
-                        //                        when(viewModel.forms[SignUpTextFieldId.ACCOUNT_TYPE]!!.text){
-//                            "student" -> UserType.Student
-//                            "teacher" -> UserType.Teacher
-//                            else -> UserType.Student
-//                        }
                     )
 
                     viewModel.firebaseSingUp(
@@ -133,6 +130,19 @@ fun SignUpScreen(
         ) {
 
             Spacer(modifier = Modifier.height(40.dp))
+            //Back Image
+            Image(
+                painter = painterResource(id = R.drawable.ic_back),
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .width(40.dp)
+                    .height(30.dp)
+                    .clickable {
+                      //  navController.popBackStack()
+                    },
+                contentDescription = "back"
+            )
+
 
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -214,7 +224,7 @@ fun SignUpScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
 
-            ExpandableMenu(
+            RadioButtonMenu(
                 isExpanded = isMenuExpanded,
                 onToggle = { isMenuExpanded = !isMenuExpanded },
                 selectedItem = viewModel.selectedItem,
@@ -243,10 +253,11 @@ fun SignUpScreen(
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
                     .height(50.dp),
-                textId = R.string.sign_up,
+                textId = R.string.next,
                 onClick = {
-               //     viewModel.onEvent(ValidationEvent.Submit)
-                    navController.navigateTo(AppScreen.SignUpTeacherProfile)
+                    viewModel.onEvent(ValidationEvent.Submit)
+                   // navController.navigateTo(AppScreen.SignUpTeacherProfile)
+
 
                 },
 

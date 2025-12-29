@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">Holoverse</string>
-    <string name="Holo">Holo</string>
-    <string name="Verse">verse</string>
+    <string name="app_name" translatable="false">Holoverse</string>
+    <string name="Holo" translatable="false">Holo</string>
+    <string name="Verse" translatable="false">verse</string>
 
 
     <!-- Authentication -->
@@ -16,6 +16,7 @@
     <string name="forget_password">Forgot Password?</string>
     <string name="do_not_have_an_account">Don\'t have an account?</string>
     <string name="sign_up">Sign up</string>
+    <string name="next">Next</string>
     <string name="full_name">Full Name</string>
 
 
@@ -23,6 +24,7 @@
     <string name="the_field_can_not_be_blank">The field can\'t be blank</string>
     <string name="that_is_not_a_valid_email">That\'s not a valid email</string>
     <string name="that_is_not_a_valid_phone_number">That\'s not a valid phone number</string>
+    <string name="the_field_can_not_be_less_then_10_digits">The field can\'t be less than 10 digits </string>
     <string name="the_password_needs_to_contain_at_least_one_letter_and_digit">
         The password needs to contain at least one letter and digit</string>
     <string name="the_password_needs_to_consist_of_at_least_8_characters">
@@ -48,6 +50,12 @@
     <string name="subjects">subjects</string>
 
     <string name="hourlyRate">hourly rate</string>
+    <string name="skip">Skip</string>
+    <string name="Warning">warning\n</string>
+    <string name="skipPresed">this form it\'s help us to make recomedatin for you to get better exiprence</string>
+    <string name="Categories">Categories</string>
+    <string name="popular_Courses">Popular Courses</string>
+    <string name="top_Mentor">Top Mentor</string>
 
 
 </resources>

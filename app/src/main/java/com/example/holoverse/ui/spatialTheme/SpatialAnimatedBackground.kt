@@ -18,11 +18,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.ui.theme.primaryLight
 import com.example.holoverse.ui.theme.secondaryLight
+import java.nio.file.Files.size
 import kotlin.math.sin
 
 @Preview
 @Composable
-fun SpatialBackground(modifier: Modifier = Modifier) {
+fun SpatialBackground(
+    modifier: Modifier = Modifier,
+) {
     val darkTheme = isSystemInDarkTheme()
     // This simulates the Three.js particle background using standard Canvas
     val infiniteTransition = rememberInfiniteTransition(label = "background")
@@ -44,8 +47,7 @@ fun SpatialBackground(modifier: Modifier = Modifier) {
                     colors = listOf(Color(0xFF8A8AE8), Color(0xFF1A1A2E))
                 )
             )
-        }
-        else{
+        } else {
             drawRect(
 
                 brush = Brush.verticalGradient(

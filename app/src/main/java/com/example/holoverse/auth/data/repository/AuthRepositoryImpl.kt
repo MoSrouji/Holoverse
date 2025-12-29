@@ -133,7 +133,7 @@ class AuthRepositoryImpl @Inject constructor(
 
             // Build update data
             val updateData = buildMap<String, Any> {
-                put("fullName", teacher.fullName ?: throw Exception("Full name is required"))
+                //put("fullName", teacher.fullName ?: throw Exception("Full name is required"))
                 teacher.bio?.let { put("bio", it) }
                 // Personal Information
                 teacher.dateOfBirth?.let { put("dateOfBirth", it) }

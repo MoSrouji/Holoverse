@@ -15,18 +15,17 @@ class AppNavigator @Inject constructor() {
         screen: AppScreen,
         popUpTo: AppScreen? = null,
         inclusive: Boolean = false
-        ) {
-        navController.navigate(screen.route){
-            popUpTo?.let {
-                popUpTo(it.route) {
-                    this.inclusive = inclusive
-                }
-            }
+    ) {
+        navController.navigate(screen.route) {
+//            popUpTo?.let {
+//                popUpTo(it.route) {
+//                    this.inclusive = inclusive
+//                }
         }
     }
-    fun popBackStack(){
-        navController.popBackStack()
-    }
-
-
 }
+//    fun popBackStack(){
+//        navController.popBackStack()
+//    }
+
+

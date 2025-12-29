@@ -1,7 +1,7 @@
 package com.example.holoverse.auth.domain.entities
 
-import android.R
-import kotlinx.coroutines.flow.Flow
+
+
 
 open class User(
 
@@ -76,10 +76,10 @@ data class Teacher(
 
 
     // Professional Information
-    var yearsOfExperience: Int? = null,
+    var yearsOfExperience: String? = null,
     var specialization: String? = null,
     var subjects: List<String>? = null,
-    var certifications: List<String>? = null,
+    var certifications: String? = null,
     var languagesSpoken: List<String>? = null,
     var hourlyRate: Double? = null,
 
@@ -105,8 +105,9 @@ data class Teacher(
     // Teaching Materials
     val resourcesUploaded: Int? = null,
     val coursesCreated: List<String>? = null,
+    override val accountType: UserType = UserType.Teacher
 
-    ) : User(accountType = UserType.Teacher)
+) : User(accountType = UserType.Teacher)
 
 enum class UserType {
     Student, Teacher

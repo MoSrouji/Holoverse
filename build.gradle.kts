@@ -10,5 +10,7 @@ plugins {
     alias(libs.plugins.google.firebase.crashlytics) apply false
     alias(libs.plugins.google.firebase.firebase.perf) apply false
     id("com.google.devtools.ksp") version "2.2.21-2.0.4" apply false
+    //id("kotlin-parcelize")
+
 
 }

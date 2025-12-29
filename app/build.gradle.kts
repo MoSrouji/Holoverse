@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.google.firebase.crashlytics)
     alias(libs.plugins.google.firebase.firebase.perf)
     id("com.google.devtools.ksp")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -78,11 +79,12 @@ dependencies {
     implementation(libs.firebase.perf)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material3)
-    implementation(libs.compose.material3)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.compose.animation)
+    implementation(libs.places)
+    implementation(libs.androidx.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -110,6 +112,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.material.icons.extended)
-   // implementation(libs.androidx.core.splashscreen) // Add this line
+    implementation(libs.androidx.datastore)
+
+    implementation(libs.androidx.compose.adaptive.android)
 
 }

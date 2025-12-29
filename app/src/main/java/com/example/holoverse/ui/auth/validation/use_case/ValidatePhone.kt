@@ -16,11 +16,17 @@ class ValidatePhone : Validate {
                 isValid = false,
                 errorMessageId = R.string.the_field_can_not_be_blank
             )
-        } else if(!Patterns.PHONE.matcher(text).matches()){
+        } else if (!Patterns.PHONE.matcher(text).matches()) {
             ValidationResultState(
                 isValid = false,
                 errorMessageId = R.string.that_is_not_a_valid_phone_number
             )
+        } else if (text.length < 10) {
+            ValidationResultState(
+                isValid = false,
+                errorMessageId = R.string.the_field_can_not_be_less_then_10_digits
+            )
+
         } else {
 
             ValidationResultState(isValid = true)

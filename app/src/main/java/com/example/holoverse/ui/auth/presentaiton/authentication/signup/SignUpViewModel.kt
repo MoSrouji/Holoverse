@@ -22,11 +22,14 @@ import kotlin.collections.set
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-    private val authenticatingUseCases: AuthUseCases
+    private val authenticatingUseCases: AuthUseCases,
 ) : BaseValidationViewModel() {
 
     private val _signUpState = mutableStateOf<Response<Boolean>>(Response.Success(false))
     val signUpState: State<Response<Boolean>> = _signUpState
+
+
+
     private var fullNameValidationState =
         ValidationState(type = TextFieldType.Text, id = SignUpTextFieldId.FULL_NAME)
 
@@ -77,13 +80,26 @@ class SignUpViewModel @Inject constructor(
             ).collect {
                 _signUpState.value = it
             }
+//            sharedViewModel.teacher.value.copy(
+//                fullName = userDto.fullName ,
+//                email = userDto.email,
+//                accountType = userDto.accountType,
+//                userId = userDto.userId
+//
+//
+//            )
+           // sharedViewModel.updateTeacher()
         }
+
     }
 
 
 }
 
 enum class SignUpTextFieldId : TextFieldId {
-    FULL_NAME, EMAIL, PASSWORD, ACCOUNT_TYPE, PHONE_NUMBER, ADDRESS, DATE_OF_BIRTH, Bio, Gender,
-    YEARS_OF_EXPERIENCE, SPECIALIZATION, SUBJECTS, CERTIFICATION, LANGUAGE_SPOKEN, HOURLY_RATE,
+    FULL_NAME, EMAIL, PASSWORD, ACCOUNT_TYPE
+}
+
+enum class SignUpTextFields: TextFieldId{
+    YEARS_OF_EXPERIENCE, SPECIALIZATION, SUBJECTS, CERTIFICATION, LANGUAGE_SPOKEN, HOURLY_RATE
 }
