@@ -8,10 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.Teacher
 import com.example.holoverse.auth.domain.entities.TeacherCategory
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.ui.auth.presentaiton.authentication.signup.SignUpTextFields
-import com.example.holoverse.ui.auth.presentaiton.base.BaseValidationViewModel
-import com.example.holoverse.ui.auth.util.TextFieldType
-import com.example.holoverse.ui.auth.validation.state.ValidationState
+import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
+import com.example.holoverse.ui.commonPart.auth.presentaiton.base.BaseValidationViewModel
+import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

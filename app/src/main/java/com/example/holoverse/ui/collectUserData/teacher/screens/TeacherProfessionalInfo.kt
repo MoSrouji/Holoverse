@@ -3,16 +3,7 @@ package com.example.holoverse.ui.collectUserData.teacher.screens
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,28 +26,23 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.Teacher
 import com.example.holoverse.auth.domain.entities.TeacherSpecializationMapper
-import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.getAllCategoryNames
 import com.example.holoverse.auth.domain.entities.getSpecialization
+import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.navigation.AppScreen
-import com.example.holoverse.ui.auth.presentaiton.authentication.signup.SignUpTextFieldId
-import com.example.holoverse.ui.auth.presentaiton.authentication.signup.SignUpTextFields
-import com.example.holoverse.ui.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.auth.widget.CheckBoxMenu
-import com.example.holoverse.ui.auth.widget.RadioButtonMenu
-import com.example.holoverse.ui.auth.widget.button.AuthenticationButton
-import com.example.holoverse.ui.collectUserData.teacher.viewModels.SignUpTextField
+import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
+import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
+import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
+import com.example.holoverse.ui.commonPart.auth.widget.CheckBoxMenu
+import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
+import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
 import com.example.holoverse.ui.collectUserData.teacher.viewModels.TeacherProfessionalViewModel
-import com.example.holoverse.ui.collectUserData.teacher.viewModels.TeacherProfileViewModel
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
 import com.example.holoverse.ui.theme.IbarraNovaSemiBoldPlatinum17
 import com.example.holoverse.utils.Response
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.intellij.lang.annotations.Language
 
 @Composable
 fun TeacherProfessionalInfoInput(
@@ -78,12 +63,8 @@ fun TeacherProfessionalInfoInput(
     var isSubjectExpanded by remember { mutableStateOf(false) }
     var isCertificateExpanded by remember { mutableStateOf(false) }
 
-    // Collect the teacher state from ViewModel
-    // val teacherState by viewModel.teacherScreenState.collectAsState()
     val signUpState = viewModel.signUpState.value
 
-
-    // Update ViewModel with incoming teacherStates
     LaunchedEffect(teacherStates) {
         teacherStates.collect { teacher ->
             viewModel.updateState(teacher)
@@ -94,7 +75,6 @@ fun TeacherProfessionalInfoInput(
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    // Update the teacher state
                     val userState = Teacher(
                         bio = teacherStates.value.bio,
                         dateOfBirth = teacherStates.value.dateOfBirth,
@@ -106,50 +86,29 @@ fun TeacherProfessionalInfoInput(
                         subjects = viewModel.subject,
                         certifications = viewModel.forms[SignUpTextFields.CERTIFICATION]!!.text,
                         languagesSpoken = viewModel.selectLanguage.toList(),
-
-                        )
-                    viewModel.firebaseSingUp(
-                        userDto = userState
                     )
-
-
+                    viewModel.firebaseSingUp(userDto = userState)
                 }
-
             }
         }
     }
 
-
-
-
-
     LaunchedEffect(signUpState) {
-
         when (signUpState) {
-
             is Response.Success -> {
                 if (signUpState.data) {
                     Toast.makeText(context, R.string.fill_the_form, Toast.LENGTH_LONG).show()
-                    navController.navigateTo(AppScreen.SignUpTeacherProfile)
-
+                    navToHomeScreen()
                 }
             }
-
             is Response.Error -> {
                 Toast.makeText(context, signUpState.massage, Toast.LENGTH_LONG).show()
             }
-
-            is Response.Loading -> {
-                Toast.makeText(context, "Loading ", Toast.LENGTH_LONG).show()
-
-            }
+            is Response.Loading -> {}
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         SpatialBackground()
         Column(
             verticalArrangement = Arrangement.Top,
@@ -158,9 +117,6 @@ fun TeacherProfessionalInfoInput(
                 .verticalScroll(rememberScrollState())
                 .fillMaxSize()
         ) {
-            // Debug info - remove in production
-
-
             Spacer(modifier = Modifier.height(30.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -173,6 +129,7 @@ fun TeacherProfessionalInfoInput(
                         .width(40.dp)
                         .height(30.dp)
                         .clickable {
+                            navController.popBackStack()
                         },
                     contentDescription = "back"
                 )
@@ -192,7 +149,6 @@ fun TeacherProfessionalInfoInput(
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            //Create Account Text
             Text(
                 text = stringResource(id = R.string.create_account),
                 style = IbarraNovaBoldPlatinum25,
@@ -200,7 +156,6 @@ fun TeacherProfessionalInfoInput(
             )
             Spacer(modifier = Modifier.height(5.dp))
 
-            //Please Fill Text
             Text(
                 text = stringResource(id = R.string.please_complete_you_auth_to_continue),
                 style = IbarraNovaBoldPlatinum18,
@@ -209,7 +164,6 @@ fun TeacherProfessionalInfoInput(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            //Years Of Exp
             RadioButtonMenu(
                 isExpanded = isYearsExpanded,
                 onToggle = { isYearsExpanded = !isYearsExpanded },
@@ -230,14 +184,12 @@ fun TeacherProfessionalInfoInput(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-
             CheckBoxMenu(
                 isExpanded = isLanguageExpanded,
                 onToggle = { isLanguageExpanded = !isLanguageExpanded },
                 selectedItems = viewModel.selectLanguage,
                 onItemSelected = { item ->
                     viewModel.updateLanguage(item)
-                    // Update validation state
                     val currentText = viewModel.forms[SignUpTextFields.LANGUAGE_SPOKEN]?.text ?: ""
                     viewModel.onEvent(
                         ValidationEvent.TextFieldValueChange(
@@ -255,7 +207,6 @@ fun TeacherProfessionalInfoInput(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            //Certificate
             RadioButtonMenu(
                 isExpanded = isCertificateExpanded,
                 onToggle = { isCertificateExpanded = !isCertificateExpanded },
@@ -276,7 +227,6 @@ fun TeacherProfessionalInfoInput(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Specializations
             RadioButtonMenu(
                 isExpanded = isSpecializationsExpanded,
                 onToggle = { isSpecializationsExpanded = !isSpecializationsExpanded },
@@ -301,14 +251,12 @@ fun TeacherProfessionalInfoInput(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            //Subjects
             CheckBoxMenu(
                 isExpanded = isSubjectExpanded,
                 onToggle = { isSubjectExpanded = !isSubjectExpanded },
                 selectedItems = viewModel.selectSubjects,
                 onItemSelected = { item ->
                     viewModel.updateSubject(item)
-                    // Update validation state
                     val currentText = viewModel.forms[SignUpTextFields.SUBJECTS]?.text ?: ""
                     viewModel.onEvent(
                         ValidationEvent.TextFieldValueChange(
@@ -327,8 +275,6 @@ fun TeacherProfessionalInfoInput(
             Spacer(modifier = Modifier.height(20.dp))
             Spacer(modifier = Modifier.height(40.dp))
 
-
-
             AuthenticationButton(
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
@@ -343,8 +289,8 @@ fun TeacherProfessionalInfoInput(
     }
 
     if (signUpState is Response.Loading) {
-        // Add loading indicator
-        CircularProgressIndicator()
-        Spacer(modifier = Modifier.height(20.dp))
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
     }
 }

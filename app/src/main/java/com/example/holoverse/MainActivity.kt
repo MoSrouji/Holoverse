@@ -31,11 +31,11 @@ class MainActivity : ComponentActivity() {
                 ) {
                     //SpatialBackground()
                     val navController = rememberNavController()
-//                    AppNavHost(
-//                        navController = navController,
-//                        navigator = navigator
-//                    )
-                    HomeScreen()
+                    AppNavHost(
+                        navController = navController,
+                        navigator = navigator
+                    )
+                   // HomeScreen()
 
                 }
             }

@@ -116,4 +116,7 @@ dependencies {
 
     implementation(libs.androidx.compose.adaptive.android)
 
+    // Splash Screen
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
 }

@@ -1,16 +1,47 @@
 package com.example.holoverse.navigation
 
-sealed class AppScreen(val route: String) {
-    data object Auth : AppScreen("auth_graph")
-    data object Login : AppScreen("login_screen")
-    data object SignUp : AppScreen("signup_screen")
-    data object SignUpTeacherProfile : AppScreen("signup_screen_teacher_profile")
-    data object SignUpTeacherProfessional : AppScreen("signup_screen_teacher_Professional")
-    data object HoloIntro : AppScreen("holo_intro")
+import kotlinx.serialization.Serializable
 
+sealed interface AppDestination {
+    @Serializable
+    data object AuthGraph : AppDestination
 
-    data object Home : AppScreen("home_graph")
-    data object HomeScreen: AppScreen("home_screen")
+    @Serializable
+    data object HomeGraph : AppDestination
 
+    @Serializable
+    data object HoloIntro : AppDestination
 
+    @Serializable
+    data object Login : AppDestination
+
+    @Serializable
+    data object SignUp : AppDestination
+
+    @Serializable
+    data object SignUpTeacherProfile : AppDestination
+
+    @Serializable
+    data object SignUpTeacherProfessional : AppDestination
+
+    @Serializable
+    data object HomeScreen : AppDestination
+
+    @Serializable
+    data object Profile : AppDestination
+
+    @Serializable
+    data object Category : AppDestination
+
+    @Serializable
+    data object Mentor : AppDestination
+
+    @Serializable
+    data object PopularCourses : AppDestination
+
+    @Serializable
+    data object Search : AppDestination
+
+    @Serializable
+    data object CreateCourse : AppDestination
 }

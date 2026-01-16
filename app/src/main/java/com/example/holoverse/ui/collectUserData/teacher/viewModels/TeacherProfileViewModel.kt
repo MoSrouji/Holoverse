@@ -4,10 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.holoverse.auth.domain.entities.Teacher
-import com.example.holoverse.ui.auth.presentaiton.base.BaseValidationViewModel
-import com.example.holoverse.ui.auth.util.TextFieldType
-import com.example.holoverse.ui.auth.validation.interfaces.TextFieldId
-import com.example.holoverse.ui.auth.validation.state.ValidationState
+import com.example.holoverse.ui.commonPart.auth.presentaiton.base.BaseValidationViewModel
+import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonPart.auth.validation.interfaces.TextFieldId
+import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

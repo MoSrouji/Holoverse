@@ -16,12 +16,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.NotificationsNone
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,12 +26,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.holoverse.R
+import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.ui.home.component.CarouselAdds
 import com.example.holoverse.ui.home.component.CourseCard
-import com.example.holoverse.ui.home.component.HoloBottomDock
-import com.example.holoverse.ui.home.component.SearchBarSample
 import com.example.holoverse.ui.home.component.SearchBarSampleV2
 import com.example.holoverse.ui.home.component.SubTitle
 import com.example.holoverse.ui.home.component.TeacherCard
@@ -43,9 +40,8 @@ import com.example.holoverse.ui.home.component.TextListTextButton
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloverseTheme
 
-@Preview(showBackground = true)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController = rememberNavController()) {
 
     Box(
         modifier = Modifier
@@ -55,13 +51,12 @@ fun HomeScreen() {
             )
     ) {
 
-        Column() {
+        Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(
                         RoundedCornerShape(
-                            // bottomEnd = 5, bottomStart = 5,
                             topStartPercent = 0,
                             topEndPercent = 0,
                             bottomEndPercent = 7,
@@ -86,7 +81,6 @@ fun HomeScreen() {
                             text = "HI , MR Mohammad ",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            //color = MaterialTheme.colorScheme.surface
                         )
                         IconButton(
                             onClick = {}
@@ -103,57 +97,48 @@ fun HomeScreen() {
                     Text(
                         text = "What Would You Like To Learn Today ?",
                         style = MaterialTheme.typography.bodyLarge,
-                        // color = MaterialTheme.colorScheme.inverseOnSurface
-
-
                     )
                     Text(
                         text = "Search Below",
                         style = MaterialTheme.typography.bodyLarge,
-                        //    color = MaterialTheme.colorScheme.inverseOnSurface
-
                     )
                     Spacer(modifier = Modifier.padding(bottom = 20.dp))
-
-
-
 
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-
-
                         SearchBarSampleV2()
                         Spacer(modifier = Modifier.padding(bottom = 8.dp))
                         CarouselAdds()
-
-
                     }
                 }
             }
 
 
             Scaffold(
-                bottomBar = { HoloBottomDock(navController = rememberNavController()) }
+                floatingActionButton = {
+                    ExtendedFloatingActionButton(
+                        onClick = { navController.navigate(AppDestination.CreateCourse) },
+                        icon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        text = { Text(text = "Create New Course") },
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.background
+                    )
+                }
 
             ) {
                 Column(
                     modifier = Modifier
                         .padding(it)
                         .verticalScroll(
-                            state =
-                                rememberScrollState()
+                            state = rememberScrollState()
                         ),
                 ) {
                     Spacer(modifier = Modifier.padding(bottom = 20.dp))
                     SubTitle(
                         text = R.string.Categories
-//                        text = com.example.holoverse.R.string.Categories,
-//                        onSubTitleButtonClick = {}
-
                     )
-                    // Spacer(modifier = Modifier.padding(bottom = 4.dp))
                     TextListButton()
 
                     SubTitle(
@@ -198,25 +183,16 @@ fun HomeScreen() {
                         TeacherCard(Modifier.padding(start = 15.dp))
                         TeacherCard(Modifier.padding(start = 15.dp))
                     }
-
-
                 }
             }
-
-
         }
-
-
     }
-
-
 }
 
 @Composable
 @Preview
-fun Preview() {
+fun HomeScreenPreview() {
     HoloverseTheme(darkTheme = true) {
         HomeScreen()
-
     }
 }
