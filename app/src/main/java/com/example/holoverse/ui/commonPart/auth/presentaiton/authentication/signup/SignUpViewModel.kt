@@ -50,7 +50,6 @@ class SignUpViewModel @Inject constructor(
     fun getUserType(): UserType {
         val selectedType = forms[SignUpTextFieldId.ACCOUNT_TYPE]?.text?.lowercase() ?: "student"
         return when (selectedType) {
-            "student" -> UserType.Student
             "teacher" -> UserType.Teacher
             else -> UserType.Student
         }
@@ -81,15 +80,6 @@ class SignUpViewModel @Inject constructor(
             ).collect {
                 _signUpState.value = it
             }
-//            sharedViewModel.teacher.value.copy(
-//                fullName = userDto.fullName ,
-//                email = userDto.email,
-//                accountType = userDto.accountType,
-//                userId = userDto.userId
-//
-//
-//            )
-           // sharedViewModel.updateTeacher()
         }
 
     }

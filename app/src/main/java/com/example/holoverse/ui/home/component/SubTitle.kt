@@ -1,6 +1,7 @@
 package com.example.holoverse.ui.home.component
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,9 +27,9 @@ import com.example.holoverse.R
 @Composable
 fun SubTitle(
    @StringRes text: Int,
-//    onSubTitleButtonClick:()-> Unit
+    onSubTitleButtonClick:()-> Unit ={ }
 ){
-    Row(modifier= Modifier
+    Row(modifier= Modifier.clickable(onClick = onSubTitleButtonClick)
         .fillMaxWidth()
         .padding(8.dp) ,
         horizontalArrangement = Arrangement.SpaceBetween ,

@@ -96,8 +96,8 @@ fun HoloBottomDock(navController: NavController = rememberNavController()) {
                 
                 NavBarItem(
                     icon = Icons.Default.Payment,
-                    isSelected = false // Handle route if needed
-                ) { /* TODO */ }
+                    isSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.Transactions>() } == true
+                ) { navController.navigate(AppDestination.Transactions)}
                 
                 Spacer(modifier = Modifier.padding(5.dp))
                 

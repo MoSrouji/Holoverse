@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
@@ -49,12 +50,22 @@ fun SignUpScreen(
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    val userState = User(
-                        userId = null,
-                        fullName = viewModel.forms[SignUpTextFieldId.FULL_NAME]!!.text,
-                        email = viewModel.forms[SignUpTextFieldId.EMAIL]!!.text,
-                        accountType = viewModel.getUserType()
-                    )
+                    val userState = when (viewModel.getUserType()){
+                        UserType.Teacher -> User.Teacher(
+                            userId = null,
+                            fullName = viewModel.forms[SignUpTextFieldId.FULL_NAME]!!.text,
+                            email = viewModel.forms[SignUpTextFieldId.EMAIL]!!.text,
+                            accountType = UserType.Teacher
+
+                        )
+                        UserType.Student -> User.Student(
+                            userId = null,
+                            fullName = viewModel.forms[SignUpTextFieldId.FULL_NAME]!!.text,
+                            email = viewModel.forms[SignUpTextFieldId.EMAIL]!!.text,
+                            accountType = UserType.Student
+
+                        )
+                    }
 
                     viewModel.firebaseSingUp(
                         userDto = userState,

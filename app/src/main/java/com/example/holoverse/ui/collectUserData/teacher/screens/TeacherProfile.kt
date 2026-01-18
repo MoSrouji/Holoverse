@@ -26,7 +26,7 @@ import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
 import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
 import com.example.holoverse.ui.commonPart.auth.widget.textfield.AuthenticationTextField
 import com.example.holoverse.R
-import com.example.holoverse.auth.domain.entities.Teacher
+import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
@@ -47,7 +47,7 @@ fun TeacherProfileInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: TeacherProfileViewModel = hiltViewModel(),
-    teacherStates: MutableStateFlow<Teacher>
+    teacherStates: MutableStateFlow<User.Teacher>
 ) {
     val genderItems = listOf("Male", "Female")
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }

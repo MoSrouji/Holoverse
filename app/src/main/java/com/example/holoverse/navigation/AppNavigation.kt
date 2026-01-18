@@ -24,7 +24,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
-import com.example.holoverse.auth.domain.entities.Teacher
+import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.category.CategoryScreen
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signin.SignInScreen
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpScreen
@@ -40,6 +40,7 @@ import com.example.holoverse.ui.studentPart.mentors.TopMentorsScreen
 import com.example.holoverse.ui.teacherPart.courses.CreateCourseScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.lifecycle.compose.currentStateAsState
+import com.example.holoverse.ui.studentPart.popularCourses.PopularCoursesScreen
 
 @Composable
 fun AppNavHost(
@@ -48,15 +49,17 @@ fun AppNavHost(
 ) {
     navigator.init(navController)
 
-    val sharedState = MutableStateFlow(Teacher())
+    val sharedState = MutableStateFlow(User.Teacher())
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
     // Logic to show bottom bar after transition completes
-    val isInHomeGraph = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.HomeGraph>() } == true
-    val isDestinationResumed = navBackStackEntry?.lifecycle?.currentStateAsState()?.value == Lifecycle.State.RESUMED
-    
+    val isInHomeGraph =
+        currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.HomeGraph>() } == true
+    val isDestinationResumed =
+        navBackStackEntry?.lifecycle?.currentStateAsState()?.value == Lifecycle.State.RESUMED
+
     var showBottomBar by remember { mutableStateOf(false) }
 
     LaunchedEffect(isInHomeGraph, isDestinationResumed) {
@@ -93,7 +96,7 @@ fun AppNavHost(
 
 private fun NavGraphBuilder.authGraph(
     navigator: AppNavigator,
-    teacherState: MutableStateFlow<Teacher>
+    teacherState: MutableStateFlow<User.Teacher>
 ) {
     navigation<AppDestination.AuthGraph>(
         startDestination = AppDestination.HoloIntro
@@ -186,9 +189,25 @@ private fun NavGraphBuilder.homeGraph(
         composable<AppDestination.HomeScreen>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
-            HomeScreen(navController = navigator.navController)
+            HomeScreen(
+                navController = navigator.navController,
+                onCategoryClick = {
+                    navigator.navigateTo(destination = AppDestination.Category)
+                },
+                onPopularCoursesClick = {
+                    navigator.navigateTo(destination = AppDestination.PopularCourses)
+                },
+                onTopMentorClick = {
+                    navigator.navigateTo(destination = AppDestination.Mentor)
+                }
+            )
         }
 
+        composable<AppDestination.PopularCourses>(
+            enterTransition = { NavAnimations.slideInFromRight()}
+        ){
+            PopularCoursesScreen()
+        }
         composable<AppDestination.CreateCourse>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
@@ -221,6 +240,12 @@ private fun NavGraphBuilder.homeGraph(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
             CategoryScreen()
+        }
+
+    composable<AppDestination.Transactions>(
+            enterTransition = { NavAnimations.slideInFromRight() }
+        ) {
+            TopMentorsScreen()
         }
     }
 }

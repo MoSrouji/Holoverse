@@ -1,7 +1,5 @@
 package com.example.holoverse.auth.data.repository
 
-import com.example.holoverse.auth.domain.entities.Student
-import com.example.holoverse.auth.domain.entities.Teacher
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
@@ -42,7 +40,7 @@ class AuthRepositoryImpl @Inject constructor(
                         throw Exception("Sign up failed ")
                     }
                     userDoc.set(
-                        Student(
+                        User.Student(
                             fullName = userDto.fullName,
                             email = userDto.email,
                             userId = userId
@@ -62,7 +60,7 @@ class AuthRepositoryImpl @Inject constructor(
                     }
 
                     userDoc.set(
-                        Teacher(
+                        User.Teacher(
                             fullName = userDto.fullName,
                             email = userDto.email,
                             userId = userId
@@ -117,7 +115,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateTeacherProfile(teacher: Teacher): Flow<Response<Boolean>> = flow {
+    override suspend fun updateTeacherProfile(teacher: User.Teacher): Flow<Response<Boolean>> = flow {
         emit(Response.Loading)
         try {
             val userId = firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
@@ -142,7 +140,7 @@ class AuthRepositoryImpl @Inject constructor(
                 teacher.gender?.let { put(" gender", it) }
                 // Professional Information
                 teacher.yearsOfExperience?.let { put(" yearsOfExperience", it) }
-                teacher.specialization?.let { put("specialization", it) }
+                put("specialization", teacher.specialization.name)
                 teacher.subjects?.let { put("subjects", it) }
                 teacher.certifications?.let { put("certifications", it) }
                 teacher.languagesSpoken?.let { put("languagesSpoken", it) }
@@ -167,7 +165,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateStudentProfile(student: Student): Flow<Response<Boolean>> = flow {
+    override suspend fun updateStudentProfile(student: User.Student): Flow<Response<Boolean>> = flow {
 
 
         emit(Response.Loading)

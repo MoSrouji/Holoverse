@@ -3,7 +3,7 @@ package com.example.holoverse.ui.collectUserData.teacher.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.holoverse.auth.domain.entities.Teacher
+import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.commonPart.auth.presentaiton.base.BaseValidationViewModel
 import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
 import com.example.holoverse.ui.commonPart.auth.validation.interfaces.TextFieldId
@@ -51,7 +51,7 @@ data class TeacherState(
     val loading: Boolean = false,
     val success: Boolean = false,
     val error: String? = null,
-    var teacher: Teacher? = null
+    var teacher: User.Teacher? = null
 )
 
 enum class SignUpTextField : TextFieldId {

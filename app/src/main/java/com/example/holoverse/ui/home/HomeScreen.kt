@@ -41,7 +41,12 @@ import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloverseTheme
 
 @Composable
-fun HomeScreen(navController: NavController = rememberNavController()) {
+fun HomeScreen(
+    navController: NavController = rememberNavController(),
+    onCategoryClick: () -> Unit,
+    onPopularCoursesClick: () -> Unit,
+    onTopMentorClick: () -> Unit
+) {
 
     Box(
         modifier = Modifier
@@ -137,12 +142,14 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                 ) {
                     Spacer(modifier = Modifier.padding(bottom = 20.dp))
                     SubTitle(
-                        text = R.string.Categories
+                        text = R.string.Categories,
+                        onSubTitleButtonClick = onCategoryClick
                     )
                     TextListButton()
 
                     SubTitle(
-                        text = R.string.popular_Courses
+                        text = R.string.popular_Courses,
+                        onSubTitleButtonClick = onPopularCoursesClick
                     )
                     TextListTextButton()
                     Spacer(modifier = Modifier.padding(bottom = 8.dp))
@@ -165,7 +172,8 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     }
 
                     SubTitle(
-                        text = R.string.top_Mentor
+                        text = R.string.top_Mentor,
+                        onSubTitleButtonClick = onTopMentorClick
                     )
                     Row(
                         modifier = Modifier
@@ -193,6 +201,10 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
 @Preview
 fun HomeScreenPreview() {
     HoloverseTheme(darkTheme = true) {
-        HomeScreen()
+        HomeScreen(
+            onCategoryClick = {},
+            onPopularCoursesClick = {},
+            onTopMentorClick = {}
+        )
     }
 }

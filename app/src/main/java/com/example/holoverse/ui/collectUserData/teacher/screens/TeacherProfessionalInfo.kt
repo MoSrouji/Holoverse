@@ -24,11 +24,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
-import com.example.holoverse.auth.domain.entities.Teacher
-import com.example.holoverse.auth.domain.entities.TeacherSpecializationMapper
-import com.example.holoverse.auth.domain.entities.getAllCategoryNames
-import com.example.holoverse.auth.domain.entities.getSpecialization
-import com.example.holoverse.navigation.AppDestination
+import com.example.holoverse.auth.domain.entities.TeacherCategory
+import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
@@ -49,12 +46,12 @@ fun TeacherProfessionalInfoInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: TeacherProfessionalViewModel = hiltViewModel(),
-    teacherStates: MutableStateFlow<Teacher>
+    teacherStates: MutableStateFlow<User.Teacher>
 ) {
     val yearsItems = listOf("0", "+1", "+4", "+8", "+10")
     val languageItems = listOf("Arabic", "English", "France", "Italy", "Spain")
     val certificateItems = listOf("Bachelors", "Masters", "PhD")
-    val specializations = getAllCategoryNames()
+    val specializations = TeacherCategory.getAllCategoryNames()
 
     val context = LocalContext.current
     var isYearsExpanded by remember { mutableStateOf(false) }
@@ -75,15 +72,15 @@ fun TeacherProfessionalInfoInput(
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    val userState = Teacher(
+                    val userState = User.Teacher(
                         bio = teacherStates.value.bio,
                         dateOfBirth = teacherStates.value.dateOfBirth,
                         phoneNumber = teacherStates.value.phoneNumber,
                         address = teacherStates.value.address,
                         gender = teacherStates.value.gender,
                         yearsOfExperience = viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!.text,
-                        specialization = viewModel.forms[SignUpTextFields.SPECIALIZATION]!!.text,
-                        subjects = viewModel.subject,
+                        specialization = viewModel.specializations,
+                        subjects = viewModel.selectSubjects.toList(),
                         certifications = viewModel.forms[SignUpTextFields.CERTIFICATION]!!.text,
                         languagesSpoken = viewModel.selectLanguage.toList(),
                     )
@@ -240,9 +237,8 @@ fun TeacherProfessionalInfoInput(
                             viewModel.forms[SignUpTextFields.SPECIALIZATION]!!.copy(text = item)
                         )
                     )
-                    viewModel.specializations = getSpecialization(item)
-                    viewModel.subject =
-                        TeacherSpecializationMapper.getSpecializationsByCategory(viewModel.specializations)
+                    viewModel.specializations = TeacherCategory.fromString(item)
+                    viewModel.subject = viewModel.specializations.specializations
                 },
                 state = viewModel.forms[SignUpTextFields.SPECIALIZATION]!!,
                 menuItems = specializations,

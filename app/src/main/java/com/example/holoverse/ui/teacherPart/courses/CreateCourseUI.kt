@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.holoverse.auth.domain.entities.getAllCategoryNames
+import com.example.holoverse.auth.domain.entities.TeacherCategory
 import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
 import com.example.holoverse.ui.spatialTheme.ProfileTextField
 import com.example.holoverse.ui.theme.HoloverseTheme
@@ -32,7 +32,7 @@ fun CreateCourseScreen(
     var isCategoryMenuExpanded by remember { mutableStateOf(false) }
     var isLevelMenuExpanded by remember { mutableStateOf(false) }
 
-    val categories = getAllCategoryNames()
+    val categories = TeacherCategory.getAllCategoryNames()
     val levels = listOf("Beginner", "Intermediate", "Advanced", "Expert")
 
     LaunchedEffect(key1 = true) {

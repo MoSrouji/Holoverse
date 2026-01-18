@@ -44,4 +44,6 @@ sealed interface AppDestination {
 
     @Serializable
     data object CreateCourse : AppDestination
+    @Serializable
+    data object Transactions : AppDestination
 }

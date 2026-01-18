@@ -5,8 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import com.example.holoverse.auth.domain.entities.Teacher
 import com.example.holoverse.auth.domain.entities.TeacherCategory
+import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
 import com.example.holoverse.ui.commonPart.auth.presentaiton.base.BaseValidationViewModel
@@ -25,22 +25,22 @@ class TeacherProfessionalViewModel @Inject constructor(
     private val authenticatingRepo: AuthRepository,
 ) : BaseValidationViewModel() {
 
-    private val _teacherScreenState = MutableStateFlow(Teacher())
-    val teacherScreenState: StateFlow<Teacher> = _teacherScreenState.asStateFlow()
+    private val _teacherScreenState = MutableStateFlow(User.Teacher())
+    val teacherScreenState: StateFlow<User.Teacher> = _teacherScreenState.asStateFlow()
 
 
     private val _signUpState = mutableStateOf<Response<Boolean>>(Response.Success(false))
     val signUpState: State<Response<Boolean>> = _signUpState
 
     // Update the state from parent component
-    fun updateState(state: Teacher) {
+    fun updateState(state: User.Teacher) {
         _teacherScreenState.value = state.copy()
     }
 
     // Add a function to update professional info
     fun updateProfessionalInfo(
         years: String,
-        specialization: String,
+        specialization: TeacherCategory,
         subjects: List<String>,
         certifications: String,
         languages: List<String>
@@ -110,7 +110,7 @@ class TeacherProfessionalViewModel @Inject constructor(
     }
 
     fun firebaseSingUp(
-        userDto: Teacher,
+        userDto: User.Teacher,
     ) {
 
         viewModelScope.launch {
