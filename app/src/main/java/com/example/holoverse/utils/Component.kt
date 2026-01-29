@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.home.component
+package com.example.holoverse.utils
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -81,9 +81,10 @@ fun HoloBottomDock(navController: NavController = rememberNavController()) {
 
                 NavBarItem(
                     icon = Icons.AutoMirrored.Filled.Message,
-                    isSelected = false // Handle route if needed
-                ) { /* TODO */ }
-                
+                    isSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.ChatScreen>() } == true
+                ) { navController.navigate(AppDestination.ChatScreen) }
+
+
                 Spacer(modifier = Modifier.padding(5.dp))
                 
                 NavBarItem(

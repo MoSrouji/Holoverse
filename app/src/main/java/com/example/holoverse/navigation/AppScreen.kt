@@ -2,12 +2,16 @@ package com.example.holoverse.navigation
 
 import kotlinx.serialization.Serializable
 
+
 sealed interface AppDestination {
     @Serializable
     data object AuthGraph : AppDestination
 
     @Serializable
     data object HomeGraph : AppDestination
+
+    @Serializable
+    data object SubGraph : AppDestination
 
     @Serializable
     data object HoloIntro : AppDestination
@@ -31,6 +35,9 @@ sealed interface AppDestination {
     data object Profile : AppDestination
 
     @Serializable
+    data object EditProfile : AppDestination
+
+    @Serializable
     data object Category : AppDestination
 
     @Serializable
@@ -44,6 +51,10 @@ sealed interface AppDestination {
 
     @Serializable
     data object CreateCourse : AppDestination
+
     @Serializable
     data object Transactions : AppDestination
+    @Serializable
+    data object ChatScreen : AppDestination
+
 }

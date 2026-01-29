@@ -37,7 +37,7 @@ fun TransactionScreen(
     val transactions = listOf(
         TransactionItem("Build Personal Branding", "Web Designer", "Paid"),
         TransactionItem("Mastering Blender 3D", "Ui/UX Designer", "Received"),
-        TransactionItem("Full Stack Web Developm..", "Web Development", "Paid"),
+        TransactionItem("Full Stack Web Developer", "Web Development", "Paid"),
         TransactionItem("Complete UI Designer", "HR Management", "Received"),
         TransactionItem("Sharing Work with Team", "Finance & Accounting", "Paid")
     )

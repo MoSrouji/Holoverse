@@ -176,13 +176,13 @@ fun HoloIntroScreen(
     // 🔥 This LaunchedEffect handles the 3-second delay and navigation.
     LaunchedEffect(Unit) {
         // Wait for 3000 milliseconds (3 seconds)
-        delay(3000L)
+        delay(300L)
 
         // After delay, trigger the text display and then immediately navigate
         showText = true
 
         // An optional, shorter delay to allow the text to be seen briefly
-        delay(500L)
+        delay(200L)
 
         onNavigationComplete()
     }
@@ -191,7 +191,8 @@ fun HoloIntroScreen(
         modifier = Modifier
             .fillMaxSize()
             //.background(Color.Black)
-            .padding(16.dp),
+            //.padding(16.dp)
+        ,
         contentAlignment = Alignment.Center
     ) {
         // The ParticleBall still animates, but its flash no longer controls the state change.

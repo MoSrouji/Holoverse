@@ -32,7 +32,7 @@ import com.example.holoverse.ui.collectUserData.teacher.screens.TeacherProfessio
 import com.example.holoverse.ui.collectUserData.teacher.screens.TeacherProfileInput
 import com.example.holoverse.ui.commonPart.profile.ProfileScreen
 import com.example.holoverse.ui.home.HomeScreen
-import com.example.holoverse.ui.home.component.HoloBottomDock
+import com.example.holoverse.utils.HoloBottomDock
 import com.example.holoverse.ui.search.SearchScreen
 import com.example.holoverse.ui.spatialTheme.HoloIntroScreen
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
@@ -40,7 +40,10 @@ import com.example.holoverse.ui.studentPart.mentors.TopMentorsScreen
 import com.example.holoverse.ui.teacherPart.courses.CreateCourseScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.lifecycle.compose.currentStateAsState
+import com.example.holoverse.ui.chat.ChatScreen
+import com.example.holoverse.ui.commonPart.profile.EditProfileScreen
 import com.example.holoverse.ui.studentPart.popularCourses.PopularCoursesScreen
+import com.example.holoverse.ui.transaction.TransactionScreen
 
 @Composable
 fun AppNavHost(
@@ -90,6 +93,7 @@ fun AppNavHost(
         ) {
             authGraph(navigator, teacherState = sharedState)
             homeGraph(navigator)
+            subGraph(navigator)
         }
     }
 }
@@ -202,12 +206,36 @@ private fun NavGraphBuilder.homeGraph(
                 }
             )
         }
-
-        composable<AppDestination.PopularCourses>(
-            enterTransition = { NavAnimations.slideInFromRight()}
-        ){
-            PopularCoursesScreen()
+        composable<AppDestination.Profile>(
+            enterTransition = { NavAnimations.slideInFromRight() }
+        ) {
+            ProfileScreen(navController = navigator)
         }
+
+        composable<AppDestination.Category>(
+            enterTransition = { NavAnimations.slideInFromRight() }
+        ) {
+            CategoryScreen()
+        }
+        composable<AppDestination.Transactions>(
+            enterTransition = { NavAnimations.slideInFromRight() }
+        ) {
+            TransactionScreen()
+        }
+        composable<AppDestination.ChatScreen>(
+            enterTransition = { NavAnimations.slideInFromRight() }
+        ) {
+            ChatScreen()
+        }
+    }
+}
+
+private fun NavGraphBuilder.subGraph(
+    navigator: AppNavigator
+) {
+    navigation<AppDestination.SubGraph>(
+        startDestination = AppDestination.CreateCourse
+    ) {
         composable<AppDestination.CreateCourse>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
@@ -217,35 +245,25 @@ private fun NavGraphBuilder.homeGraph(
                 }
             )
         }
-
-        composable<AppDestination.Profile>(
-            enterTransition = { NavAnimations.slideInFromRight() }
-        ) {
-            ProfileScreen()
-        }
-
-        composable<AppDestination.Mentor>(
-            enterTransition = { NavAnimations.slideInFromRight() }
-        ) {
-            TopMentorsScreen()
-        }
-
         composable<AppDestination.Search>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
             SearchScreen()
         }
-
-        composable<AppDestination.Category>(
+        composable<AppDestination.EditProfile>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
-            CategoryScreen()
+            EditProfileScreen()
         }
-
-    composable<AppDestination.Transactions>(
+        composable<AppDestination.PopularCourses>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
-            TopMentorsScreen()
+            PopularCoursesScreen()
         }
+    }
+    composable<AppDestination.Mentor>(
+        enterTransition = { NavAnimations.slideInFromRight() }
+    ) {
+        TopMentorsScreen()
     }
 }

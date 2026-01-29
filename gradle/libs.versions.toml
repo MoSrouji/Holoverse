@@ -1,7 +1,8 @@
 [versions]
 adaptiveAndroid = "1.2.0"
-agp = "8.13.2"
+agp = "9.0.0"
 coilCompose = "3.3.0"
+cloudinaryAndroid = "3.1.2"
 datastore = "1.2.0"
 hiltAndroid = "2.57.2"
 hiltCompiler = "2.57.2"
@@ -37,6 +38,7 @@ uiText = "1.10.0"
 animation = "1.10.0"
 places = "5.1.1"
 foundationVersion = "1.10.0"
+firebaseMessaging = "25.0.1"
 
 [libraries]
 androidx-compose-adaptive-android = { module = "androidx.compose.material3.adaptive:adaptive-android", version.ref = "adaptiveAndroid" }
@@ -51,6 +53,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiTooling" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }
+cloudinary-android = { module = "com.cloudinary:cloudinary-android", version.ref = "cloudinaryAndroid" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-compiler-v248 = { module = "com.google.dagger:hilt-compiler", version.ref = "hiltCompiler" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -82,6 +85,7 @@ androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", ve
 androidx-compose-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
 places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -90,4 +94,3 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
 google-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "googleFirebaseCrashlytics" }
 google-firebase-firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "googleFirebaseFirebasePerf" }
-

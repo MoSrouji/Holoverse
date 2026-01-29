@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.R
+import com.example.holoverse.utils.GlassCard
 
 @Composable
 @Preview
@@ -33,13 +34,13 @@ fun TeacherCard( modifier: Modifier = Modifier) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Image(
                     painterResource(
-                        R.drawable.istockphoto_1934800957_612x612 ,
+                        R.drawable.istockphoto_1934800957_612x612,
 
-                    ) ,
-                    contentDescription = "Teacher " ,
+                        ),
+                    contentDescription = "Teacher ",
                     contentScale = ContentScale.Crop
 
-                    )
+                )
 
 
             }

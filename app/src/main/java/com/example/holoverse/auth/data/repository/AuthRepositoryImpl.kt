@@ -4,9 +4,12 @@ import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.auth.network.NetworkConstant
+import com.example.holoverse.auth.network.NetworkConstant.COLLECTION_NAME_STUDENTS
+import com.example.holoverse.auth.network.NetworkConstant.COLLECTION_NAME_TEACHERS
 import com.example.holoverse.utils.Response
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
@@ -115,86 +118,106 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateTeacherProfile(teacher: User.Teacher): Flow<Response<Boolean>> = flow {
-        emit(Response.Loading)
-        try {
-            val userId = firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
+    override suspend fun updateTeacherProfile(teacher: User.Teacher): Flow<Response<Boolean>> =
+        flow {
+            emit(Response.Loading)
+            try {
+                val userId =
+                    firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
 
-            val teacherDoc = firestore.collection(NetworkConstant.COLLECTION_NAME_TEACHERS)
-                .document(userId)
+                val teacherDoc = firestore.collection(NetworkConstant.COLLECTION_NAME_TEACHERS)
+                    .document(userId)
 
-            // Verify document exists in single operation
-            val snapshot = teacherDoc.get().await()
-            if (!snapshot.exists()) {
-                throw Exception("Teacher profile not found")
+                // Verify document exists in single operation
+                val snapshot = teacherDoc.get().await()
+                if (!snapshot.exists()) {
+                    throw Exception("Teacher profile not found")
+                }
+
+                // Build update data
+                val updateData = buildMap<String, Any> {
+                    teacher.fullName?.let { put("fullName", it) }
+                    teacher.bio?.let { put("bio", it) }
+                    teacher.dateOfBirth?.let { put("dateOfBirth", it) }
+                    teacher.phoneNumber?.let { put("phoneNumber", it) }
+                    teacher.address?.let { put("address", it) }
+                    teacher.gender?.let { put("gender", it) }
+                    teacher.yearsOfExperience?.let { put("yearsOfExperience", it) }
+                    put("specialization", teacher.specialization.name)
+                    teacher.subjects?.let { put("subjects", it) }
+                    teacher.certifications?.let { put("certifications", it) }
+                    teacher.languagesSpoken?.let { put("languagesSpoken", it) }
+                    teacher.hourlyRate?.let { put("hourlyRate", it) }
+                    teacher.universityAttended?.let { put("universityAttended", it) }
+                    teacher.graduationYear?.let { put("graduationYear", it) }
+                    teacher.additionalQualifications?.let { put("additionalQualifications", it) }
+                }
+
+                teacherDoc.update(updateData).await()
+                emit(Response.Success(true))
+
+            } catch (e: Exception) {
+                emit(Response.Error(e.message ?: "Profile update failed"))
+            }
+        }
+
+    override suspend fun updateStudentProfile(student: User.Student): Flow<Response<Boolean>> =
+        flow {
+            emit(Response.Loading)
+            try {
+                val userId =
+                    firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
+
+                val studentDoc = firestore.collection(NetworkConstant.COLLECTION_NAME_STUDENTS)
+                    .document(userId)
+
+                val snapshot = studentDoc.get().await()
+                if (!snapshot.exists()) {
+                    throw Exception("Student profile not found")
+                }
+
+                val updateData = buildMap<String, Any> {
+                    student.fullName?.let { put("fullName", it) }
+                    student.phoneNumber?.let { put("phoneNumber", it) }
+                    // Add other fields as needed
+                }
+
+                studentDoc.update(updateData).await()
+                emit(Response.Success(true))
+
+            } catch (e: Exception) {
+                emit(Response.Error(e.message ?: "Profile update failed"))
             }
 
-            // Build update data
-            val updateData = buildMap<String, Any> {
-                //put("fullName", teacher.fullName ?: throw Exception("Full name is required"))
-                teacher.bio?.let { put("bio", it) }
-                // Personal Information
-                teacher.dateOfBirth?.let { put("dateOfBirth", it) }
-                teacher.phoneNumber?.let { put("phoneNumber", it) }
-                teacher.address?.let { put(" address", it) }
-                teacher.gender?.let { put(" gender", it) }
-                // Professional Information
-                teacher.yearsOfExperience?.let { put(" yearsOfExperience", it) }
-                put("specialization", teacher.specialization.name)
-                teacher.subjects?.let { put("subjects", it) }
-                teacher.certifications?.let { put("certifications", it) }
-                teacher.languagesSpoken?.let { put("languagesSpoken", it) }
-                teacher.hourlyRate?.let { put("hourlyRate", it) }
-                // Educational Background
-                teacher.universityAttended?.let { put("universityAttended", it) }
-                teacher.graduationYear?.let { put("graduationYear", it) }
-                teacher.additionalQualifications?.let { put("additionalQualifications", it) }
-                // Educational Background
-                teacher.universityAttended?.let { put("universityAttended", it) }
-                teacher.graduationYear?.let { put("graduationYear", it) }
-                teacher.additionalQualifications?.let { put("additionalQualifications", it) }
+        }
 
+    override suspend fun getCurrentUser(): User? {
+        val currentUser = firebaseAuth.currentUser ?: return null
+        val uid = currentUser.uid
 
+        return try {
+            // Check students collection first
+            val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS).document(uid).get().await()
+            if (studentDoc.exists()) {
+                return studentDoc.toObject(User.Student::class.java)?.copy(userId = uid)
             }
 
-            teacherDoc.update(updateData).await()
-            emit(Response.Success(true))
+            // If not found, check teachers collection
+            val teacherDoc = firestore.collection(COLLECTION_NAME_TEACHERS).document(uid).get().await()
+            if (teacherDoc.exists()) {
+                return teacherDoc.toObject(User.Teacher::class.java)?.copy(userId = uid)
+            }
 
+            null
         } catch (e: Exception) {
-            emit(Response.Error(e.message ?: "Profile update failed"))
+            e.printStackTrace()
+            null
         }
     }
 
-    override suspend fun updateStudentProfile(student: User.Student): Flow<Response<Boolean>> = flow {
 
-
-        emit(Response.Loading)
-        try {
-            val userId = firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
-
-            val teacherDoc = firestore.collection(NetworkConstant.COLLECTION_NAME_STUDENTS)
-                .document(userId)
-
-            // Verify document exists in single operation
-            val snapshot = teacherDoc.get().await()
-            if (!snapshot.exists()) {
-                throw Exception("Teacher profile not found")
-            }
-
-            // Build update data
-            val updateData = buildMap<String, Any> {
-                //  put("updatedAt", System.currentTimeMillis())
-                put("fullName", student.fullName ?: throw Exception("Full name is required"))
-//                student.studyMajor?.let { put("studyMajor", it) }
-//                student.favouriteTopic?.let { put("favouriteTopic", it) }
-            }
-
-            teacherDoc.update(updateData).await()
-            emit(Response.Success(true))
-
-        } catch (e: Exception) {
-            emit(Response.Error(e.message ?: "Profile update failed"))
-        }
-
+    override suspend fun updateUser(user: User?, newEmail: String?): Boolean {
+        // Implementation for general update logic if needed
+        return true
     }
 }

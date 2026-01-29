@@ -10,7 +10,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.ui.chat.ChatScreen
 import com.example.holoverse.ui.home.HomeScreen
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloverseTheme
 import javax.inject.Inject
 
@@ -29,13 +31,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    //SpatialBackground()
+                    SpatialBackground()
                     val navController = rememberNavController()
                     AppNavHost(
                         navController = navController,
                         navigator = navigator
                     )
                    // HomeScreen()
+                  //  ChatScreen()
 
                 }
             }
