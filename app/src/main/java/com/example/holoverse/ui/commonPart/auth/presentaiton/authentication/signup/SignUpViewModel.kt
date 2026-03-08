@@ -13,8 +13,11 @@ import com.example.holoverse.ui.commonPart.auth.presentaiton.base.BaseValidation
 import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
 import com.example.holoverse.ui.commonPart.auth.validation.interfaces.TextFieldId
 import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
+import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 import javax.inject.Inject
@@ -24,6 +27,7 @@ import kotlin.collections.set
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
     private val authenticatingUseCases: AuthUseCases,
+    private val preferenceManager: PreferenceManager
 ) : BaseValidationViewModel() {
 
     private val _signUpState = mutableStateOf<Response<Boolean>>(Response.Success(false))
@@ -50,7 +54,7 @@ class SignUpViewModel @Inject constructor(
     fun getUserType(): UserType {
         val selectedType = forms[SignUpTextFieldId.ACCOUNT_TYPE]?.text?.lowercase() ?: "student"
         return when (selectedType) {
-            "teacher" -> UserType.Teacher
+            "mentor" -> UserType.Mentor
             else -> UserType.Student
         }
     }
@@ -61,6 +65,14 @@ class SignUpViewModel @Inject constructor(
         forms[SignUpTextFieldId.EMAIL] = emailValidationState
         forms[SignUpTextFieldId.PASSWORD] = passwordValidationState
         forms[SignUpTextFieldId.ACCOUNT_TYPE] = accountValidationState
+        checkUserSession()
+    }
+
+    private fun checkUserSession() {
+        val user = preferenceManager.getUser()
+        if (user != null) {
+            _signUpState.value = Response.Success(true)
+        }
     }
 
 
@@ -68,20 +80,21 @@ class SignUpViewModel @Inject constructor(
         _signUpState.value = Response.Success(false)
     }
 
-    fun firebaseSingUp(
+    suspend fun firebaseSingUp(
         userDto: User,
         password: String
     ) {
-
-        viewModelScope.launch {
-            authenticatingUseCases.firebaseSignUp(
-                userDto = userDto,
-                password = password
-            ).collect {
-                _signUpState.value = it
+        authenticatingUseCases.firebaseSignUp(
+            userDto = userDto,
+            password = password
+        ).onEach { response ->
+            _signUpState.value = response
+            if (response is Response.Success && response.data) {
+                // Fetch and save user to preferences after successful sign up
+                val user = authenticatingUseCases.getCurrentUser()
+                user?.let { preferenceManager.saveUser(it) }
             }
-        }
-
+        }.launchIn(viewModelScope)
     }
 
 

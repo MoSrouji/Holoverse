@@ -41,7 +41,7 @@ fun SignUpScreen(
     navToHomeScreen: () -> Unit,
     viewModel: SignUpViewModel = hiltViewModel(),
 ) {
-    val menuItems = listOf("Teacher", "Student")
+    val menuItems = listOf("Mentor", "Student")
     val signUpState = viewModel.signUpState.value
     val context = LocalContext.current
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -51,11 +51,11 @@ fun SignUpScreen(
             when (event) {
                 ValidationResultEvent.Success -> {
                     val userState = when (viewModel.getUserType()){
-                        UserType.Teacher -> User.Teacher(
+                        UserType.Mentor -> User.Mentor(
                             userId = null,
                             fullName = viewModel.forms[SignUpTextFieldId.FULL_NAME]!!.text,
                             email = viewModel.forms[SignUpTextFieldId.EMAIL]!!.text,
-                            accountType = UserType.Teacher
+                            accountType = UserType.Mentor
 
                         )
                         UserType.Student -> User.Student(

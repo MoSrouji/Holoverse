@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -18,7 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.ui.theme.primaryLight
 import com.example.holoverse.ui.theme.secondaryLight
-import java.nio.file.Files.size
 import kotlin.math.sin
 
 @Preview
@@ -26,7 +26,9 @@ import kotlin.math.sin
 fun SpatialBackground(
     modifier: Modifier = Modifier,
 ) {
-    val darkTheme = isSystemInDarkTheme()
+    val isDark = isSystemInDarkTheme()
+    val colorScheme = MaterialTheme.colorScheme
+    
     // This simulates the Three.js particle background using standard Canvas
     val infiniteTransition = rememberInfiniteTransition(label = "background")
     val time by infiniteTransition.animateFloat(
@@ -36,22 +38,28 @@ fun SpatialBackground(
         label = "time"
     )
 
-    Canvas(modifier = Modifier.fillMaxSize()) {
+    Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
-        if (!darkTheme) {
-            // Draw "Space" gradient
+        
+        if (!isDark) {
+            // Light Theme Gradient: Lighter blue to a soft indigo
             drawRect(
-
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF8A8AE8), Color(0xFF1A1A2E))
+                    colors = listOf(
+                        Color(0xFFE2DFFF), // primaryContainerLight
+                        Color(0xFF9CF1F0)  // secondaryContainerLight
+                    )
                 )
             )
         } else {
+            // Dark Theme Gradient: Deep space colors
             drawRect(
-
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF050510), Color(0xFF1A1A2E))
+                    colors = listOf(
+                        Color(0xFF050510), 
+                        Color(0xFF1A1A2E)
+                    )
                 )
             )
         }
@@ -67,10 +75,10 @@ fun SpatialBackground(
             val alpha = (sin((time / 50f) + i) + 1) / 2 * 0.5f + 0.2f
 
             drawCircle(
-                color = if (i % 2 == 0) primaryLight else secondaryLight,
+                color = if (i % 2 == 0) colorScheme.primary else colorScheme.secondary,
                 radius = (i % 3 + 1).dp.toPx(),
                 center = Offset(xOffset, yPos),
-                alpha = alpha
+                alpha = if (isDark) alpha else alpha * 0.6f // Subtle particles in light mode
             )
         }
     }

@@ -5,6 +5,8 @@ import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.auth.domain.use_cases.AuthUseCases
 import com.example.holoverse.auth.domain.use_cases.FirebaseSignIn
 import com.example.holoverse.auth.domain.use_cases.FirebaseSignUp
+import com.example.holoverse.auth.domain.use_cases.GetCurrentUser
+import com.example.holoverse.utils.PreferenceManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -23,12 +25,14 @@ object AuthModule {
     @Provides
     fun provideAuthenticationRepository(
         firebaseAuth: FirebaseAuth,
-        firebaseFirestore: FirebaseFirestore
+        firebaseFirestore: FirebaseFirestore,
+        preferenceManager: PreferenceManager
     ): AuthRepository {
 
         return AuthRepositoryImpl(
             firebaseAuth = firebaseAuth,
-            firestore = firebaseFirestore
+            firestore = firebaseFirestore,
+            preferenceManager = preferenceManager
         )
     }
 
@@ -38,6 +42,7 @@ object AuthModule {
         repository: AuthRepository
     ) = AuthUseCases(
         firebaseSignUp = FirebaseSignUp(repository = repository),
-        firebaseSignIn = FirebaseSignIn(repository = repository)
+        firebaseSignIn = FirebaseSignIn(repository = repository),
+        getCurrentUser = GetCurrentUser(repository = repository)
     )
 }

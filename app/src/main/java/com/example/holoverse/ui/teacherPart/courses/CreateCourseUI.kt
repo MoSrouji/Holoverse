@@ -1,47 +1,53 @@
 package com.example.holoverse.ui.teacherPart.courses
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.holoverse.auth.domain.entities.TeacherCategory
-import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
-import com.example.holoverse.ui.spatialTheme.ProfileTextField
-import com.example.holoverse.ui.theme.HoloverseTheme
-import kotlinx.coroutines.flow.collectLatest
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.utils.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCourseScreen(
-    onNavigateBack: () -> Unit,
+    //navController: NavController = rememberNavController(),
+
     viewModel: CreateCourseViewModel = hiltViewModel()
 ) {
-    val scrollState = rememberScrollState()
-    var isCategoryMenuExpanded by remember { mutableStateOf(false) }
-    var isLevelMenuExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val createCourseState by viewModel.createCourseState
 
-    val categories = TeacherCategory.getAllCategoryNames()
-    val levels = listOf("Beginner", "Intermediate", "Advanced", "Expert")
+    var name by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
+    var duration by remember { mutableStateOf("") }
+    var level by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var imageUrl by remember { mutableStateOf("") }
 
-    LaunchedEffect(key1 = true) {
-        viewModel.eventFlow.collectLatest { event ->
-            when (event) {
-                is CreateCourseViewModel.UiEvent.SaveCourse -> {
-                    onNavigateBack()
-                }
+    LaunchedEffect(createCourseState) {
+        when (createCourseState) {
+            is Response.Success -> {
+                Toast.makeText(context, "Course created successfully!", Toast.LENGTH_SHORT).show()
+               // navController.popBackStack()
             }
+            is Response.Error -> {
+                Toast.makeText(context, (createCourseState as Response.Error).massage, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}
         }
     }
 
@@ -50,8 +56,9 @@ fun CreateCourseScreen(
             TopAppBar(
                 title = { Text("Create New Course") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                  //  IconButton(onClick = { navController.popBackStack() })
+                    {
+                       // Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -62,110 +69,88 @@ fun CreateCourseScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
-                .verticalScroll(scrollState),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Course Details",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Course Name") },
+                modifier = Modifier.fillMaxWidth()
             )
 
-            ProfileTextField(
-                label = "Course Name",
-                value = viewModel.name,
-                error = null,
-                onValueChange = { viewModel.onEvent(CreateCourseEvent.EnteredName(it)) }
+            OutlinedTextField(
+                value = category,
+                onValueChange = { category = it },
+                label = { Text("Category") },
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = price,
+                onValueChange = { price = it },
+                label = { Text("Price") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
+            )
 
-            RadioButtonMenu(
-                isExpanded = isCategoryMenuExpanded,
-                onToggle = { isCategoryMenuExpanded = !isCategoryMenuExpanded },
-                selectedItem = viewModel.category.ifEmpty { "Select Category" },
-                onItemSelected = {
-                    viewModel.onEvent(CreateCourseEvent.EnteredCategory(it))
-                    isCategoryMenuExpanded = false
-                },
-                menuItems = categories,
-                showIcon = false
+            OutlinedTextField(
+                value = duration,
+                onValueChange = { duration = it },
+                label = { Text("Duration (e.g., 10 hours)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = level,
+                onValueChange = { level = it },
+                label = { Text("Level (Beginner, Intermediate, Advanced)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = imageUrl,
+                onValueChange = { imageUrl = it },
+                label = { Text("Image URL") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                label = { Text("Description") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(0.85f)) {
-                OutlinedTextField(
-                    value = viewModel.price,
-                    onValueChange = { viewModel.onEvent(CreateCourseEvent.EnteredPrice(it)) },
-                    label = { Text("Price ($)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = viewModel.duration,
-                    onValueChange = { viewModel.onEvent(CreateCourseEvent.EnteredDuration(it)) },
-                    label = { Text("Duration") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            if (createCourseState is Response.Loading) {
+                CircularProgressIndicator()
+            } else {
+                Button(
+                    onClick = {
+                        if (name.isBlank() || category.isBlank() || price.isBlank()) {
+                            Toast.makeText(context, "Please fill required fields", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewModel.createCourse(
+                                name = name,
+                                category = category,
+                                price = price,
+                                duration = duration,
+                                level = level,
+                                description = description,
+                                imageUrl = imageUrl
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Create Courses \n")
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            RadioButtonMenu(
-                isExpanded = isLevelMenuExpanded,
-                onToggle = { isLevelMenuExpanded = !isLevelMenuExpanded },
-                selectedItem = viewModel.level.ifEmpty { "Select Level" },
-                onItemSelected = {
-                    viewModel.onEvent(CreateCourseEvent.EnteredLevel(it))
-                    isLevelMenuExpanded = false
-                },
-                menuItems = levels,
-                showIcon = false
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            ProfileTextField(
-                label = "Description",
-                value = viewModel.description,
-                error = null,
-                onValueChange = { viewModel.onEvent(CreateCourseEvent.EnteredDescription(it)) },
-                singleLine = false
-            )
-
-            ProfileTextField(
-                label = "Image URL",
-                value = viewModel.imageUrl,
-                error = null,
-                onValueChange = { viewModel.onEvent(CreateCourseEvent.EnteredImageUrl(it)) }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { viewModel.onEvent(CreateCourseEvent.SaveCourse) },
-                modifier = Modifier.fillMaxWidth(0.85f),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(text = "Create Course", modifier = Modifier.padding(vertical = 8.dp))
+                }
             }
         }
     }
-}
-
-@Preview
-@Composable
-private fun CreateCourseUiPreview() {
-    HoloverseTheme{
-        CreateCourseScreen(
-            onNavigateBack = {}
-        )
-    }
-
-
 }

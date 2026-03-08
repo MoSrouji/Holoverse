@@ -24,7 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
-import com.example.holoverse.auth.domain.entities.TeacherCategory
+import com.example.holoverse.auth.domain.entities.MentorCategory
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
@@ -46,12 +46,12 @@ fun TeacherProfessionalInfoInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: TeacherProfessionalViewModel = hiltViewModel(),
-    teacherStates: MutableStateFlow<User.Teacher>
+    mentorStates: MutableStateFlow<User.Mentor>
 ) {
     val yearsItems = listOf("0", "+1", "+4", "+8", "+10")
     val languageItems = listOf("Arabic", "English", "France", "Italy", "Spain")
     val certificateItems = listOf("Bachelors", "Masters", "PhD")
-    val specializations = TeacherCategory.getAllCategoryNames()
+    val specializations = MentorCategory.getAllCategoryNames()
 
     val context = LocalContext.current
     var isYearsExpanded by remember { mutableStateOf(false) }
@@ -62,8 +62,8 @@ fun TeacherProfessionalInfoInput(
 
     val signUpState = viewModel.signUpState.value
 
-    LaunchedEffect(teacherStates) {
-        teacherStates.collect { teacher ->
+    LaunchedEffect(mentorStates) {
+        mentorStates.collect { teacher ->
             viewModel.updateState(teacher)
         }
     }
@@ -72,12 +72,12 @@ fun TeacherProfessionalInfoInput(
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    val userState = User.Teacher(
-                        bio = teacherStates.value.bio,
-                        dateOfBirth = teacherStates.value.dateOfBirth,
-                        phoneNumber = teacherStates.value.phoneNumber,
-                        address = teacherStates.value.address,
-                        gender = teacherStates.value.gender,
+                    val userState = User.Mentor(
+                        bio = mentorStates.value.bio,
+                        dateOfBirth = mentorStates.value.dateOfBirth,
+                        phoneNumber = mentorStates.value.phoneNumber,
+                        address = mentorStates.value.address,
+                        gender = mentorStates.value.gender,
                         yearsOfExperience = viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!.text,
                         specialization = viewModel.specializations,
                         subjects = viewModel.selectSubjects.toList(),
@@ -237,7 +237,7 @@ fun TeacherProfessionalInfoInput(
                             viewModel.forms[SignUpTextFields.SPECIALIZATION]!!.copy(text = item)
                         )
                     )
-                    viewModel.specializations = TeacherCategory.fromString(item)
+                    viewModel.specializations = MentorCategory.fromString(item)
                     viewModel.subject = viewModel.specializations.specializations
                 },
                 state = viewModel.forms[SignUpTextFields.SPECIALIZATION]!!,

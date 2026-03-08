@@ -48,11 +48,12 @@ import com.example.holoverse.ui.transaction.TransactionScreen
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    navigator: AppNavigator
+    navigator: AppNavigator,
+    isLoggedIn: Boolean = false
 ) {
     navigator.init(navController)
 
-    val sharedState = MutableStateFlow(User.Teacher())
+    val sharedState = MutableStateFlow(User.Mentor())
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -88,10 +89,10 @@ fun AppNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = AppDestination.AuthGraph,
+            startDestination = if (isLoggedIn) AppDestination.HomeGraph else AppDestination.AuthGraph,
             modifier = Modifier.padding(innerPadding)
         ) {
-            authGraph(navigator, teacherState = sharedState)
+            authGraph(navigator, mentorState = sharedState)
             homeGraph(navigator)
             subGraph(navigator)
         }
@@ -100,7 +101,7 @@ fun AppNavHost(
 
 private fun NavGraphBuilder.authGraph(
     navigator: AppNavigator,
-    teacherState: MutableStateFlow<User.Teacher>
+    mentorState: MutableStateFlow<User.Mentor>
 ) {
     navigation<AppDestination.AuthGraph>(
         startDestination = AppDestination.HoloIntro
@@ -161,7 +162,7 @@ private fun NavGraphBuilder.authGraph(
                     )
                 },
                 viewModel = hiltViewModel(),
-                teacherStates = teacherState
+                mentorStates = mentorState
             )
         }
 
@@ -178,7 +179,7 @@ private fun NavGraphBuilder.authGraph(
                     )
                 },
                 viewModel = hiltViewModel(),
-                teacherStates = teacherState
+                mentorStates = mentorState
             )
         }
     }
@@ -203,7 +204,7 @@ private fun NavGraphBuilder.homeGraph(
                 },
                 onTopMentorClick = {
                     navigator.navigateTo(destination = AppDestination.Mentor)
-                }
+                },
             )
         }
         composable<AppDestination.Profile>(
@@ -240,9 +241,9 @@ private fun NavGraphBuilder.subGraph(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
             CreateCourseScreen(
-                onNavigateBack = {
-                    navigator.popBackStack()
-                }
+//                onNavigateBack = {
+//                    navigator.popBackStack()
+//                }
             )
         }
         composable<AppDestination.Search>(

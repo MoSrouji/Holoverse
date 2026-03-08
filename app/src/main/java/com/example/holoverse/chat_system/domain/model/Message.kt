@@ -6,7 +6,7 @@ data class Message(
     val id: String = "",
     val senderId: String = "",
     val senderName: String = "",
-    val senderType: String = "", // "Student" or "Teacher"
+    val senderType: String = "", // "Student" or "Mentor"
     val text: String = "",
     val timestamp: Timestamp? = null
 )

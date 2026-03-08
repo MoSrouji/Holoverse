@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,16 +39,20 @@ import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,10 +62,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
+import com.example.holoverse.R
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.theme.HoloverseTheme
@@ -75,20 +87,41 @@ data class ProfileItemData(
 @Composable
 fun ProfileScreen(
     navController: AppNavigator,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    
+    LaunchedEffect(Unit) {
+        viewModel.updateLanguageName(context)
+    }
+
+    var showLanguageSheet by remember { mutableStateOf(false) }
+    var showThemeSheet by remember { mutableStateOf(false) }
+
     val profileItems = listOf(
         ProfileItemData(
             Icons.Default.Person,
-            "Edit Profile",
+            stringResource(R.string.edit_profile),
             onClick = { navController.navigateTo(AppDestination.EditProfile) }),
-        ProfileItemData(Icons.Default.Payment, "Payment Option"),
-        ProfileItemData(Icons.Default.Notifications, "Notifications"),
-        ProfileItemData(Icons.Default.GppGood, "Security"),
-        ProfileItemData(Icons.Default.Language, "Language", "English (US)"),
-        ProfileItemData(Icons.Default.DarkMode, "Dark Mode"),
-        ProfileItemData(Icons.Default.Policy, "Terms & Conditions"),
-        ProfileItemData(Icons.AutoMirrored.Filled.HelpOutline, "Help Center"),
-        ProfileItemData(Icons.AutoMirrored.Filled.Message, "Invite Friends"),
+        ProfileItemData(Icons.Default.Payment, stringResource(R.string.payment_option)),
+        ProfileItemData(Icons.Default.Notifications, stringResource(R.string.notifications)),
+        ProfileItemData(Icons.Default.GppGood, stringResource(R.string.security)),
+        ProfileItemData(
+            Icons.Default.Language, 
+            stringResource(R.string.language), 
+            uiState.selectedLanguageName,
+            onClick = { showLanguageSheet = true }
+        ),
+        ProfileItemData(
+            Icons.Default.DarkMode, 
+            stringResource(R.string.dark_mode),
+            uiState.selectedThemeMode.replaceFirstChar { it.uppercase() },
+            onClick = { showThemeSheet = true }
+        ),
+        ProfileItemData(Icons.Default.Policy, stringResource(R.string.terms_conditions)),
+        ProfileItemData(Icons.AutoMirrored.Filled.HelpOutline, stringResource(R.string.help_center)),
+        ProfileItemData(Icons.AutoMirrored.Filled.Message, stringResource(R.string.invite_friends)),
     )
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -104,7 +137,6 @@ fun ProfileScreen(
         ProfileImageBottomSheet(
             onDismissRequest = { showBottomSheet = false },
             onSeeImage = {
-                // Handle see image logic here
                 showBottomSheet = false
             },
             onUploadImage = {
@@ -116,76 +148,222 @@ fun ProfileScreen(
         )
     }
 
+    if (showLanguageSheet) {
+        LanguageBottomSheet(
+            onDismissRequest = { showLanguageSheet = false },
+            onLanguageSelected = { code ->
+                viewModel.onLanguageSelected(code)
+                showLanguageSheet = false
+            }
+        )
+    }
+
+    if (showThemeSheet) {
+        ThemeBottomSheet(
+            onDismissRequest = { showThemeSheet = false },
+            onThemeSelected = { mode ->
+                viewModel.onThemeSelected(mode)
+                showThemeSheet = false
+            },
+            selectedMode = uiState.selectedThemeMode
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profile", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.profile), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { /* Handle back */ }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(20.dp))
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color(0xFF009688))
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Box {
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .background(Color.LightGray)
-                        .border(4.dp, Color(0xFF009688), CircleShape)
+                Box {
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(Color.LightGray)
+                            .border(4.dp, Color(0xFF009688), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (uiState.profileImageUrl != null) {
+                            AsyncImage(
+                                model = uiState.profileImageUrl,
+                                contentDescription = "Profile Image",
+                                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = Color.Gray
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .offset(x = (-8).dp, y = (-4).dp)
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White)
+                            .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            modifier = Modifier.clickable(onClick = {
+                                showBottomSheet = true
+                            }),
+                            contentDescription = "Edit Image",
+                            tint = Color(0xFF009688),
+                            imageVector = Icons.Default.Image,
+                        )
+                    }
+                }
 
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(x = (-8).dp, y = (-4).dp)
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White)
-                        .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(uiState.fullName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text(uiState.email, color = Color.Gray, fontSize = 14.sp)
+                
+                if (uiState.error != null) {
+                    Text(uiState.error!!, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    Icon(
-                        modifier = Modifier.clickable(onClick = {
-                            showBottomSheet = true
-                        }),
-                        contentDescription = "Edit Image",
-                        tint = Color(0xFF009688),
-                        imageVector = Icons.Default.Image,
-                    )
+                    Column {
+                        profileItems.forEachIndexed { index, item ->
+                            ProfileItem(item = item)
+                            if (index < profileItems.lastIndex) {
+                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                            }
+                        }
+                    }
                 }
             }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(16.dp))
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ThemeBottomSheet(
+    onDismissRequest: () -> Unit,
+    onThemeSelected: (String) -> Unit,
+    selectedMode: String
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val themes = listOf(
+        "light" to "Light",
+        "dark" to "Dark",
+        "system" to "System Default"
+    )
 
-            Text("James S. Hernandez", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Text("hernandex.redial@gmail.ac.in", color = Color.Gray, fontSize = 14.sp)
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp, start = 16.dp, end = 16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.dark_mode),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            LazyColumn {
+                items(themes) { (mode, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onThemeSelected(mode) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = name, modifier = Modifier.weight(1f), fontSize = 16.sp)
+                        RadioButton(
+                            selected = (selectedMode == mode),
+                            onClick = { onThemeSelected(mode) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                //colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(2.dp)
-            ) {
-                Column {
-                    profileItems.forEachIndexed { index, item ->
-                        ProfileItem(item = item)
-                        if (index < profileItems.lastIndex) {
-                            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                        }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageBottomSheet(
+    onDismissRequest: () -> Unit,
+    onLanguageSelected: (String?) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val languages = listOf(
+        null to stringResource(R.string.device_language),
+        "en" to stringResource(R.string.english),
+        "ar" to stringResource(R.string.arabic),
+        "es" to stringResource(R.string.spanish),
+        "it" to stringResource(R.string.italian)
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp, start = 16.dp, end = 16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.language),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            LazyColumn {
+                items(languages) { (code, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onLanguageSelected(code) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = name, modifier = Modifier.weight(1f), fontSize = 16.sp)
+                        // Note: To show which one is selected, we'd need current language from VM
                     }
                 }
             }
@@ -205,7 +383,6 @@ fun ProfileImageBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
-      //  containerColor = Color.White
     ) {
         Column(
             modifier = Modifier

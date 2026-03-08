@@ -2,6 +2,7 @@ package com.example.holoverse.ui.home.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,119 +23,107 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import com.example.holoverse.courses.domain.Courses
 
 @Composable
-@Preview(showBackground = true)
 fun CourseCard(
+    course: Courses,
     modifier: Modifier = Modifier
 ) {
-
     Card(
         modifier = modifier
             .height(240.dp)
-            .width(
-                280.dp
-            ),
+            .width(280.dp),
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column() {
-            Column(
+        Column {
+            Box(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .fillMaxHeight(.50f)
-                    .background(
-                        color = MaterialTheme.colorScheme.background
-                    )
+                    .background(color = MaterialTheme.colorScheme.background)
             ) {
-
-
+                AsyncImage(
+                    model = course.imageUrl,
+                    contentDescription = course.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(5.dp)
+                    .padding(10.dp)
             ) {
-                CourseTypeWithButton()
-                Spacer(modifier = Modifier.padding(8.dp))
+                CourseTypeWithButton(course.category)
+                Spacer(modifier = Modifier.padding(4.dp))
                 Text(
-                    text = "Graphic Design Advanced",
+                    text = course.name,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
-                Spacer(modifier = Modifier.padding(8.dp))
-
-                CourseBottomDivider()
-
-
+                Spacer(modifier = Modifier.padding(4.dp))
+                CourseBottomDivider(
+                    price = course.price,
+                    rating = course.rating,
+                    numEnrolled = course.numEnrolled
+                )
             }
-
         }
-
-
     }
-
-
 }
 
 @Composable
-@Preview(showBackground = true)
-fun CourseTypeWithButton(
-
-) {
+fun CourseTypeWithButton(category: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Graphic Design",
+            text = category,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.tertiary,
             fontWeight = FontWeight.Bold
         )
         Icon(
-            imageVector = Icons.Default.BookmarkAdd, contentDescription = "Save For Later "
+            imageVector = Icons.Default.BookmarkAdd,
+            contentDescription = "Save For Later"
         )
-
-
     }
 }
 
+@Composable
+fun CourseBottomDivider(price: Double, rating: Double, numEnrolled: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = "$$price", fontWeight = FontWeight.Bold)
+        VerticalDivider(modifier = Modifier.height(16.dp), thickness = 1.dp)
+        Text(text = rating.toString())
+        VerticalDivider(modifier = Modifier.height(16.dp), thickness = 1.dp)
+        Text(text = "$numEnrolled Std")
+    }
+}
 
 @Composable
 @Preview(showBackground = true)
-fun CourseBottomDivider() {
-    Row(
-        modifier = Modifier.fillMaxWidth(.80f),
-        horizontalArrangement = Arrangement.Absolute.SpaceAround
-    ) {
-        Text(
-            text = " $28"
+fun CourseCardPreview() {
+    CourseCard(
+        course = Courses(
+            name = "Graphic Design Advanced",
+            category = "Graphic Design",
+            price = 28.0,
+            rating = 4.2,
+            numEnrolled = 7830
         )
-        VerticalDivider(
-            modifier = Modifier
-
-                .height(20.dp),
-            thickness = 3.dp
-
-            )
-        Text(
-            text = "4.2"
-        )
-        VerticalDivider(
-            modifier = Modifier.height(
-                20.dp
-            ),
-            thickness = 3.dp
-
-        )
-        Text(
-            text = "7830 Std "
-        )
-    }
-
-
+    )
 }

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Holoverse</string>
+    <string name="login">Iniciar sesión</string>
+    <string name="create_account">Crear cuenta</string>
+    <string name="please_sign_in_to_continue">Por favor, inicie sesión para continuar</string>
+    <string name="please_complete_you_auth_to_continue">Por favor, complete su autenticación para continuar</string>
+    <string name="login_capital">INICIAR SESIÓN</string>
+    <string name="signup_capital">REGISTRARSE</string>
+    <string name="password">Contraseña</string>
+    <string name="email">Correo electrónico</string>
+    <string name="forget_password">¿Olvidó su contraseña?</string>
+    <string name="do_not_have_an_account">¿No tiene una cuenta?</string>
+    <string name="sign_up">Registrarse</string>
+    <string name="next">Siguiente</string>
+    <string name="full_name">Nombre completo</string>
+    <string name="the_field_can_not_be_blank">El campo no puede estar vacío</string>
+    <string name="that_is_not_a_valid_email">Este no es un correo electrónico válido</string>
+    <string name="that_is_not_a_valid_phone_number">Este no es un número de teléfono válido</string>
+    <string name="the_field_can_not_be_less_then_10_digits">El campo no puede tener menos de 10 dígitos</string>
+    <string name="the_password_needs_to_contain_at_least_one_letter_and_digit">La contraseña debe contener al menos una letra y un dígito</string>
+    <string name="the_password_needs_to_consist_of_at_least_8_characters">La contraseña debe tener al menos 8 caracteres</string>
+    <string name="must_be_from_9_to_12_digits">Debe tener de 9 a 12 dígitos</string>
+    <string name="validation_successfully">Validación exitosa</string>
+    <string name="sign_up_successfully">Registro exitoso\n</string>
+    <string name="fill_the_form">Por favor, complete el formulario\n</string>
+    <string name="sign_in_successfully">Inicio de sesión exitoso\n</string>
+    <string name="select_role">Seleccionar tipo de usuario</string>
+    <string name="bio">Biografía</string>
+    <string name="dateOfBirth">Fecha de nacimiento</string>
+    <string name="phoneNumber">Número de teléfono</string>
+    <string name="address">Dirección</string>
+    <string name="gender">Género</string>
+    <string name="yearsOfExperience">Años de experiencia</string>
+    <string name="languagesSpoken">Idiomas hablados</string>
+    <string name="certifications">Certificaciones</string>
+    <string name="specialization">Especialización</string>
+    <string name="subjects">Materias</string>
+    <string name="hourlyRate">Tarifa por hora</string>
+    <string name="skip">Omitir</string>
+    <string name="Warning">Advertencia\n</string>
+    <string name="skipPresed">Este formulario nos ayuda a hacer recomendaciones para que tengas una mejor experiencia</string>
+    <string name="Categories">Categorías</string>
+    <string name="popular_Courses">Cursos populares</string>
+    <string name="top_Mentor">Mejor Mentor</string>
+    <string name="profile">Perfil</string>
+    <string name="edit_profile">Editar perfil</string>
+    <string name="payment_option">Opción de pago</string>
+    <string name="notifications">Notificaciones</string>
+    <string name="security">Seguridad</string>
+    <string name="language">Idioma</string>
+    <string name="dark_mode">Modo oscuro</string>
+    <string name="terms_conditions">Términos y condiciones</string>
+    <string name="help_center">Centro de ayuda</string>
+    <string name="invite_friends">Invitar amigos</string>
+    <string name="logout">Cerrar sesión</string>
+</resources>

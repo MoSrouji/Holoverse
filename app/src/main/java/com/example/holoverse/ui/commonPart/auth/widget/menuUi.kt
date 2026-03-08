@@ -91,7 +91,7 @@ fun ExpandableMenuScreen(
 ) {
     var isMenuExpanded by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf("Select User Type") }
-    val menuItems = listOf("Teacher", "Student")
+    val menuItems = listOf("Mentor", "Student")
 
     Column(
         modifier = Modifier

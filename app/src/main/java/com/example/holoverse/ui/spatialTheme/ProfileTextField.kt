@@ -131,18 +131,18 @@ fun UserTypeMenu(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Teacher Option
+        // Mentor Option
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
                 .clickable {
-                    selectedOption = "teacher"
-                    onOptionSelected("teacher")
+                    selectedOption = "mentor"
+                    onOptionSelected("mentor")
                 },
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (selectedOption == "teacher") {
+                containerColor = if (selectedOption == "mentor") {
                     MaterialTheme.colorScheme.primaryContainer
                 } else {
                     MaterialTheme.colorScheme.surface
@@ -157,10 +157,10 @@ fun UserTypeMenu(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "👨‍🏫 Teacher",
+                    text = "👨‍🏫 Mentor",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
-                    color = if (selectedOption == "teacher") {
+                    color = if (selectedOption == "mentor") {
                         MaterialTheme.colorScheme.onPrimaryContainer
                     } else {
                         MaterialTheme.colorScheme.onSurface

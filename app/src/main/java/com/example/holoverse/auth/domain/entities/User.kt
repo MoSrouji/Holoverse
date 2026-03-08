@@ -1,11 +1,15 @@
 package com.example.holoverse.auth.domain.entities
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 sealed interface User {
     val userId: String?
     val fullName: String?
     val email: String?
     val accountType: UserType
 
+    @Serializable
     data class Student(
         override val userId: String? = null,
         override val fullName: String? = null,
@@ -51,11 +55,12 @@ sealed interface User {
         val mentoringStatus: String? = null
     ) : User
 
-    data class Teacher(
+    @Serializable
+    data class Mentor(
         override val userId: String? = null,
         override val fullName: String? = null,
         override val email: String? = null,
-        override val accountType: UserType = UserType.Teacher,
+        override val accountType: UserType = UserType.Mentor,
 
         // Personal Information
         val dateOfBirth: String? = null,
@@ -66,7 +71,7 @@ sealed interface User {
 
         // Professional Information
         val yearsOfExperience: String? = null,
-        val specialization: TeacherCategory = TeacherCategory.OTHER,
+        val specialization: MentorCategory = MentorCategory.OTHER,
         val subjects: List<String>? = null,
         val certifications: String? = null,
         val languagesSpoken: List<String>? = null,
@@ -95,11 +100,13 @@ sealed interface User {
     ) : User
 }
 
+@Serializable
 enum class UserType {
-    Student, Teacher
+    Student, Mentor
 }
 
-enum class TeacherCategory(val specializations: List<String>) {
+@Serializable
+enum class MentorCategory(val specializations: List<String>) {
     MATHEMATICS(
         listOf(
             "Elementary Mathematics",
@@ -114,7 +121,7 @@ enum class TeacherCategory(val specializations: List<String>) {
         listOf(
             "Physics Specialist",
             "Chemistry Expert",
-            "Biology Teacher",
+            "Biology Mentor",
             "Environmental Science",
             "Earth Science",
             "AP Science"
@@ -131,7 +138,7 @@ enum class TeacherCategory(val specializations: List<String>) {
     ),
     HUMANITIES(
         listOf(
-            "History Teacher",
+            "History Mentor",
             "Social Studies",
             "Geography",
             "Philosophy",
@@ -148,7 +155,7 @@ enum class TeacherCategory(val specializations: List<String>) {
     ),
     COMPUTER_SCIENCE(
         listOf(
-            "Computer Science Teacher",
+            "Computer Science Mentor",
             "Programming Mentor",
             "Web Development",
             "Data Science"
@@ -156,7 +163,7 @@ enum class TeacherCategory(val specializations: List<String>) {
     ),
     ARTS(
         listOf(
-            "Music Teacher",
+            "Music Mentor",
             "Art & Design",
             "Drama/Theater",
             "Creative Writing"
@@ -188,7 +195,7 @@ enum class TeacherCategory(val specializations: List<String>) {
     );
 
     companion object {
-        fun fromString(name: String): TeacherCategory {
+        fun fromString(name: String): MentorCategory {
             return entries.find { it.name.equals(name, ignoreCase = true) } ?: OTHER
         }
 

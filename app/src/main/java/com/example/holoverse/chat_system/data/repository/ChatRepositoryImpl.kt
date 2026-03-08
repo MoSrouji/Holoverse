@@ -1,7 +1,7 @@
 package com.example.holoverse.chat_system.data.repository
 
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.auth.network.NetworkConstant
+import com.example.holoverse.utils.NetworkConstant
 import com.example.holoverse.chat_system.domain.model.Chat
 import com.example.holoverse.chat_system.domain.model.Message
 import com.example.holoverse.chat_system.domain.repository.ChatRepository
@@ -45,17 +45,18 @@ class ChatRepositoryImpl @Inject constructor(
         senderName: String,
         senderType: String
     ) {
-        val message = Message(
-            senderId = senderId,
-            senderName = senderName,
-            senderType = senderType,
-            text = text,
-            timestamp = Timestamp.now()
-        )
+
 
         val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
         val messageRef = chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document()
-
+        val serverTime = com.google.firebase.firestore.FieldValue.serverTimestamp()
+        val message = mapOf(
+            "senderId" to senderId,
+            "senderName" to senderName,
+            "senderType" to senderType,
+            "text" to text,
+            "timestamp" to serverTime
+        )
         firestore.runBatch { batch ->
             // 1. Write the message
             batch.set(messageRef, message)
@@ -63,7 +64,7 @@ class ChatRepositoryImpl @Inject constructor(
             // 2. Update Chat Metadata for efficient list viewing
             val chatUpdate = mapOf(
                 "lastMessage" to text,
-                "lastMessageTimestamp" to message.timestamp,
+                "lastMessageTimestamp" to serverTime,
                 "lastSenderId" to senderId,
                 // Ensure participants exist (useful for first message)
                 "participants" to com.google.firebase.firestore.FieldValue.arrayUnion(senderId)

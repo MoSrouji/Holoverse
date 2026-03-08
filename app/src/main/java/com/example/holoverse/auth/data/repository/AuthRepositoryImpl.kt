@@ -3,13 +3,12 @@ package com.example.holoverse.auth.data.repository
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.auth.network.NetworkConstant
-import com.example.holoverse.auth.network.NetworkConstant.COLLECTION_NAME_STUDENTS
-import com.example.holoverse.auth.network.NetworkConstant.COLLECTION_NAME_TEACHERS
+import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
+import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
+import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
@@ -17,8 +16,8 @@ import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
-
+    private val firestore: FirebaseFirestore,
+    private val preferenceManager: PreferenceManager
 ) : AuthRepository {
     override suspend fun firebaseSignUp(
         userDto: User,
@@ -32,9 +31,9 @@ class AuthRepositoryImpl @Inject constructor(
 
             val userId = user.uid
 
-            when (userDto.accountType) {
+            val savedUser = when (userDto.accountType) {
                 UserType.Student -> {
-                    val userDoc = firestore.collection(NetworkConstant.COLLECTION_NAME_STUDENTS)
+                    val userDoc = firestore.collection(COLLECTION_NAME_STUDENTS)
                         .document(userId)
 
                     if (userDoc.get().await().exists()) {
@@ -42,19 +41,17 @@ class AuthRepositoryImpl @Inject constructor(
                         user.delete().await()
                         throw Exception("Sign up failed ")
                     }
-                    userDoc.set(
-                        User.Student(
-                            fullName = userDto.fullName,
-                            email = userDto.email,
-                            userId = userId
-                        )
-                    ).await()
-
-
+                    val student = User.Student(
+                        fullName = userDto.fullName,
+                        email = userDto.email,
+                        userId = userId
+                    )
+                    userDoc.set(student).await()
+                    student
                 }
 
-                UserType.Teacher -> {
-                    val userDoc = firestore.collection(NetworkConstant.COLLECTION_NAME_TEACHERS)
+                UserType.Mentor -> {
+                    val userDoc = firestore.collection(COLLECTION_NAME_MENTORS)
                         .document(userId)
                     if (userDoc.get().await().exists()) {
                         // Clean up auth user if document exists
@@ -62,23 +59,17 @@ class AuthRepositoryImpl @Inject constructor(
                         throw Exception("Sign up failed ")
                     }
 
-                    userDoc.set(
-                        User.Teacher(
-                            fullName = userDto.fullName,
-                            email = userDto.email,
-                            userId = userId
-                        )
-
-                    ).await()
-
-
+                    val mentor = User.Mentor(
+                        fullName = userDto.fullName,
+                        email = userDto.email,
+                        userId = userId
+                    )
+                    userDoc.set(mentor).await()
+                    mentor
                 }
-
-                else -> {}
             }
-
-
-
+            
+            preferenceManager.saveUser(savedUser)
             emit(Response.Success(true))
 
         } catch (e: Exception) {
@@ -97,6 +88,8 @@ class AuthRepositoryImpl @Inject constructor(
 
             // Additional checks if needed
             if (authResult.user != null) {
+                val user = getCurrentUser()
+                user?.let { preferenceManager.saveUser(it) }
                 emit(Response.Success(true))
             } else {
                 emit(Response.Error("Sign in failed - no user returned"))
@@ -112,48 +105,54 @@ class AuthRepositoryImpl @Inject constructor(
         emit(Response.Loading)
         try {
             firebaseAuth.signOut()
+            preferenceManager.clearData()
             emit(Response.Success(true))
         } catch (e: Exception) {
             emit(Response.Error(e.localizedMessage ?: "Sign out failed"))
         }
     }
 
-    override suspend fun updateTeacherProfile(teacher: User.Teacher): Flow<Response<Boolean>> =
+    override suspend fun updateMentorProfile(mentor: User.Mentor): Flow<Response<Boolean>> =
         flow {
             emit(Response.Loading)
             try {
                 val userId =
                     firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
 
-                val teacherDoc = firestore.collection(NetworkConstant.COLLECTION_NAME_TEACHERS)
+                val teacherDoc = firestore.collection(COLLECTION_NAME_MENTORS)
                     .document(userId)
 
                 // Verify document exists in single operation
                 val snapshot = teacherDoc.get().await()
                 if (!snapshot.exists()) {
-                    throw Exception("Teacher profile not found")
+                    throw Exception("Mentor profile not found")
                 }
 
                 // Build update data
                 val updateData = buildMap<String, Any> {
-                    teacher.fullName?.let { put("fullName", it) }
-                    teacher.bio?.let { put("bio", it) }
-                    teacher.dateOfBirth?.let { put("dateOfBirth", it) }
-                    teacher.phoneNumber?.let { put("phoneNumber", it) }
-                    teacher.address?.let { put("address", it) }
-                    teacher.gender?.let { put("gender", it) }
-                    teacher.yearsOfExperience?.let { put("yearsOfExperience", it) }
-                    put("specialization", teacher.specialization.name)
-                    teacher.subjects?.let { put("subjects", it) }
-                    teacher.certifications?.let { put("certifications", it) }
-                    teacher.languagesSpoken?.let { put("languagesSpoken", it) }
-                    teacher.hourlyRate?.let { put("hourlyRate", it) }
-                    teacher.universityAttended?.let { put("universityAttended", it) }
-                    teacher.graduationYear?.let { put("graduationYear", it) }
-                    teacher.additionalQualifications?.let { put("additionalQualifications", it) }
+                    mentor.fullName?.let { put("fullName", it) }
+                    mentor.bio?.let { put("bio", it) }
+                    mentor.dateOfBirth?.let { put("dateOfBirth", it) }
+                    mentor.phoneNumber?.let { put("phoneNumber", it) }
+                    mentor.address?.let { put("address", it) }
+                    mentor.gender?.let { put("gender", it) }
+                    mentor.yearsOfExperience?.let { put("yearsOfExperience", it) }
+                    put("specialization", mentor.specialization.name)
+                    mentor.subjects?.let { put("subjects", it) }
+                    mentor.certifications?.let { put("certifications", it) }
+                    mentor.languagesSpoken?.let { put("languagesSpoken", it) }
+                    mentor.hourlyRate?.let { put("hourlyRate", it) }
+                    mentor.universityAttended?.let { put("universityAttended", it) }
+                    mentor.graduationYear?.let { put("graduationYear", it) }
+                    mentor.additionalQualifications?.let { put("additionalQualifications", it) }
                 }
 
                 teacherDoc.update(updateData).await()
+                
+                // Refresh local cache
+                val updatedUser = getCurrentUser()
+                updatedUser?.let { preferenceManager.saveUser(it) }
+                
                 emit(Response.Success(true))
 
             } catch (e: Exception) {
@@ -168,7 +167,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val userId =
                     firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
 
-                val studentDoc = firestore.collection(NetworkConstant.COLLECTION_NAME_STUDENTS)
+                val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS)
                     .document(userId)
 
                 val snapshot = studentDoc.get().await()
@@ -183,6 +182,11 @@ class AuthRepositoryImpl @Inject constructor(
                 }
 
                 studentDoc.update(updateData).await()
+                
+                // Refresh local cache
+                val updatedUser = getCurrentUser()
+                updatedUser?.let { preferenceManager.saveUser(it) }
+
                 emit(Response.Success(true))
 
             } catch (e: Exception) {
@@ -203,9 +207,9 @@ class AuthRepositoryImpl @Inject constructor(
             }
 
             // If not found, check teachers collection
-            val teacherDoc = firestore.collection(COLLECTION_NAME_TEACHERS).document(uid).get().await()
+            val teacherDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(uid).get().await()
             if (teacherDoc.exists()) {
-                return teacherDoc.toObject(User.Teacher::class.java)?.copy(userId = uid)
+                return teacherDoc.toObject(User.Mentor::class.java)?.copy(userId = uid)
             }
 
             null

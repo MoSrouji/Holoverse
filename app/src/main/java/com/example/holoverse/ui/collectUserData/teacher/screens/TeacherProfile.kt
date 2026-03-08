@@ -47,7 +47,7 @@ fun TeacherProfileInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: TeacherProfileViewModel = hiltViewModel(),
-    teacherStates: MutableStateFlow<User.Teacher>
+    mentorStates: MutableStateFlow<User.Mentor>
 ) {
     val genderItems = listOf("Male", "Female")
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
@@ -62,7 +62,7 @@ fun TeacherProfileInput(
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    teacherStates.value = teacherStates.value.copy(
+                    mentorStates.value = mentorStates.value.copy(
                         bio = viewModel.forms[SignUpTextField.Bio]?.text ?: "",
                         phoneNumber = viewModel.forms[SignUpTextField.PHONE_NUMBER]?.text ?: "",
                         address = viewModel.forms[SignUpTextField.ADDRESS]?.text ?: "",

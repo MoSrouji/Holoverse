@@ -1,0 +1,13 @@
+package com.example.holoverse.fetch.domain
+
+import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.courses.domain.Courses
+
+interface FetchDataRepository {
+
+    suspend fun fetchCourses(forceRefresh: Boolean = false): List<Courses>
+    suspend fun fetchMentors(forceRefresh: Boolean = false): List<User.Mentor>
+    suspend fun fetchAds()
+
+
+}

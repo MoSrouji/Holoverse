@@ -1,7 +1,7 @@
 package com.example.holoverse.auth.domain.use_cases
 
-class AuthUseCases(
+data class AuthUseCases(
     val firebaseSignUp: FirebaseSignUp,
-    val firebaseSignIn: FirebaseSignIn
-
+    val firebaseSignIn: FirebaseSignIn,
+    val getCurrentUser: GetCurrentUser
 )

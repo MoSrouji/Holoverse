@@ -51,7 +51,7 @@ data class TeacherState(
     val loading: Boolean = false,
     val success: Boolean = false,
     val error: String? = null,
-    var teacher: User.Teacher? = null
+    var mentor: User.Mentor? = null
 )
 
 enum class SignUpTextField : TextFieldId {

@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import com.example.holoverse.auth.domain.entities.TeacherCategory
+import com.example.holoverse.auth.domain.entities.MentorCategory
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
@@ -25,27 +25,27 @@ class TeacherProfessionalViewModel @Inject constructor(
     private val authenticatingRepo: AuthRepository,
 ) : BaseValidationViewModel() {
 
-    private val _teacherScreenState = MutableStateFlow(User.Teacher())
-    val teacherScreenState: StateFlow<User.Teacher> = _teacherScreenState.asStateFlow()
+    private val _mentorScreenState = MutableStateFlow(User.Mentor())
+    val mentorScreenState: StateFlow<User.Mentor> = _mentorScreenState.asStateFlow()
 
 
     private val _signUpState = mutableStateOf<Response<Boolean>>(Response.Success(false))
     val signUpState: State<Response<Boolean>> = _signUpState
 
     // Update the state from parent component
-    fun updateState(state: User.Teacher) {
-        _teacherScreenState.value = state.copy()
+    fun updateState(state: User.Mentor) {
+        _mentorScreenState.value = state.copy()
     }
 
     // Add a function to update professional info
     fun updateProfessionalInfo(
         years: String,
-        specialization: TeacherCategory,
+        specialization: MentorCategory,
         subjects: List<String>,
         certifications: String,
         languages: List<String>
     ) {
-        _teacherScreenState.value = _teacherScreenState.value.copy(
+        _mentorScreenState.value = _mentorScreenState.value.copy(
             yearsOfExperience = years,
             specialization = specialization,
             subjects = subjects,
@@ -59,7 +59,7 @@ class TeacherProfessionalViewModel @Inject constructor(
     var selectLanguage by mutableStateOf(emptySet<String>())
     var selectSpecializations by mutableStateOf("Select your specializations ")
     var selectSubjects by mutableStateOf(emptySet<String>())
-    var specializations by mutableStateOf(TeacherCategory.OTHER)
+    var specializations by mutableStateOf(MentorCategory.OTHER)
 
     var subject by mutableStateOf(listOf(""))
 
@@ -110,12 +110,12 @@ class TeacherProfessionalViewModel @Inject constructor(
     }
 
     fun firebaseSingUp(
-        userDto: User.Teacher,
+        userDto: User.Mentor,
     ) {
 
         viewModelScope.launch {
-            authenticatingRepo.updateTeacherProfile(
-                teacher = userDto
+            authenticatingRepo.updateMentorProfile(
+                mentor = userDto
 
             ).collect {
                 _signUpState.value = it
