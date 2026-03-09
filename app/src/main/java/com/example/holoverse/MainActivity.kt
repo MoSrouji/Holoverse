@@ -62,7 +62,8 @@ class MainActivity : ComponentActivity() {
                     AppNavHost(
                         navController = navController,
                         navigator = navigator,
-                        isLoggedIn = currentUser != null
+                        isLoggedIn = currentUser != null,
+                        darkTheme = darkTheme
                     )
 
                 }

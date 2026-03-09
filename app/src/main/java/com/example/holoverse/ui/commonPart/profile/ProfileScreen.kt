@@ -119,7 +119,11 @@ fun ProfileScreen(
             uiState.selectedThemeMode.replaceFirstChar { it.uppercase() },
             onClick = { showThemeSheet = true }
         ),
-        ProfileItemData(Icons.Default.Policy, stringResource(R.string.terms_conditions)),
+        ProfileItemData(
+            Icons.Default.Policy, 
+            stringResource(R.string.terms_conditions),
+            onClick = { navController.navigateTo(AppDestination.TermsAndConditions) }
+        ),
         ProfileItemData(Icons.AutoMirrored.Filled.HelpOutline, stringResource(R.string.help_center)),
         ProfileItemData(Icons.AutoMirrored.Filled.Message, stringResource(R.string.invite_friends)),
     )

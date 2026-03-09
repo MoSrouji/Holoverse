@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.lifecycle.compose.currentStateAsState
 import com.example.holoverse.ui.chat.ChatScreen
 import com.example.holoverse.ui.commonPart.profile.EditProfileScreen
+import com.example.holoverse.ui.commonPart.profile.TermsAndConditionsScreen
 import com.example.holoverse.ui.studentPart.popularCourses.PopularCoursesScreen
 import com.example.holoverse.ui.transaction.TransactionScreen
 
@@ -49,7 +50,8 @@ import com.example.holoverse.ui.transaction.TransactionScreen
 fun AppNavHost(
     navController: NavHostController,
     navigator: AppNavigator,
-    isLoggedIn: Boolean = false
+    isLoggedIn: Boolean = false,
+    darkTheme: Boolean
 ) {
     navigator.init(navController)
 
@@ -74,7 +76,7 @@ fun AppNavHost(
         }
     }
 
-    SpatialBackground()
+    SpatialBackground(darkTheme = darkTheme)
 
     Scaffold(
         bottomBar = {
@@ -93,7 +95,7 @@ fun AppNavHost(
             modifier = Modifier.padding(innerPadding)
         ) {
             authGraph(navigator, mentorState = sharedState)
-            homeGraph(navigator)
+            homeGraph(navigator , darkTheme)
             subGraph(navigator)
         }
     }
@@ -187,6 +189,7 @@ private fun NavGraphBuilder.authGraph(
 
 private fun NavGraphBuilder.homeGraph(
     navigator: AppNavigator,
+    darkTheme: Boolean
 ) {
     navigation<AppDestination.HomeGraph>(
         startDestination = AppDestination.HomeScreen
@@ -205,6 +208,7 @@ private fun NavGraphBuilder.homeGraph(
                 onTopMentorClick = {
                     navigator.navigateTo(destination = AppDestination.Mentor)
                 },
+                darkTheme =darkTheme
             )
         }
         composable<AppDestination.Profile>(
@@ -227,6 +231,11 @@ private fun NavGraphBuilder.homeGraph(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
             ChatScreen()
+        }
+        composable<AppDestination.TermsAndConditions>(
+            enterTransition = { NavAnimations.slideInFromRight() }
+        ) {
+            TermsAndConditionsScreen(navController = navigator)
         }
     }
 }

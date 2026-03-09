@@ -37,7 +37,7 @@ import kotlinx.coroutines.delay
 @Composable
 @Preview
 fun CarouselAdds() {
-    val state: List<String> = listOf(" First Index  " , " Second Index  ", " Third Index ")
+    val state: List<String> = listOf(" First Index  ", " Second Index  ", " Third Index ")
     val pagerState = rememberPagerState(
         initialPage = 0,
         pageCount = { state.size }
@@ -65,9 +65,11 @@ fun CarouselAdds() {
     }
     val itemSpacing = 8.dp
     val defaultPadding = 0.dp
-    Row (modifier = Modifier.fillMaxWidth() ,
+    Row(
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center) {
+        horizontalArrangement = Arrangement.Center
+    ) {
         HorizontalPager(
             state = pagerState,
             contentPadding = PaddingValues(start = defaultPadding),
@@ -75,16 +77,20 @@ fun CarouselAdds() {
         ) { page ->
             if (isAutoScrolling) {
                 AnimatedContent(targetState = page) { index ->
-                    Row(modifier = Modifier.fillMaxWidth() ,
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center) {
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         CarouselAddsCards(text = state[index])
                     }
                 }
             } else {
-                Row(modifier = Modifier.fillMaxWidth() ,
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center) {
+                    horizontalArrangement = Arrangement.Center
+                ) {
                     CarouselAddsCards(text = state[page])
                 }
             }
@@ -98,21 +104,25 @@ fun CarouselAdds() {
 @Composable
 @Preview
 fun CarouselAddsCards(text: String = " Enter\nAR Lab") {
-    HoloverseTheme() {
+    //HoloverseTheme() {
         GlassCard(
             modifier = Modifier
                 .height(160.dp)
                 .width(320.dp),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.primaryFixedDim,
             onClick = {},
             enable = true
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.weight(1f))
-                Text(text = text, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(
+                    text = text,
+                    color = MaterialTheme.colorScheme.onPrimaryFixed,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
-    }
+   // }
 
 }

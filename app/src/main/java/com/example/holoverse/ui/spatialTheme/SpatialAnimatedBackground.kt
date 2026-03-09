@@ -1,5 +1,6 @@
 package com.example.holoverse.ui.spatialTheme
 
+import androidx.activity.viewModels
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -19,16 +21,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.ui.theme.primaryLight
 import com.example.holoverse.ui.theme.secondaryLight
+import com.example.holoverse.utils.SplashViewModel
+import kotlin.getValue
 import kotlin.math.sin
+import androidx.activity.viewModels
+import androidx.lifecycle.viewmodel.compose.viewModel
 
-@Preview
+
 @Composable
 fun SpatialBackground(
     modifier: Modifier = Modifier,
+    darkTheme: Boolean = !isSystemInDarkTheme()
+
 ) {
-    val isDark = isSystemInDarkTheme()
+
+
     val colorScheme = MaterialTheme.colorScheme
-    
+
     // This simulates the Three.js particle background using standard Canvas
     val infiniteTransition = rememberInfiniteTransition(label = "background")
     val time by infiniteTransition.animateFloat(
@@ -41,8 +50,8 @@ fun SpatialBackground(
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
-        
-        if (!isDark) {
+
+        if (darkTheme) {
             // Light Theme Gradient: Lighter blue to a soft indigo
             drawRect(
                 brush = Brush.verticalGradient(
@@ -57,7 +66,7 @@ fun SpatialBackground(
             drawRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF050510), 
+                        Color(0xFF050510),
                         Color(0xFF1A1A2E)
                     )
                 )
@@ -78,7 +87,7 @@ fun SpatialBackground(
                 color = if (i % 2 == 0) colorScheme.primary else colorScheme.secondary,
                 radius = (i % 3 + 1).dp.toPx(),
                 center = Offset(xOffset, yPos),
-                alpha = if (isDark) alpha else alpha * 0.6f // Subtle particles in light mode
+                alpha = if (darkTheme) alpha else alpha * 0.6f // Subtle particles in light mode
             )
         }
     }

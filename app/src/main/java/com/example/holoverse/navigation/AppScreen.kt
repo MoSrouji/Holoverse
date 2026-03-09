@@ -56,5 +56,8 @@ sealed interface AppDestination {
     data object Transactions : AppDestination
     @Serializable
     data object ChatScreen : AppDestination
+    
+    @Serializable
+    data object TermsAndConditions : AppDestination
 
 }

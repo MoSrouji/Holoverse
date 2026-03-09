@@ -60,6 +60,7 @@ fun HomeScreen(
     onCategoryClick: () -> Unit,
     onPopularCoursesClick: () -> Unit,
     onTopMentorClick: () -> Unit,
+    darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -91,7 +92,9 @@ fun HomeScreen(
                         .fillMaxHeight(0.45f)
 
                 ) {
-                    SpatialBackground()
+                    SpatialBackground(
+                        darkTheme = !darkTheme
+                    )
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -206,7 +209,10 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(15.dp)
                         ) {
                             if (uiState.courses.isEmpty() && !uiState.isLoading) {
-                                Text(text = "No courses available", modifier = Modifier.padding(16.dp))
+                                Text(
+                                    text = "No courses available",
+                                    modifier = Modifier.padding(16.dp)
+                                )
                             } else {
                                 uiState.courses.forEach { course ->
                                     CourseCard(
@@ -231,7 +237,10 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(15.dp)
                         ) {
                             if (uiState.mentors.isEmpty() && !uiState.isLoading) {
-                                Text(text = "No mentors available", modifier = Modifier.padding(16.dp))
+                                Text(
+                                    text = "No mentors available",
+                                    modifier = Modifier.padding(16.dp)
+                                )
                             } else {
                                 uiState.mentors.forEach { mentor ->
                                     TeacherCard(
