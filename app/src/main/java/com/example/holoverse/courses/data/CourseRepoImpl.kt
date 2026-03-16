@@ -58,4 +58,19 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
             emit(Response.Error(e.message ?: "Error fetching course"))
         }
     }
+
+    override suspend fun getCoursesByCategory(category: String): Flow<Response<List<Courses>>> = flow {
+        emit(Response.Loading)
+        try {
+            val snapshot = firestore.collection("courses")
+                .whereEqualTo("category", category)
+                .get()
+                .await()
+            val courses = snapshot.toObjects(Courses::class.java)
+            emit(Response.Success(courses))
+        } catch (e: Exception) {
+            Log.e("CourseRepoImpl", "Error getting courses by category", e)
+            emit(Response.Error(e.message ?: "Error fetching courses"))
+        }
+    }
 }

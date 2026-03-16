@@ -1,24 +1,35 @@
 package com.example.holoverse
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
+import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.utils.LanguageManager
 import com.example.holoverse.utils.SplashViewModel
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -29,13 +40,25 @@ class MainActivity : ComponentActivity() {
     
     @Inject
     lateinit var languageManager: LanguageManager
+
+    @Inject
+    lateinit var authRepository: AuthRepository
     
     private val splashViewModel: SplashViewModel by viewModels()
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            fetchAndStoreFcmToken()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         languageManager.applyLanguage()
+        askNotificationPermission()
 
         installSplashScreen().apply {
             setKeepOnScreenCondition {
@@ -51,13 +74,20 @@ class MainActivity : ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
 
+            val currentUser by splashViewModel.currentUser.collectAsState()
+
+            LaunchedEffect(currentUser) {
+                if (currentUser != null) {
+                    fetchAndStoreFcmToken()
+                }
+            }
+
             HoloverseTheme(darkTheme = darkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = ComposeColor.Transparent
                 ) {
                     val navController = rememberNavController()
-                    val currentUser by splashViewModel.currentUser.collectAsState()
                     
                     AppNavHost(
                         navController = navController,
@@ -66,6 +96,31 @@ class MainActivity : ComponentActivity() {
                         darkTheme = darkTheme
                     )
 
+                }
+            }
+        }
+    }
+
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                fetchAndStoreFcmToken()
+            }
+        } else {
+            fetchAndStoreFcmToken()
+        }
+    }
+
+    private fun fetchAndStoreFcmToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                CoroutineScope(Dispatchers.IO).launch {
+                    authRepository.updateFcmToken(token)
                 }
             }
         }

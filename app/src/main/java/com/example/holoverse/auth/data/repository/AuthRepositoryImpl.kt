@@ -224,4 +224,46 @@ class AuthRepositoryImpl @Inject constructor(
         // Implementation for general update logic if needed
         return true
     }
+
+    override suspend fun updateFcmToken(token: String): Response<Boolean> {
+        return try {
+            val userId = firebaseAuth.currentUser?.uid ?: return Response.Error("User not authenticated")
+            
+            // Try updating in students collection
+            val studentRef = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId)
+            val studentDoc = studentRef.get().await()
+            if (studentDoc.exists()) {
+                studentRef.update("fcmToken", token).await()
+                return Response.Success(true)
+            }
+
+            // Try updating in mentors collection
+            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(userId)
+            val mentorDoc = mentorRef.get().await()
+            if (mentorDoc.exists()) {
+                mentorRef.update("fcmToken", token).await()
+                return Response.Success(true)
+            }
+
+            Response.Error("User document not found")
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Failed to update FCM token")
+        }
+    }
+
+    override suspend fun getFcmToken(userId: String): String? {
+        return try {
+            // Check students
+            val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId).get().await()
+            if (studentDoc.exists()) return studentDoc.getString("fcmToken")
+
+            // Check mentors
+            val mentorDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(userId).get().await()
+            if (mentorDoc.exists()) return mentorDoc.getString("fcmToken")
+
+            null
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

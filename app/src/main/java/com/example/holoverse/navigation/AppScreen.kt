@@ -41,6 +41,9 @@ sealed interface AppDestination {
     data object Category : AppDestination
 
     @Serializable
+    data class CategoryCourses(val categoryName: String) : AppDestination
+
+    @Serializable
     data object Mentor : AppDestination
 
     @Serializable
@@ -60,4 +63,9 @@ sealed interface AppDestination {
     @Serializable
     data object TermsAndConditions : AppDestination
 
+    @Serializable
+    data object InviteFriends : AppDestination
+
+    @Serializable
+    data class CourseDetail(val courseId: String) : AppDestination
 }

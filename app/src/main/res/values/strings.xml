@@ -66,6 +66,7 @@
     <string name="terms_conditions">Terms &amp; Conditions</string>
     <string name="help_center">Help Center</string>
     <string name="invite_friends">Invite Friends</string>
+    <string name="invite_message">Join me on Holoverse! Download the app now and start learning. https://holoverse.example.com</string>
     <string name="logout">Logout</string>
 
     <!-- Languages -->
@@ -74,4 +75,22 @@
     <string name="spanish">Spanish</string>
     <string name="italian">Italian</string>
     <string name="device_language">Device Language</string>
+
+    <!-- Category Screen -->
+    <string name="all_categories">All Categories</string>
+    <string name="search_for">Search for...</string>
+    <string name="back">Back</string>
+    <string name="search_icon">Search Icon</string>
+    <string name="category_3d_design">3D Design</string>
+    <string name="category_graphic_design">Graphic Design</string>
+    <string name="category_web_development">Web Development</string>
+    <string name="category_seo_marketing">SEO &amp; Marketing</string>
+    <string name="category_finance_accounting">Finance &amp; Accounting</string>
+    <string name="category_personal_development">Personal Development</string>
+    <string name="category_office_productivity">Office Productivity</string>
+    <string name="category_hr_management">HR Management</string>
+
+    <!-- Home Tabs -->
+    <string name="tab_explore">Explore</string>
+    <string name="tab_your_courses">Your Courses</string>
 </resources>

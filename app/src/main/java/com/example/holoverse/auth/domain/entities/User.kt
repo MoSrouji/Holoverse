@@ -8,6 +8,7 @@ sealed interface User {
     val fullName: String?
     val email: String?
     val accountType: UserType
+    val fcmToken: String?
 
     @Serializable
     data class Student(
@@ -15,6 +16,7 @@ sealed interface User {
         override val fullName: String? = null,
         override val email: String? = null,
         override val accountType: UserType = UserType.Student,
+        override val fcmToken: String? = null,
 
         // Personal Information
         val profileImageUrl: String? = null,
@@ -61,6 +63,7 @@ sealed interface User {
         override val fullName: String? = null,
         override val email: String? = null,
         override val accountType: UserType = UserType.Mentor,
+        override val fcmToken: String? = null,
 
         // Personal Information
         val dateOfBirth: String? = null,

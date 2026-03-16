@@ -58,4 +58,22 @@
     <string name="spanish">الإسبانية</string>
     <string name="italian">الإيطالية</string>
     <string name="device_language">لغة الجهاز</string>
+
+    <!-- Category Screen -->
+    <string name="all_categories">جميع التصنيفات</string>
+    <string name="search_for">البحث عن...</string>
+    <string name="back">رجوع</string>
+    <string name="search_icon">أيقونة البحث</string>
+    <string name="category_3d_design">تصميم ثلاثي الأبعاد</string>
+    <string name="category_graphic_design">تصميم جرافيك</string>
+    <string name="category_web_development">تطوير الويب</string>
+    <string name="category_seo_marketing">سيو وتسويق</string>
+    <string name="category_finance_accounting">المالية والمحاسبة</string>
+    <string name="category_personal_development">التطوير الشخصي</string>
+    <string name="category_office_productivity">الإنتاجية المكتبية</string>
+    <string name="category_hr_management">إدارة الموارد البشرية</string>
+
+    <!-- Home Tabs -->
+    <string name="tab_explore">استكشاف</string>
+    <string name="tab_your_courses">دوراتك</string>
 </resources>

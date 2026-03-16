@@ -1,6 +1,6 @@
 [versions]
 adaptiveAndroid = "1.2.0"
-agp = "9.0.1"
+agp = "9.1.0"
 coilCompose = "3.3.0"
 cloudinaryAndroid = "3.1.2"
 coreSplashscreen = "1.2.0"
@@ -53,6 +53,7 @@ androidx-hilt-navigation = { module = "androidx.hilt:hilt-navigation", version.r
 androidx-navigationevent = { module = "androidx.navigationevent:navigationevent", version.ref = "navigationevent" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiTooling" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }

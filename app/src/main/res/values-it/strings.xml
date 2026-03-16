@@ -59,4 +59,8 @@
     <string name="spanish">Spagnolo</string>
     <string name="italian">Italiano</string>
     <string name="device_language">Lingua del dispositivo</string>
+
+    <!-- Home Tabs -->
+    <string name="tab_explore">Esplora</string>
+    <string name="tab_your_courses">I Tuoi Corsi</string>
 </resources>

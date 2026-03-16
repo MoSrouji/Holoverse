@@ -1,5 +1,6 @@
 package com.example.holoverse.ui.commonPart.profile
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.GppGood
@@ -80,6 +82,8 @@ data class ProfileItemData(
     val icon: ImageVector,
     val title: String,
     val endText: String? = null,
+    val titleColor: Color = Color.Unspecified,
+    val iconColor: Color = Color.Gray,
     val onClick: () -> Unit = {}
 )
 
@@ -94,6 +98,14 @@ fun ProfileScreen(
     
     LaunchedEffect(Unit) {
         viewModel.updateLanguageName(context)
+    }
+
+    LaunchedEffect(uiState.isSignedOut) {
+        if (uiState.isSignedOut) {
+            navController.navigateTo(AppDestination.AuthGraph) {
+                popUpTo(AppDestination.HomeGraph) { inclusive = true }
+            }
+        }
     }
 
     var showLanguageSheet by remember { mutableStateOf(false) }
@@ -125,7 +137,26 @@ fun ProfileScreen(
             onClick = { navController.navigateTo(AppDestination.TermsAndConditions) }
         ),
         ProfileItemData(Icons.AutoMirrored.Filled.HelpOutline, stringResource(R.string.help_center)),
-        ProfileItemData(Icons.AutoMirrored.Filled.Message, stringResource(R.string.invite_friends)),
+        ProfileItemData(
+            Icons.AutoMirrored.Filled.Message, 
+            stringResource(R.string.invite_friends),
+            onClick = {
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, context.getString(R.string.invite_message))
+                    type = "text/plain"
+                }
+                val shareIntent = Intent.createChooser(sendIntent, null)
+                context.startActivity(shareIntent)
+            }
+        ),
+        ProfileItemData(
+            Icons.AutoMirrored.Filled.Logout,
+            stringResource(R.string.logout),
+            titleColor = Color.Red,
+            iconColor = Color.Red,
+            onClick = { viewModel.signOut() }
+        ),
     )
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -261,8 +292,9 @@ fun ProfileScreen(
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    Column {
-                        profileItems.forEachIndexed { index, item ->
+                    LazyColumn {
+                        items(profileItems.size) { index ->
+                            val item = profileItems[index]
                             ProfileItem(item = item)
                             if (index < profileItems.lastIndex) {
                                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
@@ -436,13 +468,14 @@ fun ProfileItem(item: ProfileItemData) {
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(item.icon, contentDescription = item.title, tint = Color.Gray)
+        Icon(item.icon, contentDescription = item.title, tint = item.iconColor)
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             item.title,
             modifier = Modifier.weight(1f),
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            color = item.titleColor
         )
         item.endText?.let {
             Text(it, color = Color(0xFF007AFF), fontWeight = FontWeight.SemiBold)

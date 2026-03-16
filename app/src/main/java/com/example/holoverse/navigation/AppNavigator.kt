@@ -20,7 +20,10 @@ class AppNavigator @Inject constructor() {
         destination: T,
         builder: NavOptionsBuilder.() -> Unit = {}
     ) {
-        navController.navigate(destination, builder)
+        navController.navigate(destination) {
+            launchSingleTop = true
+            builder()
+        }
     }
 
     fun navigateAndPopUpTo(
@@ -29,6 +32,7 @@ class AppNavigator @Inject constructor() {
         inclusive: Boolean = false
     ) {
         navController.navigate(destination) {
+            launchSingleTop = true
             popUpTo(popUpTo) {
                 this.inclusive = inclusive
             }

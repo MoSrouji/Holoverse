@@ -1,6 +1,7 @@
 package com.example.holoverse.ui.home.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,12 +34,14 @@ import com.example.holoverse.courses.domain.Courses
 @Composable
 fun CourseCard(
     course: Courses,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = modifier
             .height(240.dp)
-            .width(280.dp),
+            .width(280.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(20.dp)
     ) {
         Column {

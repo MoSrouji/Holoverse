@@ -1,6 +1,7 @@
 package com.example.holoverse.ui.transaction
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,21 +19,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
+import com.example.holoverse.ui.theme.BorderWhite
+import com.example.holoverse.ui.theme.GlassWhite
+import com.example.holoverse.ui.theme.HoloCyan
+import com.example.holoverse.ui.theme.HoloPurple
 import com.example.holoverse.ui.theme.IbarraNovaFont
-import com.example.holoverse.ui.theme.primaryLight
-import com.example.holoverse.ui.theme.secondaryLight
+import com.example.holoverse.ui.theme.ColorPlatinum
+import com.example.holoverse.ui.theme.HoloverseTheme
 
 data class TransactionItem(
     val title: String,
     val category: String,
     val status: String,
 )
-@Preview
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionScreen(
-    onBackClick: () -> Unit = {},
-    onSearchClick: () -> Unit = {}
+    appNavigator: AppNavigator
 ) {
     val transactions = listOf(
         TransactionItem("Build Personal Branding", "Web Designer", "Paid"),
@@ -42,56 +48,61 @@ fun TransactionScreen(
         TransactionItem("Sharing Work with Team", "Finance & Accounting", "Paid")
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Transactions",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontFamily = IbarraNovaFont,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp
+    Box(modifier = Modifier.fillMaxSize()) {
+      //  SpatialBackground()
+        
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "Transactions",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = IbarraNovaFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 24.sp,
+                                color = Color.White
+                            )
                         )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { appNavigator.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { /* TODO */ }) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        navigationIconContentColor = Color.White,
+                        titleContentColor = Color.White,
+                        actionIconContentColor = Color.White
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onSearchClick) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
                 )
-            )
-        },
-        containerColor = Color(0xFFF8FAFC)
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
-        ) {
-            items(transactions) { transaction ->
-                TransactionCard(transaction)
-                Spacer(modifier = Modifier.height(20.dp))
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = Color.LightGray.copy(alpha = 0.3f)
-                )
-                Spacer(modifier = Modifier.height(20.dp))
+            },
+            containerColor = Color.Transparent
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(transactions) { transaction ->
+                    TransactionCard(transaction)
+                }
             }
         }
     }
@@ -100,15 +111,21 @@ fun TransactionScreen(
 @Composable
 fun TransactionCard(transaction: TransactionItem) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(GlassWhite)
+            .border(1.dp, BorderWhite, RoundedCornerShape(24.dp))
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Thumbnail Image Placeholder
         Box(
             modifier = Modifier
-                .size(85.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.Black)
+                .size(70.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.Black.copy(alpha = 0.5f))
+                .border(1.dp, BorderWhite, RoundedCornerShape(16.dp))
         )
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -123,36 +140,36 @@ fun TransactionCard(transaction: TransactionItem) {
                     fontFamily = IbarraNovaFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = Color(0xFF1B1B21)
+                    color = Color.White
                 )
             )
             Text(
                 text = transaction.category,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontFamily = IbarraNovaFont,
-                    color = Color.Gray,
+                    color = ColorPlatinum.copy(alpha = 0.7f),
                     fontSize = 14.sp
                 )
             )
             
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Status Badge
-            val badgeColor = if (transaction.status == "Paid") {
-                secondaryLight // Teal
+            val (badgeColor, textColor) = if (transaction.status == "Paid") {
+                HoloPurple to Color.White
             } else {
-                primaryLight // Received on primary color
+                HoloCyan to Color.Black
             }
 
             Surface(
                 color = badgeColor,
-                shape = RoundedCornerShape(4.dp)
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     text = transaction.status,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color.White,
+                        color = textColor,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -160,3 +177,13 @@ fun TransactionCard(transaction: TransactionItem) {
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun TransactionScreenPreview() {
+    HoloverseTheme(darkTheme = true ) {
+        TransactionScreen(appNavigator = AppNavigator())
+
+    }
+}
+

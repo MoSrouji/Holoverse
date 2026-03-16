@@ -1,18 +1,22 @@
 package com.example.holoverse.ui.home.component
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -26,10 +30,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.holoverse.ui.theme.HoloCyan
+import com.example.holoverse.ui.theme.HoloPurple
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.utils.GlassCard
 import kotlinx.coroutines.delay
@@ -105,24 +113,37 @@ fun CarouselAdds() {
 @Preview
 fun CarouselAddsCards(text: String = " Enter\nAR Lab") {
     //HoloverseTheme() {
-        GlassCard(
-            modifier = Modifier
-                .height(160.dp)
-                .width(320.dp),
-            color = MaterialTheme.colorScheme.primaryFixedDim,
-            onClick = {},
-            enable = true
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = text,
-                    color = MaterialTheme.colorScheme.onPrimaryFixed,
-                    fontWeight = FontWeight.Bold
+//        GlassCard(
+//            modifier = Modifier
+//                .height(160.dp)
+//                .width(320.dp),
+//            color = MaterialTheme.colorScheme.primaryFixedDim,
+//            onClick = {},
+//            enable = true
+//        )
+    Box(
+        modifier = Modifier.clip(
+            shape = RoundedCornerShape(12.dp)
+        )
+            .height(160.dp)
+            .width(320.dp)
+            .background(
+                Brush.verticalGradient(
+                    listOf(HoloPurple.copy(alpha = 0.7f),
+                        HoloCyan.copy(alpha = 0.7f))
                 )
-            }
+            )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = text,
+                color = MaterialTheme.colorScheme.onPrimaryFixed,
+                fontWeight = FontWeight.Bold
+            )
         }
-   // }
+    }
+    // }
 
 }

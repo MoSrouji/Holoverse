@@ -1,6 +1,8 @@
 package com.example.holoverse.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -8,54 +10,62 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.holoverse.R
-import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.navigation.AppDestination
+import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.home.component.CarouselAdds
 import com.example.holoverse.ui.home.component.CourseCard
-import com.example.holoverse.ui.home.component.SearchBarSampleV2
+import com.example.holoverse.ui.home.component.FabMenuItem
+import com.example.holoverse.ui.home.component.FloatingActionButtonMenu
+import com.example.holoverse.ui.home.component.HomeSearchBar
 import com.example.holoverse.ui.home.component.SubTitle
 import com.example.holoverse.ui.home.component.TeacherCard
 import com.example.holoverse.ui.home.component.TextListButton
 import com.example.holoverse.ui.home.component.TextListTextButton
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloverseTheme
-import com.example.holoverse.utils.PreferenceManager
+import java.util.Calendar
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    navController: NavController = rememberNavController(),
+    appNavigator: AppNavigator,
     viewModel: HomeViewModel = hiltViewModel(),
     onCategoryClick: () -> Unit,
     onPopularCoursesClick: () -> Unit,
@@ -63,191 +73,259 @@ fun HomeScreen(
     darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    var isFabVisible by remember { mutableStateOf(true) }
 
-    PullToRefreshBox(
-        isRefreshing = uiState.isLoading,
-        onRefresh = { viewModel.onRefresh() },
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Box(
+    // Logic to hide/show FAB on scroll
+    var lastScrollValue by remember { mutableStateOf(0) }
+    LaunchedEffect(scrollState) {
+        snapshotFlow { scrollState.value }.collect { currentScroll ->
+            if (currentScroll > lastScrollValue + 10) {
+                isFabVisible = false
+            } else if (currentScroll < lastScrollValue - 10) {
+                isFabVisible = true
+            }
+            lastScrollValue = currentScroll
+        }
+    }
+
+    val fabMenuItems = listOf(
+        FabMenuItem("Create Course", Icons.Default.Add) {
+            appNavigator.navigateTo(AppDestination.CreateCourse)
+        },
+        FabMenuItem("Analytics", Icons.Default.Analytics) {
+            /* Navigate to Analytics */
+        },
+        FabMenuItem("Students", Icons.Default.Groups) {
+            /* Navigate to Students List */
+        },
+        FabMenuItem("Messages", Icons.Default.Chat) {
+            appNavigator.navigateTo(AppDestination.ChatScreen)
+        },
+        FabMenuItem("Announcements", Icons.Default.Campaign) {
+            /* Open Announcement Dialog */
+        }
+    )
+
+    Scaffold(
+        floatingActionButton = {
+            if (uiState.currentUser?.accountType == UserType.Mentor) {
+                FloatingActionButtonMenu(
+                    visible = isFabVisible,
+                    items = fabMenuItems
+                )
+            }
+        }
+    ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = uiState.isLoading,
+            onRefresh = { viewModel.onRefresh() },
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    color = MaterialTheme.colorScheme.background
-                )
+                .padding(innerPadding)
         ) {
-
-            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+            ) {
+                // Top Header Section
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(
-                            RoundedCornerShape(
-                                topStartPercent = 0,
-                                topEndPercent = 0,
-                                bottomEndPercent = 7,
-                                bottomStartPercent = 7
-                            )
-                        )
-                        .fillMaxHeight(0.45f)
-
+                        .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                        .background(MaterialTheme.colorScheme.surface)
                 ) {
                     SpatialBackground(
+                        modifier = Modifier.matchParentSize(),
                         darkTheme = !darkTheme
                     )
+                    
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(12.dp)
+                            .fillMaxWidth()
+                            .padding(24.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = if (uiState.isLoading) {
-                                    "...."
-                                } else {
-                                    "Hello Mr ${uiState.currentUser?.fullName ?: "Error"}"
-
-                                },
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            Column {
+                                Text(
+                                    text = getGreeting(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                                Text(
+                                    text = uiState.currentUser?.fullName ?: "Guest",
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = (-0.5).sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            
                             IconButton(
-                                onClick = {}
+                                onClick = { /* Navigate to Notifications */ },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                )
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.NotificationsNone,
                                     contentDescription = "Notifications",
-                                    modifier = Modifier.size(36.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
-
-
                         }
-                        Text(
-                            text = "What Would You Like To Learn Today ?",
-                            style = MaterialTheme.typography.bodyLarge,
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        HomeSearchBar(
+                            onSearchClick = { appNavigator.navigateTo(AppDestination.Search) }
                         )
-                        Text(
-                            text = "Search Below",
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Spacer(modifier = Modifier.padding(bottom = 20.dp))
-
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            SearchBarSampleV2()
-                            Spacer(modifier = Modifier.padding(bottom = 8.dp))
-                            CarouselAdds()
-                        }
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        CarouselAdds()
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
 
-
-                Scaffold(
-
-
-                    floatingActionButton = {
-                        AnimatedVisibility(visible = uiState.currentUser?.accountType == UserType.Mentor) {
-                            ExtendedFloatingActionButton(
-                                onClick = { navController.navigate(AppDestination.CreateCourse) },
-                                icon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                text = { Text(text = "Create New Course") },
-                                containerColor = MaterialTheme.colorScheme.secondary,
-                                contentColor = MaterialTheme.colorScheme.background
+                // Main Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 100.dp) // Space for FAB
+                ) {
+                    if (uiState.error != null) {
+                        Card(
+                            modifier = Modifier.padding(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                        ) {
+                            Text(
+                                text = uiState.error!!,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(16.dp),
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
 
-
-                ) {
-                    Column(
+                    // Tab Toggle for Explore and Your Courses
+                    Row(
                         modifier = Modifier
-                            .padding(it)
-                            .verticalScroll(
-                                state = rememberScrollState()
-                            ),
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 20.dp),
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        if (uiState.isLoading) {
-                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                        }
-
-                        if (uiState.error != null) {
-                            Text(
-                                text = uiState.error!!,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.padding(bottom = 20.dp))
-                        SubTitle(
-                            text = R.string.Categories,
-                            onSubTitleButtonClick = onCategoryClick
-                        )
-                        TextListButton()
-
-                        SubTitle(
-                            text = R.string.popular_Courses,
-                            onSubTitleButtonClick = onPopularCoursesClick
-                        )
-                        TextListTextButton()
-                        Spacer(modifier = Modifier.padding(bottom = 8.dp))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 8.dp)
-                                .horizontalScroll(
-                                    state = rememberScrollState()
-                                ),
-                            horizontalArrangement = Arrangement.spacedBy(15.dp)
+                        SingleChoiceSegmentedButtonRow(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            if (uiState.courses.isEmpty() && !uiState.isLoading) {
-                                Text(
-                                    text = "No courses available",
-                                    modifier = Modifier.padding(16.dp)
+                            val commonShape = RoundedCornerShape(12.dp)
+                            SegmentedButton(
+                                selected = uiState.selectedTab == HomeTab.Explore,
+                                onClick = { viewModel.onTabSelected(HomeTab.Explore) },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = 0,
+                                    count = 2,
+                                    baseShape = commonShape
+                                ),
+                                icon = {},
+                                colors = SegmentedButtonDefaults.colors(
+                                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 )
-                            } else {
-                                uiState.courses.forEach { course ->
-                                    CourseCard(
-                                        course = course,
-                                        modifier = Modifier.padding(start = 7.dp)
-                                    )
-                                }
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.tab_explore),
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                                )
+                            }
+                            SegmentedButton(
+                                selected = uiState.selectedTab == HomeTab.YourCourses,
+                                onClick = { viewModel.onTabSelected(HomeTab.YourCourses) },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = 1,
+                                    count = 2,
+                                    baseShape = commonShape
+                                ),
+                                icon = {},
+                                colors = SegmentedButtonDefaults.colors(
+                                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.tab_your_courses),
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                                )
                             }
                         }
+                    }
 
-                        SubTitle(
-                            text = R.string.top_Mentor,
-                            onSubTitleButtonClick = onTopMentorClick
-                        )
-                        Row(
+                    AnimatedVisibility(
+                        visible = uiState.selectedTab == HomeTab.Explore,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        Column {
+                            SectionHeader(
+                                titleId = R.string.Categories,
+                                onClick = onCategoryClick
+                            )
+                            TextListButton()
+
+                            SectionHeader(
+                                titleId = R.string.popular_Courses,
+                                onClick = onPopularCoursesClick
+                            )
+                            TextListTextButton()
+                            
+                            HorizontalCourseList(
+                                courses = uiState.courses, 
+                                isLoading = uiState.isLoading,
+                                onCourseClick = { course ->
+                                    appNavigator.navigateTo(AppDestination.CourseDetail(course.id))
+                                }
+                            )
+
+                            SectionHeader(
+                                titleId = R.string.top_Mentor,
+                                onClick = onTopMentorClick
+                            )
+                            HorizontalMentorList(mentors = uiState.mentors, isLoading = uiState.isLoading)
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = uiState.selectedTab == HomeTab.YourCourses,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 8.dp)
-                                .horizontalScroll(
-                                    state = rememberScrollState()
-                                ),
-                            horizontalArrangement = Arrangement.spacedBy(15.dp)
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            if (uiState.mentors.isEmpty() && !uiState.isLoading) {
-                                Text(
-                                    text = "No mentors available",
-                                    modifier = Modifier.padding(16.dp)
-                                )
-                            } else {
-                                uiState.mentors.forEach { mentor ->
-                                    TeacherCard(
-                                        mentor = mentor,
-                                        modifier = Modifier.padding(start = 7.dp)
-                                    )
-                                }
+                            Text(
+                                text = "Ongoing Learning",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            EmptyStateText("You haven't enrolled in any courses yet.")
+                            Button(
+                                onClick = { viewModel.onTabSelected(HomeTab.Explore) },
+                                modifier = Modifier.padding(top = 16.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Start Exploring")
                             }
                         }
                     }
@@ -258,10 +336,87 @@ fun HomeScreen(
 }
 
 @Composable
+fun SectionHeader(titleId: Int, onClick: () -> Unit) {
+    SubTitle(
+        text = titleId,
+        onSubTitleButtonClick = onClick
+    )
+}
+
+@Composable
+fun HorizontalCourseList(
+    courses: List<com.example.holoverse.courses.domain.Courses>, 
+    isLoading: Boolean,
+    onCourseClick: (com.example.holoverse.courses.domain.Courses) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (courses.isEmpty() && !isLoading) {
+            EmptyStateText("No courses available yet")
+        } else {
+            courses.forEach { course ->
+                CourseCard(
+                    course = course,
+                    onClick = { onCourseClick(course) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun HorizontalMentorList(mentors: List<com.example.holoverse.auth.domain.entities.User.Mentor>, isLoading: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (mentors.isEmpty() && !isLoading) {
+            EmptyStateText("No mentors found")
+        } else {
+            mentors.forEach { mentor ->
+                TeacherCard(mentor = mentor)
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyStateText(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(vertical = 24.dp)
+    )
+}
+
+private fun getGreeting(): String {
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    return when (hour) {
+        in 0..11 -> "Good Morning"
+        in 12..16 -> "Good Afternoon"
+        else -> "Good Evening"
+    }
+}
+
+@Composable
 @Preview
 fun HomeScreenPreview() {
     HoloverseTheme(darkTheme = true) {
-        // Preview with default parameters (hiltViewModel won't work in preview without more setup)
-        // You might want to create a stateless version for better previewing
+        HomeScreen(
+            appNavigator = AppNavigator(),
+            onCategoryClick = {},
+            onPopularCoursesClick = {},
+            onTopMentorClick = {},
+            darkTheme = true
+        )
     }
 }

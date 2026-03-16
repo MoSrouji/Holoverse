@@ -16,10 +16,11 @@ class CloudinaryRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : CloudinaryRepository {
 
-    override suspend fun uploadPhoto(fileUri: Uri): Result<String> {
+    override suspend fun uploadFile(fileUri: Uri): Result<String> {
         return suspendCancellableCoroutine { continuation ->
             MediaManager.get().upload(fileUri)
                 .unsigned("ml_default")
+                .option("resource_type", "auto")
                 .callback(object : UploadCallback {
                     override fun onStart(requestId: String?) {
                         Log.d("Cloudinary", "Upload started")

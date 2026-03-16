@@ -9,4 +9,5 @@ interface CourseRepo {
     suspend fun deleteCourse(course: Courses): Flow<Response<Boolean>>
     suspend fun updateCourse(course: Courses): Flow<Response<Boolean>>
     suspend fun getCourseById(courseId: String): Flow<Response<Courses?>>
+    suspend fun getCoursesByCategory(category: String): Flow<Response<List<Courses>>>
 }

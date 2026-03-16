@@ -8,5 +8,6 @@ data class Message(
     val senderName: String = "",
     val senderType: String = "", // "Student" or "Mentor"
     val text: String = "",
+    val audioUrl: String? = null,
     val timestamp: Timestamp? = null
 )

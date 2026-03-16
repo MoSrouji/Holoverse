@@ -14,11 +14,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class HomeTab {
+    Explore, YourCourses
+}
+
 data class HomeUiState(
     val isLoading: Boolean = false,
     val currentUser: User? = null,
     val courses: List<Courses> = emptyList(),
     val mentors: List<User.Mentor> = emptyList(),
+    val selectedTab: HomeTab = HomeTab.Explore,
     val error: String? = null
 )
 
@@ -67,5 +72,9 @@ class HomeViewModel @Inject constructor(
 
     fun onRefresh() {
         fetchHomeData(forceRefresh = true)
+    }
+
+    fun onTabSelected(tab: HomeTab) {
+        _uiState.update { it.copy(selectedTab = tab) }
     }
 }

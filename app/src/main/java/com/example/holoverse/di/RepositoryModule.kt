@@ -2,6 +2,8 @@ package com.example.holoverse.di
 
 import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.data.CourseRepoImpl
+import com.example.holoverse.search.data.repository.SearchRepositoryImpl
+import com.example.holoverse.search.domain.repository.SearchRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
@@ -13,11 +15,15 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
-   
-
     @Provides
     @Singleton
     fun provideCourseRepo(firestore: FirebaseFirestore): CourseRepo {
         return CourseRepoImpl(firestore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSearchRepository(firestore: FirebaseFirestore): SearchRepository {
+        return SearchRepositoryImpl(firestore)
     }
 }

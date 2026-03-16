@@ -63,6 +63,15 @@ android {
     buildFeatures {
         compose = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Needed for Google Auth library
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/INDEX.LIST"
+        }
+    }
 }
 
 dependencies {
@@ -119,12 +128,16 @@ dependencies {
     // Database and Persistence
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore)
 
     // UI Tools and Utilities
     implementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.cloudinary.android)
+
+    // FCM V1 Auth
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
 
     // Testing
     testImplementation(libs.junit)

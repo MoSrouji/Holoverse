@@ -1,5 +1,11 @@
 package com.example.holoverse.ui.studentPart.popularCourses
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,16 +27,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -45,82 +57,210 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.example.holoverse.R
+import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.theme.HoloverseTheme
-
-data class Course(
-    val category: String,
-    val title: String,
-    val newPrice: Int,
-    val oldPrice: Int,
-    val rating: Float,
-    val students: String,
-)
+import com.example.holoverse.ui.theme.IbarraNovaFont
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PopularCoursesScreen() {
     val courses = remember {
         listOf(
-            Course("Graphic Design", "Graphic Design Advanced", 28, 42, 4.2f, "7830 Std"),
-            Course("Graphic Design", "Advertisement Design", 42, 61, 3.9f, "12680 Std"),
-            Course("Programming", "Graphic Design Advanced", 37, 41, 4.2f, "990 Std"),
-            Course("Web Development", "Web Developer conce..", 56, 71, 4.9f, "14580 Std"),
-            Course("SEO & Marketing", "Digital Marketing...", 45, 60, 4.8f, "10230 Std")
+            Courses(
+                id = "1",
+                category = "Graphic Design",
+                name = "Graphic Design Advanced",
+                price = 28.0,
+                rating = 4.2,
+                numEnrolled = 7830,
+                numReviews = 120,
+                imageUrl = "https://img.freepik.com/free-vector/gradient-graphic-design-landing-page_23-2149132514.jpg"
+            ),
+            Courses(
+                id = "2",
+                category = "Graphic Design",
+                name = "Advertisement Design",
+                price = 42.0,
+                rating = 3.9,
+                numEnrolled = 12680,
+                numReviews = 450,
+                imageUrl = "https://img.freepik.com/free-psd/digital-marketing-agency-corporate-web-banner-template_120329-3113.jpg"
+            ),
+            Courses(
+                id = "3",
+                category = "Programming",
+                name = "Kotlin for Beginners",
+                price = 37.0,
+                rating = 4.8,
+                numEnrolled = 990,
+                numReviews = 85,
+                imageUrl = "https://img.freepik.com/free-vector/software-development-programming-coding-concept_53876-120902.jpg"
+            ),
+            Courses(
+                id = "4",
+                category = "Web Development",
+                name = "Web Developer concepts",
+                price = 56.0,
+                rating = 4.9,
+                numEnrolled = 14580,
+                numReviews = 1200,
+                imageUrl = "https://img.freepik.com/free-vector/web-development-programmer-engineering-and-coding-website-on-augmented-reality-interface-screens-developer-project-engineer-programming-software-application-design-concept-flat-illustration_107791-3863.jpg"
+            ),
+            Courses(
+                id = "5",
+                category = "SEO & Marketing",
+                name = "Digital Marketing Masterclass",
+                price = 45.0,
+                rating = 4.8,
+                numEnrolled = 10230,
+                numReviews = 890,
+                imageUrl = "https://img.freepik.com/free-vector/digital-marketing-concept-illustration_114360-3918.jpg"
+            )
         )
     }
 
-    val categories = listOf("All", "Graphic Design", "3D Design", "Arts & Design", "Programming")
+    val categories = listOf("All", "Graphic Design", "3D Design", "Programming", "Web Development")
     var selectedCategory by remember { mutableStateOf("All") }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredCourses = courses.filter {
+        (selectedCategory == "All" || it.category == selectedCategory) &&
+                (it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(searchQuery, ignoreCase = true))
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Popular Courses", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Popular Courses",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontFamily = IbarraNovaFont,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { /* Handle back */ }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                actions = {
-                    IconButton(onClick = { /* Handle search */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text("Search courses...", style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear",
+                                tint = Color.Gray
+                            )
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(16.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                )
+            )
+
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(categories) { category ->
-                    Chip(
-                        label = category,
-                        isSelected = category == selectedCategory,
-                        onSelected = { selectedCategory = it }
+                    FilterChip(
+                        selected = category == selectedCategory,
+                        onClick = { selectedCategory = category },
+                        label = {
+                            Text(
+                                category,
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = if (category == selectedCategory) FontWeight.Bold else FontWeight.Medium
+                                )
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        border = null,
+                        shape = RoundedCornerShape(24.dp)
                     )
                 }
             }
 
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(courses) { course ->
-                    CourseItem(course = course)
+                Text(
+                    text = if (searchQuery.isEmpty()) "Showing ${filteredCourses.size} courses" else "Search results (${filteredCourses.size})",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            }
+
+            AnimatedContent(
+                targetState = filteredCourses,
+                transitionSpec = {
+                    fadeIn() togetherWith fadeOut()
+                }, label = ""
+            ) { coursesToShow ->
+                if (coursesToShow.isEmpty()) {
+                    EmptyState()
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(coursesToShow, key = { it.id }) { course ->
+                            CourseItem(course = course)
+                        }
+                    }
                 }
             }
         }
@@ -128,106 +268,170 @@ fun PopularCoursesScreen() {
 }
 
 @Composable
-fun Chip(label: String, isSelected: Boolean, onSelected: (String) -> Unit) {
-    val backgroundColor =
-        if (isSelected) MaterialTheme.colorScheme.secondary else Color.LightGray.copy(alpha = 0.3f)
-    val contentColor = if (isSelected) Color.White else Color.Black.copy(alpha = 0.8f)
-
-    Box(
+fun EmptyState() {
+    Column(
         modifier = Modifier
-            .clip(CircleShape)
-            .background(backgroundColor)
-            .clickable { onSelected(label) }
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Text(text = label, color = contentColor, fontSize = 14.sp)
+        Icon(
+            Icons.Default.Search,
+            contentDescription = null,
+            modifier = Modifier.size(80.dp),
+            tint = Color.LightGray
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "No courses found",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Try adjusting your filters or search query",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
 @Composable
-fun CourseItem(course: Course) {
+fun CourseItem(course: Courses) {
+    var isBookmarked by remember { mutableStateOf(false) }
+
     Card(
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { /* Handle course click */ }
     ) {
         Row(
-            //   modifier = Modifier.padding(12.dp)
+            modifier = Modifier
+                .padding(12.dp)
+                .height(120.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-//            Box(
-//                modifier = Modifier
-//                    .size(110.dp)
-//                    .clip(RoundedCornerShape(12.dp))
-//                    .background(Color.Black)
-//            )
-            Image(
-                painter = painterResource(id = R.drawable._c2a306853c02c630a95ee6d5922a5d0),
-                contentDescription = "Course Image",
+            AsyncImage(
+                model = course.imageUrl,
+                contentDescription = course.name,
                 modifier = Modifier
-                    .width(110.dp)
-                    .height(145.dp),
-                contentScale = ContentScale.Crop
+                    .size(110.dp)
+                    .clip(RoundedCornerShape(16.dp)),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                error = painterResource(R.drawable.istockphoto_1934800957_612x612)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(
                 modifier = Modifier
-                    .padding(12.dp)
-                    .weight(1f)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceEvenly
             ) {
+                Column {
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = course.name,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 20.sp
+                            ),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = { isBookmarked = !isBookmarked },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                                contentDescription = "Bookmark",
+                                tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.LightGray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.padding(2.dp))
+
+                    Text(
+                        text = course.category,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        course.category,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Icon(
-                        Icons.Filled.Bookmark,
-                        contentDescription = "Bookmark",
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(course.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "\$${course.newPrice}",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "\$${course.oldPrice}",
-                        textDecoration = TextDecoration.LineThrough,
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.Star,
                         contentDescription = "Rating",
                         tint = Color(0xFFFFC107),
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(14.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "${course.rating}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = course.rating.toString(),
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = "(${course.numReviews} reviews)",
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                    )
                     Text("|", color = Color.LightGray)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(course.students, fontSize = 12.sp, color = Color.Gray)
+                    Text(
+                        text = "${formatEnrolled(course.numEnrolled)} std",
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "$${course.price}",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Simulated old price for visual effect
+                        Text(
+                            "$${(course.price * 1.25).toInt()}.0",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                textDecoration = TextDecoration.LineThrough,
+                                color = Color.Gray
+                            )
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+private fun formatEnrolled(num: Int): String {
+    return if (num >= 1000) {
+        String.format(Locale.US, "%.1fk", num / 1000.0)
+    } else {
+        num.toString()
     }
 }
 

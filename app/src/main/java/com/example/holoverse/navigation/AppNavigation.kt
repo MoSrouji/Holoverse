@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.ui.category.CategoryCoursesScreen
 import com.example.holoverse.ui.category.CategoryScreen
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signin.SignInScreen
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpScreen
@@ -43,6 +44,7 @@ import androidx.lifecycle.compose.currentStateAsState
 import com.example.holoverse.ui.chat.ChatScreen
 import com.example.holoverse.ui.commonPart.profile.EditProfileScreen
 import com.example.holoverse.ui.commonPart.profile.TermsAndConditionsScreen
+import com.example.holoverse.ui.courseDetail.CourseDetailScreen
 import com.example.holoverse.ui.studentPart.popularCourses.PopularCoursesScreen
 import com.example.holoverse.ui.transaction.TransactionScreen
 
@@ -198,7 +200,7 @@ private fun NavGraphBuilder.homeGraph(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
             HomeScreen(
-                navController = navigator.navController,
+                appNavigator = navigator,
                 onCategoryClick = {
                     navigator.navigateTo(destination = AppDestination.Category)
                 },
@@ -220,12 +222,17 @@ private fun NavGraphBuilder.homeGraph(
         composable<AppDestination.Category>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
-            CategoryScreen()
+            CategoryScreen(appNavigator = navigator)
+        }
+        composable<AppDestination.CategoryCourses>(
+            enterTransition = { NavAnimations.slideInFromRight() }
+        ) {
+            CategoryCoursesScreen(appNavigator = navigator)
         }
         composable<AppDestination.Transactions>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
-            TransactionScreen()
+            TransactionScreen(appNavigator = navigator)
         }
         composable<AppDestination.ChatScreen>(
             enterTransition = { NavAnimations.slideInFromRight() }
@@ -250,15 +257,13 @@ private fun NavGraphBuilder.subGraph(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
             CreateCourseScreen(
-//                onNavigateBack = {
-//                    navigator.popBackStack()
-//                }
+                appNavigator = navigator
             )
         }
         composable<AppDestination.Search>(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
-            SearchScreen()
+            SearchScreen(appNavigator = navigator)
         }
         composable<AppDestination.EditProfile>(
             enterTransition = { NavAnimations.slideInFromRight() }
@@ -269,6 +274,14 @@ private fun NavGraphBuilder.subGraph(
             enterTransition = { NavAnimations.slideInFromRight() }
         ) {
             PopularCoursesScreen()
+        }
+        composable<AppDestination.CourseDetail>(
+            enterTransition = { NavAnimations.slideInFromRight() }
+        ) {
+            CourseDetailScreen(
+                onBackClick = { navigator.popBackStack() },
+                onApplyClick = { /* Handle apply course */ }
+            )
         }
     }
     composable<AppDestination.Mentor>(
