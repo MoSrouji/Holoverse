@@ -127,7 +127,9 @@ class ChatRepositoryImpl @Inject constructor(
         currentUserId: String,
         otherUserId: String,
         currentUserName: String,
-        otherUserName: String
+        otherUserName: String,
+        currentUserImageUrl: String?,
+        otherUserImageUrl: String?
     ): String {
         val participants = listOf(currentUserId, otherUserId).sorted()
         val chatId = participants.joinToString("_")
@@ -136,13 +138,19 @@ class ChatRepositoryImpl @Inject constructor(
         val snapshot = chatRef.get().await()
 
         if (!snapshot.exists()) {
+            val namesMap = mutableMapOf(
+                currentUserId to currentUserName,
+                otherUserId to otherUserName
+            )
+            val imagesMap = mutableMapOf<String, String>()
+            currentUserImageUrl?.let { imagesMap[currentUserId] = it }
+            otherUserImageUrl?.let { imagesMap[otherUserId] = it }
+
             val chatData = Chat(
                 id = chatId,
                 participants = participants,
-                participantNames = mapOf(
-                    currentUserId to currentUserName,
-                    otherUserId to otherUserName
-                )
+                participantNames = namesMap,
+                participantProfileImages = imagesMap
             )
             chatRef.set(chatData).await()
             chatDao.insertChats(listOf(chatData.toEntity()))
@@ -260,7 +268,8 @@ class ChatRepositoryImpl @Inject constructor(
             lastMessageTimestamp = this.lastMessageTimestamp?.seconds ?: 0L,
             lastSenderName = this.lastSenderName,
             lastSenderId = this.lastSenderId,
-            participantNames = this.participantNames
+            participantNames = this.participantNames,
+            participantProfileImages = this.participantProfileImages
         )
     }
 
@@ -272,7 +281,8 @@ class ChatRepositoryImpl @Inject constructor(
             lastMessageTimestamp = if (this.lastMessageTimestamp != 0L) Timestamp(this.lastMessageTimestamp, 0) else null,
             lastSenderName = this.lastSenderName,
             lastSenderId = this.lastSenderId,
-            participantNames = this.participantNames
+            participantNames = this.participantNames,
+            participantProfileImages = this.participantProfileImages
         )
     }
 }

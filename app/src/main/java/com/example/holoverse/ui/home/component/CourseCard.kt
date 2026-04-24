@@ -109,7 +109,7 @@ fun CourseBottomDivider(price: Double, rating: Double, numEnrolled: Int) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "$$price", fontWeight = FontWeight.Bold)
+        Text(text = "$${"%.2f".format(price)}", fontWeight = FontWeight.Bold)
         VerticalDivider(modifier = Modifier.height(16.dp), thickness = 1.dp)
         Text(text = rating.toString())
         VerticalDivider(modifier = Modifier.height(16.dp), thickness = 1.dp)

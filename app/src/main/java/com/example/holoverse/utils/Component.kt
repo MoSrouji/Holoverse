@@ -17,9 +17,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.filled.BrowseGallery
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.PersonOutline
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.ZoomInMap
+import androidx.compose.material.icons.filled.ZoomOutMap
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,9 +48,11 @@ import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.BorderWhite
 import com.example.holoverse.ui.theme.GlassWhite
 
-@Preview
 @Composable
-fun HoloBottomDock(navController: NavController = rememberNavController()) {
+fun HoloBottomDock(
+    navController: NavController = rememberNavController(),
+    darkTheme: Boolean
+) {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -61,11 +67,11 @@ fun HoloBottomDock(navController: NavController = rememberNavController()) {
             modifier = Modifier
                 .height(58.dp),
             cornerRadius = 0.dp,
-            color = Color(0xFF1A1A24),
+            color = if (darkTheme) Color(0xFF1A1A24) else Color(0xFFF5F5F7).copy(alpha = 0.9f),
             onClick = {},
             enable = false
         ) {
-            SpatialBackground()
+            SpatialBackground(isDark = darkTheme)
             Row(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -73,81 +79,105 @@ fun HoloBottomDock(navController: NavController = rememberNavController()) {
             ) {
                 Spacer(modifier = Modifier.padding(5.dp))
 
+                val isCategorySelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.Category>() } == true
                 NavBarItem(
                     icon = Icons.AutoMirrored.Default.ViewList,
-                    isSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.Category>() } == true
+                    isSelected = isCategorySelected,
+                    darkTheme = darkTheme
                 ) {
-                    navController.navigate(AppDestination.Category) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (!isCategorySelected) {
+                        navController.navigate(AppDestination.Category) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.padding(5.dp))
 
+                val isChatSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.ChatList>() } == true
                 NavBarItem(
                     icon = Icons.AutoMirrored.Filled.Message,
-                    isSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.ChatScreen>() } == true
+                    isSelected = isChatSelected,
+                    darkTheme = darkTheme
                 ) {
-                    navController.navigate(AppDestination.ChatScreen) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (!isChatSelected) {
+                        navController.navigate(AppDestination.ChatList) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 }
 
 
                 Spacer(modifier = Modifier.padding(5.dp))
-                
+
+                val isHomeSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.HomeScreen>() } == true
                 NavBarItem(
                     icon = Icons.Default.Home,
-                    isSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.HomeScreen>() } == true,
-                    modifier = Modifier.padding(bottom = 5.dp).size(40.dp)
+                    isSelected = isHomeSelected,
+                    darkTheme = darkTheme,
+                    modifier = Modifier
+                        .padding(bottom = 5.dp)
+                        .size(40.dp)
                 ) {
-                    navController.navigate(AppDestination.HomeScreen) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (!isHomeSelected) {
+                        navController.navigate(AppDestination.HomeScreen) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.padding(5.dp))
-                
+
+                val isGallerySelected = currentDestination?.hierarchy?.any { 
+                    it.hasRoute<AppDestination.GalleryScreen>() || it.hasRoute<AppDestination.ModelGraph>()
+                } == true
                 NavBarItem(
-                    icon = Icons.Default.Payment,
-                    isSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.Transactions>() } == true
+                    icon = Icons.Default.Storefront,
+                    isSelected = isGallerySelected,
+                    darkTheme = darkTheme
                 ) {
-                    navController.navigate(AppDestination.Transactions) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (!isGallerySelected) {
+                        navController.navigate(AppDestination.ModelGraph) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.padding(5.dp))
-                
+
+                val isProfileSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.Profile>() } == true
                 NavBarItem(
                     icon = Icons.Default.PersonOutline,
-                    isSelected = currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.Profile>() } == true
+                    isSelected = isProfileSelected,
+                    darkTheme = darkTheme
                 ) {
-                    navController.navigate(AppDestination.Profile) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (!isProfileSelected) {
+                        navController.navigate(AppDestination.Profile) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.padding(5.dp))
             }
         }
@@ -159,9 +189,14 @@ fun NavBarItem(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     isSelected: Boolean,
+    darkTheme: Boolean,
     onClick: () -> Unit,
 ) {
-    val color = if (isSelected) MaterialTheme.colorScheme.secondary else Color.DarkGray.copy(alpha = 0.6f)
+    val color = if (isSelected) {
+        MaterialTheme.colorScheme.secondary
+    } else {
+        if (darkTheme) Color.White.copy(alpha = 0.4f) else Color.Black.copy(alpha = 0.4f)
+    }
 
     IconButton(onClick = onClick) {
         Icon(

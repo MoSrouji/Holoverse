@@ -46,7 +46,8 @@ fun TeacherProfessionalInfoInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: TeacherProfessionalViewModel = hiltViewModel(),
-    mentorStates: MutableStateFlow<User.Mentor>
+    mentorStates: MutableStateFlow<User.Mentor>,
+    darkTheme: Boolean
 ) {
     val yearsItems = listOf("0", "+1", "+4", "+8", "+10")
     val languageItems = listOf("Arabic", "English", "France", "Italy", "Spain")
@@ -106,7 +107,6 @@ fun TeacherProfessionalInfoInput(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        SpatialBackground()
         Column(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,

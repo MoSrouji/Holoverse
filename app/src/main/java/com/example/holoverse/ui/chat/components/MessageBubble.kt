@@ -91,9 +91,8 @@ fun SendingVoiceBubble() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = Color.White,
-                    strokeWidth = 2.dp
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(

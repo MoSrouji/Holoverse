@@ -12,5 +12,6 @@ data class ChatEntity(
     val lastMessageTimestamp: Long,
     val lastSenderName: String,
     val lastSenderId: String,
-    val participantNames: Map<String, String>
+    val participantNames: Map<String, String>,
+    val participantProfileImages: Map<String, String>
 )

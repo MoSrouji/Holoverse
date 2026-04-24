@@ -1,5 +1,6 @@
 package com.example.holoverse.auth.data.repository
 
+import android.util.Log
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
@@ -8,6 +9,7 @@ import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -145,13 +147,19 @@ class AuthRepositoryImpl @Inject constructor(
                     mentor.universityAttended?.let { put("universityAttended", it) }
                     mentor.graduationYear?.let { put("graduationYear", it) }
                     mentor.additionalQualifications?.let { put("additionalQualifications", it) }
+                    mentor.profileImageUrl?.let { put("profileImageUrl", it) }
                 }
 
                 teacherDoc.update(updateData).await()
+                Log.d("AuthRepository", "Firestore update successful for Mentor. Data: $updateData")
                 
                 // Refresh local cache
                 val updatedUser = getCurrentUser()
-                updatedUser?.let { preferenceManager.saveUser(it) }
+                Log.d("AuthRepository", "Fetched updated user from Firestore: $updatedUser")
+                updatedUser?.let { 
+                    preferenceManager.saveUser(it)
+                    Log.d("AuthRepository", "Saved updated user to PreferenceManager")
+                }
                 
                 emit(Response.Success(true))
 
@@ -178,14 +186,20 @@ class AuthRepositoryImpl @Inject constructor(
                 val updateData = buildMap<String, Any> {
                     student.fullName?.let { put("fullName", it) }
                     student.phoneNumber?.let { put("phoneNumber", it) }
+                    student.profileImageUrl?.let { put("profileImageUrl", it) }
                     // Add other fields as needed
                 }
 
                 studentDoc.update(updateData).await()
+                Log.d("AuthRepository", "Firestore update successful for Student. Data: $updateData")
                 
                 // Refresh local cache
                 val updatedUser = getCurrentUser()
-                updatedUser?.let { preferenceManager.saveUser(it) }
+                Log.d("AuthRepository", "Fetched updated user from Firestore: $updatedUser")
+                updatedUser?.let { 
+                    preferenceManager.saveUser(it)
+                    Log.d("AuthRepository", "Saved updated user to PreferenceManager")
+                }
 
                 emit(Response.Success(true))
 
@@ -217,6 +231,10 @@ class AuthRepositoryImpl @Inject constructor(
             e.printStackTrace()
             null
         }
+    }
+
+    override fun getCachedUser(): User? {
+        return preferenceManager.getUser()
     }
 
 
@@ -264,6 +282,64 @@ class AuthRepositoryImpl @Inject constructor(
             null
         } catch (e: Exception) {
             null
+        }
+    }
+
+    override suspend fun followMentor(followerId: String, mentorId: String): Response<Boolean> {
+        return try {
+            val currentUser = getCachedUser() ?: getCurrentUser() ?: return Response.Error("Not authenticated")
+            val collection = if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val followerRef = firestore.collection(collection).document(followerId)
+            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId)
+
+            firestore.runBatch { batch ->
+                // Update Follower
+                batch.update(followerRef, "following", FieldValue.arrayUnion(mentorId))
+                batch.update(followerRef, "followingCount", FieldValue.increment(1))
+
+                // Update Mentor
+                batch.update(mentorRef, "followers", FieldValue.arrayUnion(followerId))
+                batch.update(mentorRef, "followersCount", FieldValue.increment(1))
+            }.await()
+
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Failed to follow mentor")
+        }
+    }
+
+    override suspend fun unfollowMentor(followerId: String, mentorId: String): Response<Boolean> {
+        return try {
+            val currentUser = getCachedUser() ?: getCurrentUser() ?: return Response.Error("Not authenticated")
+            val collection = if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val followerRef = firestore.collection(collection).document(followerId)
+            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId)
+
+            firestore.runBatch { batch ->
+                // Update Follower
+                batch.update(followerRef, "following", FieldValue.arrayRemove(mentorId))
+                batch.update(followerRef, "followingCount", FieldValue.increment(-1))
+
+                // Update Mentor
+                batch.update(mentorRef, "followers", FieldValue.arrayRemove(followerId))
+                batch.update(mentorRef, "followersCount", FieldValue.increment(-1))
+            }.await()
+
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Failed to unfollow mentor")
+        }
+    }
+
+    override suspend fun isFollowing(followerId: String, mentorId: String): Boolean {
+        return try {
+            val currentUser = getCachedUser() ?: getCurrentUser() ?: return false
+            val collection = if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val followerDoc = firestore.collection(collection).document(followerId).get().await()
+            val followingList = followerDoc.get("following") as? List<*>
+            followingList?.contains(mentorId) == true
+        } catch (e: Exception) {
+            false
         }
     }
 }

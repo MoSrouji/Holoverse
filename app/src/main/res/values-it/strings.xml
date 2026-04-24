@@ -63,4 +63,12 @@
     <!-- Home Tabs -->
     <string name="tab_explore">Esplora</string>
     <string name="tab_your_courses">I Tuoi Corsi</string>
+
+    <!-- Mentor Profile -->
+    <string name="courses">Corsi</string>
+    <string name="ratings">Valutazioni</string>
+    <string name="follow">Segui</string>
+    <string name="following">Seguito</string>
+    <string name="message">Messaggio</string>
+    <string name="students">Studenti</string>
 </resources>

@@ -40,6 +40,7 @@ fun SignUpScreen(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: SignUpViewModel = hiltViewModel(),
+    darkTheme: Boolean
 ) {
     val menuItems = listOf("Mentor", "Student")
     val signUpState = viewModel.signUpState.value
@@ -94,7 +95,6 @@ fun SignUpScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        SpatialBackground()
         Column(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,

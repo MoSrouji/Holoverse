@@ -33,7 +33,8 @@ import com.example.holoverse.ui.theme.rubik_glitch_pop
 fun SignInScreen(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
-    viewModel: SignInViewModel = hiltViewModel()
+    viewModel: SignInViewModel = hiltViewModel(),
+    darkTheme: Boolean
 ) {
 
     val context = LocalContext.current
@@ -70,7 +71,6 @@ fun SignInScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        SpatialBackground()
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,

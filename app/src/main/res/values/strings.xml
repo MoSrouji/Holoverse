@@ -55,6 +55,8 @@
     <string name="Categories">Categories</string>
     <string name="popular_Courses">Popular Courses</string>
     <string name="top_Mentor">Top Mentor</string>
+    <string name="for_you_courses">Recommended Courses</string>
+    <string name="for_you_mentor">Recommended Mentors</string>
 
     <string name="profile">Profile</string>
     <string name="edit_profile">Edit Profile</string>
@@ -80,6 +82,7 @@
     <string name="all_categories">All Categories</string>
     <string name="search_for">Search for...</string>
     <string name="back">Back</string>
+    <string name="clear">Clear</string>
     <string name="search_icon">Search Icon</string>
     <string name="category_3d_design">3D Design</string>
     <string name="category_graphic_design">Graphic Design</string>
@@ -89,8 +92,72 @@
     <string name="category_personal_development">Personal Development</string>
     <string name="category_office_productivity">Office Productivity</string>
     <string name="category_hr_management">HR Management</string>
+    <string name="category_data_science">Data Science</string>
+    <string name="category_mobile_development">Mobile Development</string>
+    <string name="category_music">Music</string>
+    <string name="category_photography">Photography</string>
+    <string name="category_business">Business</string>
+    <string name="category_health_fitness">Health &amp; Fitness</string>
+    <string name="category_language_learning">Language Learning</string>
+    <string name="category_ai">Artificial Intelligence</string>
+    <string name="category_mathematics">Mathematics</string>
+    <string name="category_science">Science</string>
+    <string name="category_languages">Languages</string>
+    <string name="category_humanities">Humanities</string>
+    <string name="category_test_prep">Test Prep</string>
+    <string name="category_computer_science">Computer Science</string>
+    <string name="category_arts">Arts</string>
+    <string name="category_special_education">Special Education</string>
+    <string name="category_physics">Physics</string>
+    <string name="category_chemistry">Chemistry</string>
+    <string name="category_biology">Biology</string>
+    <string name="category_history">History</string>
+    <string name="category_philosophy">Philosophy</string>
+    <string name="category_psychology">Psychology</string>
+    <string name="category_economics">Economics</string>
+    <string name="category_entrepreneurship">Entrepreneurship</string>
+    <string name="category_elementary_education">Elementary Education</string>
+    <string name="category_study_skills">Study Skills</string>
 
     <!-- Home Tabs -->
     <string name="tab_explore">Explore</string>
     <string name="tab_your_courses">Your Courses</string>
+
+    <!-- Home Screen -->
+    <string name="create_course">Create Course</string>
+    <string name="analytics">Analytics</string>
+    <string name="students">Students</string>
+    <string name="messages">Messages</string>
+    <string name="announcements">Announcements</string>
+    <string name="ongoing_learning">Ongoing Learning</string>
+    <string name="no_enrolled_courses">You haven\'t enrolled in any courses yet.</string>
+    <string name="start_exploring">Start Exploring</string>
+    <string name="no_courses_available">No courses available yet</string>
+    <string name="no_mentors_found">No mentors found</string>
+    <string name="good_morning">Good Morning</string>
+    <string name="good_afternoon">Good Afternoon</string>
+    <string name="good_evening">Good Evening</string>
+    <string name="guest">Guest</string>
+    <string name="notifications_desc">Notifications</string>
+    <!-- Recommendation Screen -->
+    <string name="recommendation_title">Recommendation</string>
+    <string name="search_recommendation_placeholder">Search recommendation courses...</string>
+    <string name="showing_courses">Showing %1$d courses</string>
+    <string name="search_results">Search results (%1$d)</string>
+    <string name="no_recommended_found">No recommended courses found</string>
+    <string name="adjust_search_query">Try adjusting your search query</string>
+    <string name="reviews_count">(%1$d reviews)</string>
+    <string name="enrolled_count">%1$s std</string>
+    <string name="rating_desc">Rating</string>
+    <string name="bookmark_desc">Bookmark</string>
+    <string name="price_format">$%1$.2f</string>
+    <!-- Mentor Profile -->
+    <string name="courses">Courses</string>
+    <string name="ratings">Ratings</string>
+    <string name="follow">Follow</string>
+    <string name="following">Following</string>
+    <string name="message">Message</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="at_google">\u0020At Google</string>
+
 </resources>

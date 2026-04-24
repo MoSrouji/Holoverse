@@ -1,12 +1,9 @@
-package com.example.holoverse.ui.studentPart.popularCourses
+package com.example.holoverse.ui.home.coursesList
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,9 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -35,9 +30,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,8 +52,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -66,78 +61,28 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.ui.home.HomeViewModel
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PopularCoursesScreen() {
-    val courses = remember {
-        listOf(
-            Courses(
-                id = "1",
-                category = "Graphic Design",
-                name = "Graphic Design Advanced",
-                price = 28.0,
-                rating = 4.2,
-                numEnrolled = 7830,
-                numReviews = 120,
-                imageUrl = "https://img.freepik.com/free-vector/gradient-graphic-design-landing-page_23-2149132514.jpg"
-            ),
-            Courses(
-                id = "2",
-                category = "Graphic Design",
-                name = "Advertisement Design",
-                price = 42.0,
-                rating = 3.9,
-                numEnrolled = 12680,
-                numReviews = 450,
-                imageUrl = "https://img.freepik.com/free-psd/digital-marketing-agency-corporate-web-banner-template_120329-3113.jpg"
-            ),
-            Courses(
-                id = "3",
-                category = "Programming",
-                name = "Kotlin for Beginners",
-                price = 37.0,
-                rating = 4.8,
-                numEnrolled = 990,
-                numReviews = 85,
-                imageUrl = "https://img.freepik.com/free-vector/software-development-programming-coding-concept_53876-120902.jpg"
-            ),
-            Courses(
-                id = "4",
-                category = "Web Development",
-                name = "Web Developer concepts",
-                price = 56.0,
-                rating = 4.9,
-                numEnrolled = 14580,
-                numReviews = 1200,
-                imageUrl = "https://img.freepik.com/free-vector/web-development-programmer-engineering-and-coding-website-on-augmented-reality-interface-screens-developer-project-engineer-programming-software-application-design-concept-flat-illustration_107791-3863.jpg"
-            ),
-            Courses(
-                id = "5",
-                category = "SEO & Marketing",
-                name = "Digital Marketing Masterclass",
-                price = 45.0,
-                rating = 4.8,
-                numEnrolled = 10230,
-                numReviews = 890,
-                imageUrl = "https://img.freepik.com/free-vector/digital-marketing-concept-illustration_114360-3918.jpg"
-            )
-        )
-    }
+fun RecommendationScreen(
+    onBackClick: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val courses = uiState.recommendedCourses
 
-    val categories = listOf("All", "Graphic Design", "3D Design", "Programming", "Web Development")
-    var selectedCategory by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredCourses = courses.filter {
-        (selectedCategory == "All" || it.category == selectedCategory) &&
-                (it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(searchQuery, ignoreCase = true))
+        it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(searchQuery, ignoreCase = true)
     }
 
     Scaffold(
@@ -145,7 +90,7 @@ fun PopularCoursesScreen() {
             TopAppBar(
                 title = {
                     Text(
-                        "Popular Courses",
+                        stringResource(R.string.recommendation_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontFamily = IbarraNovaFont,
                             fontWeight = FontWeight.Bold
@@ -153,8 +98,8 @@ fun PopularCoursesScreen() {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Handle back */ }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -177,14 +122,14 @@ fun PopularCoursesScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search courses...", style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)) },
+                placeholder = { Text(stringResource(R.string.search_recommendation_placeholder), style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear",
+                                contentDescription = stringResource(R.string.clear),
                                 tint = Color.Gray
                             )
                         }
@@ -200,34 +145,6 @@ fun PopularCoursesScreen() {
                 )
             )
 
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(categories) { category ->
-                    FilterChip(
-                        selected = category == selectedCategory,
-                        onClick = { selectedCategory = category },
-                        label = {
-                            Text(
-                                category,
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = if (category == selectedCategory) FontWeight.Bold else FontWeight.Medium
-                                )
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        border = null,
-                        shape = RoundedCornerShape(24.dp)
-                    )
-                }
-            }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -236,7 +153,7 @@ fun PopularCoursesScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (searchQuery.isEmpty()) "Showing ${filteredCourses.size} courses" else "Search results (${filteredCourses.size})",
+                    text = if (searchQuery.isEmpty()) stringResource(R.string.showing_courses, filteredCourses.size) else stringResource(R.string.search_results, filteredCourses.size),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
@@ -245,20 +162,24 @@ fun PopularCoursesScreen() {
             }
 
             AnimatedContent(
-                targetState = filteredCourses,
+                targetState = uiState.isLoading to filteredCourses,
                 transitionSpec = {
                     fadeIn() togetherWith fadeOut()
                 }, label = ""
-            ) { coursesToShow ->
-                if (coursesToShow.isEmpty()) {
-                    EmptyState()
+            ) { (isLoading, coursesToShow) ->
+                if (isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (coursesToShow.isEmpty()) {
+                    RecommendationEmptyState()
                 } else {
                     LazyColumn(
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(coursesToShow, key = { it.id }) { course ->
-                            CourseItem(course = course)
+                            RecommendationCourseItem(course = course)
                         }
                     }
                 }
@@ -268,7 +189,7 @@ fun PopularCoursesScreen() {
 }
 
 @Composable
-fun EmptyState() {
+private fun RecommendationEmptyState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -284,12 +205,12 @@ fun EmptyState() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            "No courses found",
+            stringResource(R.string.no_recommended_found),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
         Text(
-            "Try adjusting your filters or search query",
+            stringResource(R.string.adjust_search_query),
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray,
             textAlign = TextAlign.Center
@@ -298,7 +219,7 @@ fun EmptyState() {
 }
 
 @Composable
-fun CourseItem(course: Courses) {
+private fun RecommendationCourseItem(course: Courses) {
     var isBookmarked by remember { mutableStateOf(false) }
 
     Card(
@@ -356,7 +277,7 @@ fun CourseItem(course: Courses) {
                         ) {
                             Icon(
                                 imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = "Bookmark",
+                                contentDescription = stringResource(R.string.bookmark_desc),
                                 tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.LightGray,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -379,7 +300,7 @@ fun CourseItem(course: Courses) {
                 ) {
                     Icon(
                         Icons.Default.Star,
-                        contentDescription = "Rating",
+                        contentDescription = stringResource(R.string.rating_desc),
                         tint = Color(0xFFFFC107),
                         modifier = Modifier.size(14.dp)
                     )
@@ -388,12 +309,12 @@ fun CourseItem(course: Courses) {
                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "(${course.numReviews} reviews)",
+                        text = stringResource(R.string.reviews_count, course.numReviews),
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
                     )
                     Text("|", color = Color.LightGray)
                     Text(
-                        text = "${formatEnrolled(course.numEnrolled)} std",
+                        text = stringResource(R.string.enrolled_count, formatEnrolled(course.numEnrolled)),
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
                     )
                 }
@@ -405,16 +326,15 @@ fun CourseItem(course: Courses) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            "$${course.price}",
+                            "$${"%.2f".format(course.price)}",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.ExtraBold
                             )
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        // Simulated old price for visual effect
                         Text(
-                            "$${(course.price * 1.25).toInt()}.0",
+                            "$${"%.2f".format(course.price * 1.25)}",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 textDecoration = TextDecoration.LineThrough,
                                 color = Color.Gray
@@ -437,8 +357,8 @@ private fun formatEnrolled(num: Int): String {
 
 @Preview(showBackground = true)
 @Composable
-fun PopularCoursesScreenPreview() {
+fun RecommendationScreenPreview() {
     HoloverseTheme {
-        PopularCoursesScreen()
+        RecommendationScreen(onBackClick = {})
     }
 }

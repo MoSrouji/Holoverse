@@ -1,8 +1,9 @@
 package com.example.holoverse.ui.courseDetail
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -15,8 +16,12 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,7 +59,9 @@ fun CourseDetailScreen(
     when (courseState) {
         is Response.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = HoloCyan)
+                CircularProgressIndicator(
+                    color = HoloCyan
+                )
             }
         }
         is Response.Success -> {
@@ -79,6 +86,10 @@ fun CourseDetailScreen(
     }
 }
 
+enum class CourseDetailTab {
+    Courses, Ratings
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseDetailContent(
@@ -86,6 +97,8 @@ fun CourseDetailContent(
     onBackClick: () -> Unit,
     onApplyClick: () -> Unit
 ) {
+    var selectedTab by remember { mutableStateOf(CourseDetailTab.Courses) }
+    
     val sessions = listOf(
         CourseSession("Introduction", "7/2/2026", "10:30 -> 11:30"),
         CourseSession("Fundamentals of Design", "9/2/2025", "12:00 -> 14:20"),
@@ -130,7 +143,7 @@ fun CourseDetailContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "$${course.price}",
+                            text = "$${"%.2f".format(course.price)}",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = HoloCyan
@@ -252,7 +265,7 @@ fun CourseDetailContent(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = if (course.description.isNotEmpty()) course.description else "No description available for this course yet. Stay tuned for updates!",
+                        text = course.description.ifEmpty { "No description available for this course yet. Stay tuned for updates!" },
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 24.sp
@@ -260,29 +273,212 @@ fun CourseDetailContent(
 
                     Spacer(modifier = Modifier.height(40.dp))
 
-                    Text(
-                        text = "Course Schedule",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                    CourseDetailToggle(
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it }
                     )
                     
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
 
-            // Syllabus / Timeline
-            itemsIndexed(sessions) { index, session ->
-                TimelineItem(
-                    session = session,
-                    isFirst = index == 0,
-                    isLast = index == sessions.size - 1
-                )
+            if (selectedTab == CourseDetailTab.Courses) {
+                // Syllabus / Timeline
+                itemsIndexed(sessions) { index, session ->
+                    TimelineItem(
+                        session = session,
+                        isFirst = index == 0,
+                        isLast = index == sessions.size - 1
+                    )
+                }
+            } else {
+                item {
+                    RatingSection(course)
+                }
             }
             
             item {
                 Spacer(modifier = Modifier.height(32.dp))
             }
+        }
+    }
+}
+
+@Composable
+fun CourseDetailToggle(
+    selectedTab: CourseDetailTab,
+    onTabSelected: (CourseDetailTab) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(54.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF1A1C1E))
+            .padding(6.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            TabItem(
+                title = "Content",
+                isSelected = selectedTab == CourseDetailTab.Courses,
+                modifier = Modifier.weight(1f),
+                onClick = { onTabSelected(CourseDetailTab.Courses) }
+            )
+            TabItem(
+                title = "Ratings",
+                isSelected = selectedTab == CourseDetailTab.Ratings,
+                modifier = Modifier.weight(1f),
+                onClick = { onTabSelected(CourseDetailTab.Ratings) }
+            )
+        }
+    }
+}
+
+@Composable
+fun TabItem(
+    title: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) Color(0xFF2D2F31) else Color.Transparent,
+        label = "tabBackground"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) Color.White else Color.Gray,
+        label = "tabText"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = textColor
+        )
+    }
+}
+
+@Composable
+fun RatingSection(course: Courses) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "${course.rating}",
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Row {
+                    repeat(5) { index ->
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = if (index < course.rating.toInt()) Color(0xFFFFC107) else Color.Gray.copy(alpha = 0.5f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${course.numReviews} Reviews",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            // Simplified Rating Bars
+            Column(modifier = Modifier.weight(1f).padding(start = 32.dp)) {
+                RatingBar(5, 0.8f)
+                RatingBar(4, 0.15f)
+                RatingBar(3, 0.03f)
+                RatingBar(2, 0.01f)
+                RatingBar(1, 0.01f)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Placeholder for individual reviews
+        Text(
+            text = "Latest Reviews",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Example Review
+        ReviewItem(
+            name = "Alex Johnson",
+            rating = 5,
+            comment = "This course exceeded my expectations! The content is very well structured and easy to follow."
+        )
+    }
+}
+
+@Composable
+fun RatingBar(stars: Int, percentage: Float) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 2.dp)
+    ) {
+        Text(
+            text = "$stars",
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.width(12.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        LinearProgressIndicator(
+            progress = { percentage },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(CircleShape),
+            color = HoloCyan,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    }
+}
+
+@Composable
+fun ReviewItem(name: String, rating: Int, comment: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = name, fontWeight = FontWeight.Bold)
+                Row {
+                    repeat(rating) {
+                        Icon(Icons.Default.Star, null, tint = Color(0xFFFFC107), modifier = Modifier.size(14.dp))
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = comment, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -426,7 +622,7 @@ fun TimelineItem(
 @Preview(showBackground = true)
 @Composable
 fun CourseDetailScreenPreview() {
-    MaterialTheme {
+    com.example.holoverse.ui.theme.HoloverseTheme {
         CourseDetailContent(
             course = Courses(
                 name = "Advanced UI/UX Masterclass",

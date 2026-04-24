@@ -44,10 +44,19 @@ sealed interface AppDestination {
     data class CategoryCourses(val categoryName: String) : AppDestination
 
     @Serializable
-    data object Mentor : AppDestination
+    data class Mentor(val mentorId: String = "") : AppDestination
+
+    @Serializable
+    data class MentorProfile(val mentorId: String) : AppDestination
 
     @Serializable
     data object PopularCourses : AppDestination
+
+    @Serializable
+    data object Recommended : AppDestination
+
+    @Serializable
+    data object RecommendedMentors : AppDestination
 
     @Serializable
     data object Search : AppDestination
@@ -57,9 +66,13 @@ sealed interface AppDestination {
 
     @Serializable
     data object Transactions : AppDestination
+
     @Serializable
-    data object ChatScreen : AppDestination
-    
+    data object ChatList : AppDestination
+
+    @Serializable
+    data class ChatScreen(val mentorId: String? = null) : AppDestination
+
     @Serializable
     data object TermsAndConditions : AppDestination
 
@@ -68,4 +81,16 @@ sealed interface AppDestination {
 
     @Serializable
     data class CourseDetail(val courseId: String) : AppDestination
+
+    @Serializable
+    data object ArScreen : AppDestination
+
+    @Serializable
+    data object ViewerScreen : AppDestination
+
+    @Serializable
+    data object GalleryScreen : AppDestination
+
+    @Serializable
+    data object ModelGraph : AppDestination
 }

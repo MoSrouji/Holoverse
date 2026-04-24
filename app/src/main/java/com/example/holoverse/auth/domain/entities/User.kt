@@ -51,7 +51,8 @@ sealed interface User {
         val currentCourses: List<String>? = null,
 
         // Social & Interaction
-        val followingTeachers: List<String>? = null,
+        val following: List<String>? = null,
+        val followingCount: Int? = 0,
         val studyGroups: List<String>? = null,
         val peerConnections: List<String>? = null,
         val mentoringStatus: String? = null
@@ -66,6 +67,7 @@ sealed interface User {
         override val fcmToken: String? = null,
 
         // Personal Information
+        val profileImageUrl: String? = null,
         val dateOfBirth: String? = null,
         val phoneNumber: String? = null,
         val address: String? = null,
@@ -89,6 +91,12 @@ sealed interface User {
         val preferredStudentLevel: String? = null,
         val maxStudentsPerSession: String? = null,
         val preferredLearningTime: String? = null,
+
+        // Social & Interaction
+        val followers: List<String>? = null,
+        val following: List<String>? = null,
+        val followersCount: Int? = 0,
+        val followingCount: Int? = 0,
 
         // Statistics & Performance
         val totalStudentsTaught: Int? = null,

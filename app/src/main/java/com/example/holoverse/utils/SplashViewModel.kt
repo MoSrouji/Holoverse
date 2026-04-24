@@ -35,7 +35,7 @@ class SplashViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             _currentUser.value = preferenceManager.getUser()
-            delay(500) // Small delay for splash experience
+            delay(100) // Reduced delay for faster startup
             _isLoading.value = false
         }
     }

@@ -1,6 +1,8 @@
 package com.example.holoverse.ui.commonPart.profile
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
@@ -59,7 +61,7 @@ class ProfileViewModel @Inject constructor(
         if (user != null) {
             val rawImageUrl = when (user) {
                 is User.Student -> user.profileImageUrl
-                is User.Mentor -> null
+                is User.Mentor -> user.profileImageUrl
             }
 
             val finalImageUrl = rawImageUrl?.let {
@@ -121,5 +123,48 @@ class ProfileViewModel @Inject constructor(
 
     fun onRefresh() {
         loadUserProfile()
+    }
+
+    fun uploadProfileImage(uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val uploadResult = cloudinaryRepository.uploadFile(uri)
+            
+            uploadResult.onSuccess { imageUrl ->
+                Log.d("ProfileViewModel", "Cloudinary upload success. URL: $imageUrl")
+                val currentUser = preferenceManager.getUser()
+                Log.d("ProfileViewModel", "Current user from preferenceManager: $currentUser")
+                if (currentUser != null) {
+                    val updatedUser = when (currentUser) {
+                        is User.Student -> currentUser.copy(profileImageUrl = imageUrl)
+                        is User.Mentor -> currentUser.copy(profileImageUrl = imageUrl)
+                    }
+                    Log.d("ProfileViewModel", "Updating user in AuthRepository: $updatedUser")
+                    
+                    val updateFlow = when (updatedUser) {
+                        is User.Student -> authRepository.updateStudentProfile(updatedUser)
+                        is User.Mentor -> authRepository.updateMentorProfile(updatedUser)
+                    }
+                    
+                    updateFlow.collect { response ->
+                        when (response) {
+                            is Response.Loading -> {
+                                Log.d("ProfileViewModel", "Profile update loading...")
+                            }
+                            is Response.Success -> {
+                                Log.d("ProfileViewModel", "Profile update success. Reloading user profile.")
+                                loadUserProfile()
+                            }
+                            is Response.Error -> {
+                                Log.e("ProfileViewModel", "Profile update error: ${response.massage}")
+                                _uiState.update { it.copy(isLoading = false, error = response.massage) }
+                            }
+                        }
+                    }
+                }
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
+            }
+        }
     }
 }

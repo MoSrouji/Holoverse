@@ -76,4 +76,12 @@
     <!-- Home Tabs -->
     <string name="tab_explore">استكشاف</string>
     <string name="tab_your_courses">دوراتك</string>
+
+    <!-- Mentor Profile -->
+    <string name="courses">الدورات</string>
+    <string name="ratings">التقييمات</string>
+    <string name="follow">متابعة</string>
+    <string name="following">متابع</string>
+    <string name="message">رسالة</string>
+    <string name="students">الطلاب</string>
 </resources>

@@ -21,7 +21,12 @@ interface AuthRepository {
     suspend fun updateMentorProfile(mentor: User.Mentor): Flow<Response<Boolean>>
     suspend fun updateStudentProfile(student: User.Student): Flow<Response<Boolean>>
     suspend fun getCurrentUser(): User?
+    fun getCachedUser(): User?
     suspend fun updateUser(user: User?, newEmail: String? = null): Boolean
     suspend fun updateFcmToken(token: String): Response<Boolean>
     suspend fun getFcmToken(userId: String): String?
+
+    suspend fun followMentor(followerId: String, mentorId: String): Response<Boolean>
+    suspend fun unfollowMentor(followerId: String, mentorId: String): Response<Boolean>
+    suspend fun isFollowing(followerId: String, mentorId: String): Boolean
 }

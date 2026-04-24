@@ -223,7 +223,7 @@ fun RecentSearchesSection(
 fun SearchResultsSection(uiState: SearchUiState) {
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = ColorBlue)
+            CircularProgressIndicator()
         }
     } else if (uiState.error != null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -302,7 +302,7 @@ fun MentorSearchResultItem(mentor: User.Mentor) {
             }
         }
         Text(
-            text = "$${mentor.hourlyRate ?: 0}/hr",
+            text = "$${"%.2f".format(mentor.hourlyRate ?: 0.0)}/hr",
             fontWeight = FontWeight.Bold,
             color = ColorBlue
         )

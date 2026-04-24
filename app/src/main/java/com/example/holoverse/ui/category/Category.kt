@@ -17,30 +17,42 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Biotech
+import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.BusinessCenter
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Draw
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.HistoryEdu
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelfImprovement
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,118 +69,147 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.R
 import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
+import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.ui.theme.HoloverseTheme
 
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.ui.platform.LocalContext
 import com.example.holoverse.navigation.AppDestination
 
-data class Category(val nameRes: Int, val icon: ImageVector)
+data class Category(val key: String, val nameRes: Int, val icon: ImageVector)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryScreen(appNavigator: AppNavigator) {
+fun CategoryScreen(appNavigator: AppNavigator, darkTheme: Boolean) {
     val context = LocalContext.current
     val categories = remember {
         listOf(
-            Category(R.string.category_3d_design, Icons.Default.Category),
-            Category(R.string.category_graphic_design, Icons.Default.Draw),
-            Category(R.string.category_web_development, Icons.Default.Code),
-            Category(R.string.category_seo_marketing, Icons.Default.TrendingUp),
-            Category(R.string.category_finance_accounting, Icons.Default.AccountBalance),
-            Category(R.string.category_personal_development, Icons.Default.SelfImprovement),
-            Category(R.string.category_office_productivity, Icons.Default.Work),
-            Category(R.string.category_hr_management, Icons.Default.Groups)
+            Category("3D DESIGN", R.string.category_3d_design, Icons.Default.Category),
+            Category("GRAPHIC DESIGN", R.string.category_graphic_design, Icons.Default.Draw),
+            Category("WEB DEVELOPMENT", R.string.category_web_development, Icons.Default.Code),
+            Category("SEO MARKETING", R.string.category_seo_marketing,
+                Icons.AutoMirrored.Filled.TrendingUp
+            ),
+            Category("FINANCE & ACCOUNTING", R.string.category_finance_accounting, Icons.Default.AccountBalance),
+            Category("PERSONAL DEVELOPMENT", R.string.category_personal_development, Icons.Default.SelfImprovement),
+            Category("OFFICE PRODUCTIVITY", R.string.category_office_productivity, Icons.Default.Work),
+            Category("HR MANAGEMENT", R.string.category_hr_management, Icons.Default.Groups),
+            Category("DATA SCIENCE", R.string.category_data_science, Icons.Default.Science),
+            Category("MOBILE DEVELOPMENT", R.string.category_mobile_development, Icons.Default.Smartphone),
+            Category("MUSIC", R.string.category_music, Icons.Default.MusicNote),
+            Category("PHOTOGRAPHY", R.string.category_photography, Icons.Default.CameraAlt),
+            Category("BUSINESS", R.string.category_business, Icons.Default.BusinessCenter),
+            Category("HEALTH & FITNESS", R.string.category_health_fitness, Icons.Default.FitnessCenter),
+            Category("LANGUAGE LEARNING", R.string.category_language_learning, Icons.Default.Language),
+            Category("AI", R.string.category_ai, Icons.Default.AutoAwesome),
+            Category("MATHEMATICS", R.string.category_mathematics, Icons.Default.Calculate),
+            Category("SCIENCE", R.string.category_science, Icons.Default.Science),
+            Category("LANGUAGES", R.string.category_languages, Icons.Default.Language),
+            Category("HUMANITIES", R.string.category_humanities, Icons.AutoMirrored.Filled.MenuBook),
+            Category("TEST PREP", R.string.category_test_prep, Icons.AutoMirrored.Filled.Assignment),
+            Category("COMPUTER SCIENCE", R.string.category_computer_science, Icons.Default.Code),
+            Category("ARTS", R.string.category_arts, Icons.Default.Brush),
+            Category("SPECIAL EDUCATION", R.string.category_special_education, Icons.Default.Psychology),
+            Category("PHYSICS", R.string.category_physics, Icons.Default.Biotech),
+            Category("CHEMISTRY", R.string.category_chemistry, Icons.Default.Science),
+            Category("BIOLOGY", R.string.category_biology, Icons.Default.Science),
+            Category("HISTORY", R.string.category_history, Icons.Default.HistoryEdu),
+            Category("PHILOSOPHY", R.string.category_philosophy, Icons.Default.Lightbulb),
+            Category("PSYCHOLOGY", R.string.category_psychology, Icons.Default.Psychology),
+            Category("ECONOMICS", R.string.category_economics, Icons.AutoMirrored.Filled.TrendingUp),
+            Category("ENTREPRENEURSHIP", R.string.category_entrepreneurship, Icons.Default.Business),
+            Category("ELEMENTARY EDUCATION", R.string.category_elementary_education, Icons.Default.ChildCare),
+            Category("STUDY SKILLS", R.string.category_study_skills, Icons.Default.Edit)
         )
     }
 
     var searchQuery by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        text = stringResource(R.string.all_categories), 
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold 
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = { appNavigator.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack, 
-                            contentDescription = stringResource(R.string.back)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .padding(paddingValues)
-                .padding(horizontal = 20.dp)
                 .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            // Refined Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { 
-                    Text(
-                        text = stringResource(R.string.search_for), 
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    ) 
-                },
+            // Top Header Section
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                ),
-                trailingIcon = {
-                    Surface(
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .size(40.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primary
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = stringResource(R.string.search_icon),
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.padding(10.dp)
-                        )
-                    }
-                },
-                singleLine = true
-            )
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                SpatialBackground(
+                    modifier = Modifier.matchParentSize(),
+                    isDark = darkTheme
+                )
+                
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
 
-            Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = stringResource(R.string.all_categories),
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = IbarraNovaFont
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Search Bar inside Header
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { 
+                            Text(
+                                text = stringResource(R.string.search_for), 
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            ) 
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                        ),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = stringResource(R.string.search_icon),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                        },
+                        singleLine = true
+                    )
+                }
+            }
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                contentPadding = PaddingValues(16.dp)
             ) {
                 items(categories) { category ->
                     CategoryItem(category) {
-                        val categoryName = context.getString(category.nameRes)
-                        appNavigator.navigateTo(AppDestination.CategoryCourses(categoryName))
+                        appNavigator.navigateTo(AppDestination.CategoryCourses(category.key))
                     }
                 }
             }
@@ -231,7 +272,7 @@ fun CategoryItem(category: Category, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun CategoryScreenPreview() {
-    HoloverseTheme {
-        CategoryScreen(appNavigator = AppNavigator())
+    HoloverseTheme(darkTheme = true) {
+        CategoryScreen(appNavigator = AppNavigator(), darkTheme = true)
     }
 }

@@ -26,6 +26,7 @@ class FetchDataRepositoryImpl(
                 .get()
                 .await()
                 .toObjects(Courses::class.java)
+                .shuffled()
             cachedCourses = courses
             courses
         } catch (e: Exception) {
@@ -44,6 +45,7 @@ class FetchDataRepositoryImpl(
                 .get()
                 .await()
                 .toObjects(User.Mentor::class.java)
+                .shuffled()
             cachedMentors = mentors
             mentors
         } catch (e: Exception) {
@@ -52,8 +54,21 @@ class FetchDataRepositoryImpl(
         }
     }
 
+    override suspend fun fetchMentorById(mentorId: String): User.Mentor? {
+        return try {
+            firestore.collection(NetworkConstant.COLLECTION_NAME_MENTORS)
+                .document(mentorId)
+                .get()
+                .await()
+                .toObject(User.Mentor::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching mentor by id: $mentorId", e)
+            null
+        }
+    }
+
     override suspend fun fetchAds() {
         // Implementation for fetchAds depends on what the return type and data model should be.
-        TODO("Not yet implemented")
+        Log.d(TAG, "fetchAds: Not yet implemented")
     }
 }

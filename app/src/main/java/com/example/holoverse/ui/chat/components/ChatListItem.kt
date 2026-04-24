@@ -15,8 +15,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.auth.domain.entities.User
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+
 @Composable
-fun ChatListItem(name: String, lastMessage: String, onClick: () -> Unit) {
+fun ChatListItem(name: String, lastMessage: String, imageUrl: String? = null, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable { onClick() },
         headlineContent = { Text(name, fontWeight = FontWeight.Bold) },
@@ -28,7 +32,16 @@ fun ChatListItem(name: String, lastMessage: String, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(name.take(1).uppercase(), style = MaterialTheme.typography.titleLarge)
+                    if (imageUrl != null) {
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(name.take(1).uppercase(), style = MaterialTheme.typography.titleLarge)
+                    }
                 }
             }
         }
@@ -48,7 +61,16 @@ fun ContactListItem(mentor: User.Mentor, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.tertiaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text((mentor.fullName ?: "U").take(1).uppercase())
+                    if (mentor.profileImageUrl != null) {
+                        AsyncImage(
+                            model = mentor.profileImageUrl,
+                            contentDescription = mentor.fullName,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text((mentor.fullName ?: "U").take(1).uppercase())
+                    }
                 }
             }
         }

@@ -47,7 +47,8 @@ fun TeacherProfileInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: TeacherProfileViewModel = hiltViewModel(),
-    mentorStates: MutableStateFlow<User.Mentor>
+    mentorStates: MutableStateFlow<User.Mentor>,
+    darkTheme: Boolean
 ) {
     val genderItems = listOf("Male", "Female")
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
@@ -84,7 +85,6 @@ fun TeacherProfileInput(
                 onDismissClick = { showAlert = false }
             )
         }
-        SpatialBackground()
         Column(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
