@@ -66,6 +66,7 @@ sealed interface User {
         override val fcmToken: String? = null,
 
         // Personal Information
+        val profileImageUrl: String? = null,
         val dateOfBirth: String? = null,
         val phoneNumber: String? = null,
         val address: String? = null,

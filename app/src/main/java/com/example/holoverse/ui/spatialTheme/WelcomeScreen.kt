@@ -77,7 +77,9 @@ class ParticleSystem(private val numParticles: Int, private val maxRadius: Float
 
     // Update particle positions
     fun update(center: Offset, time: Float) {
-        particles.forEach { p ->
+        val count = particles.size
+        for (i in 0 until count) {
+            val p = particles[i]
             val displacement = sin(time * p.speed) * (p.initialRadius * 0.1f)
             p.currentRadius = p.initialRadius + displacement
 
@@ -87,9 +89,10 @@ class ParticleSystem(private val numParticles: Int, private val maxRadius: Float
     }
 
     // Draw all particles
-    // Fix: Pass radiusPx here so we don't need 'toPx()' inside this class
     fun draw(drawScope: DrawScope, radiusPx: Float) {
-        particles.forEach { p ->
+        val count = particles.size
+        for (i in 0 until count) {
+            val p = particles[i]
             drawScope.drawCircle(
                 color = p.color,
                 radius = radiusPx,
@@ -110,7 +113,7 @@ fun ParticleBall(
     // ... (rest of ParticleBall implementation) ...
 
     // Use the previous ParticleBall implementation here, keeping the flash animation
-    val numParticles = 800
+    val numParticles = 300
     val maxSphereRadius = 150.dp
 
     val animProgress = rememberInfiniteTransition(label = "flashTransition").animateFloat(
@@ -151,16 +154,18 @@ fun ParticleBall(
 
     val particleSystem = remember { ParticleSystem(numParticles, maxSphereRadius.value) }
 
+    val particleRadiusPx = remember { 1.5.dp }
+
     Canvas(modifier = modifier) {
         val center = Offset(size.width / 2f, size.height / 2f)
-        val particleRadiusPx = 1.5.dp.toPx()
+        val radiusPx = particleRadiusPx.toPx()
 
         particleSystem.update(center, time.value)
 
         val flashScale = 1f + (animProgress.value * 0.15f)
 
         scale(scaleX = flashScale, scaleY = flashScale, pivot = center) {
-            particleSystem.draw(this, particleRadiusPx)
+            particleSystem.draw(this, radiusPx)
         }
     }
 }

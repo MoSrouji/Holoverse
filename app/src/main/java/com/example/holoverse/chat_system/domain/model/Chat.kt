@@ -9,5 +9,6 @@ data class Chat(
     val lastMessageTimestamp: Timestamp? = null,
     val lastSenderName: String = "",
     val lastSenderId: String = "",
-    val participantNames: Map<String, String> = emptyMap() // Map of userId to fullName
+    val participantNames: Map<String, String> = emptyMap(), // Map of userId to fullName
+    val participantProfileImages: Map<String, String> = emptyMap() // Map of userId to imageUrl
 )

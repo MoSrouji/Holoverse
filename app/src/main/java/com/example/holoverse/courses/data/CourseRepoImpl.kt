@@ -73,4 +73,19 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
             emit(Response.Error(e.message ?: "Error fetching courses"))
         }
     }
+
+    override suspend fun getCoursesByInstructorId(instructorId: String): Flow<Response<List<Courses>>> = flow {
+        emit(Response.Loading)
+        try {
+            val snapshot = firestore.collection("courses")
+                .whereEqualTo("instructorId", instructorId)
+                .get()
+                .await()
+            val courses = snapshot.toObjects(Courses::class.java)
+            emit(Response.Success(courses))
+        } catch (e: Exception) {
+            Log.e("CourseRepoImpl", "Error getting courses by instructor id", e)
+            emit(Response.Error(e.message ?: "Error fetching courses"))
+        }
+    }
 }

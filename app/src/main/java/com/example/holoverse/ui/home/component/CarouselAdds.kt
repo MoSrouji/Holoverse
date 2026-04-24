@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +20,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,78 +35,305 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.ui.theme.ColorVerdigris
 import com.example.holoverse.ui.theme.HoloCyan
 import com.example.holoverse.ui.theme.HoloPurple
-import com.example.holoverse.ui.theme.HoloverseTheme
-import com.example.holoverse.utils.GlassCard
 import kotlinx.coroutines.delay
+
+@Composable
+fun CarouselCourses(courses: List<Courses>) {
+    if (courses.isEmpty()) return
+
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { courses.size }
+    )
+    val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
+
+    LaunchedEffect(isDragged) {
+        if (!isDragged) {
+            while (true) {
+                delay(5000)
+                if (pagerState.pageCount > 0) {
+                    val target = (pagerState.currentPage + 1) % pagerState.pageCount
+                    pagerState.animateScrollToPage(target)
+                }
+            }
+        }
+    }
+
+    HorizontalPager(
+        state = pagerState,
+        contentPadding = PaddingValues(horizontal = 32.dp),
+        pageSpacing = 16.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) { page ->
+        val course = courses[page]
+        val style = page % 3
+        CoursePromotionalCard(
+            course = course,
+            style = style,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun CoursePromotionalCard(course: Courses, style: Int, modifier: Modifier = Modifier) {
+    when (style) {
+        0 -> PromotionalStyleHolographic(course, modifier)
+        1 -> PromotionalStyleFeatured(course, modifier)
+        else -> PromotionalStyleDynamicSplit(course, modifier)
+    }
+}
+
+@Composable
+fun PromotionalStyleHolographic(course: Courses, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .height(160.dp)
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        HoloPurple.copy(alpha = 0.8f),
+                        HoloCyan.copy(alpha = 0.6f),
+                        ColorVerdigris.copy(alpha = 0.7f)
+                    )
+                )
+            )
+            .padding(16.dp)
+    ) {
+        Column {
+            Text(
+                text = "FEATURED COURSE",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.8f),
+                fontWeight = FontWeight.ExtraBold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = course.name,
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Star, contentDescription = null, tint = Color.Yellow, modifier = Modifier.height(16.dp))
+                Text(
+                    text = " ${course.rating}  •  ${course.category}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PromotionalStyleFeatured(course: Courses, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .height(160.dp)
+    ) {
+        AsyncImage(
+            model = course.imageUrl,
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))))
+        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(HoloCyan)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "HOT NOW",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = course.name,
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+            Text(
+                text = "Enroll for $${course.price}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = HoloCyan,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun PromotionalStyleDynamicSplit(course: Courses, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .height(160.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            AsyncImage(
+                model = course.imageUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1.2f)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = course.category.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = course.name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    Text(
+                        text = "${course.numEnrolled}+",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Students",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = HoloPurple,
+                    modifier = Modifier.background(HoloPurple.copy(alpha = 0.1f), RoundedCornerShape(50.dp)).padding(4.dp)
+                )
+            }
+        }
+    }
+}
 
 @Composable
 @Preview
 fun CarouselAdds() {
-    val state: List<String> = listOf(" First Index  ", " Second Index  ", " Third Index ")
+    val dummyCourses = listOf(
+        Courses(
+            name = "Mastering Augmented Reality",
+            category = "3D Design",
+            price = 49.99,
+            rating = 4.9,
+            numEnrolled = 1250,
+            imageUrl = "https://images.unsplash.com/photo-1633177317976-3f9bc45e1d1d?q=80&w=320&h=160&auto=format&fit=crop"
+        ),
+        Courses(
+            name = "VR World Building",
+            category = "Development",
+            price = 59.99,
+            rating = 4.8,
+            numEnrolled = 850,
+            imageUrl = "https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?q=80&w=320&h=160&auto=format&fit=crop"
+        ),
+        Courses(
+            name = "Spatial UI Design",
+            category = "Design",
+            price = 39.99,
+            rating = 4.7,
+            numEnrolled = 2100,
+            imageUrl = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=320&h=160&auto=format&fit=crop"
+        ),
+        Courses(
+            name = "Advanced Holographics",
+            category = "Science",
+            price = 79.99,
+            rating = 5.0,
+            numEnrolled = 450,
+            imageUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=320&h=160&auto=format&fit=crop"
+        ),
+        Courses(
+            name = "Mixed Reality for Beginners",
+            category = "Technology",
+            price = 29.99,
+            rating = 4.5,
+            numEnrolled = 3000,
+            imageUrl = "https://images.unsplash.com/photo-1592477383748-47209930f46c?q=80&w=320&h=160&auto=format&fit=crop"
+        ),
+        Courses(
+            name = "Unity XR Foundations",
+            category = "Coding",
+            price = 69.99,
+            rating = 4.6,
+            numEnrolled = 1100,
+            imageUrl = "https://images.unsplash.com/photo-1478416215748-28c169d5180f?q=80&w=320&h=160&auto=format&fit=crop"
+        )
+    )
+
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { state.size }
+        pageCount = { dummyCourses.size }
     )
     val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
-    var isAutoScrolling by remember {
-        mutableStateOf(true)
-    }
 
-
-
-    LaunchedEffect(key1 = pagerState.currentPage) {
-        if (isDragged) {
-            isAutoScrolling = false
-        } else {
-            isAutoScrolling = true
-            delay(5000)
-            with(pagerState) {
-                val target = if (currentPage < state.size - 1) currentPage + 1 else 0
-                scrollToPage(target)
-            }
-
-
-        }
-    }
-    val itemSpacing = 8.dp
-    val defaultPadding = 0.dp
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(start = defaultPadding),
-            pageSpacing = itemSpacing
-        ) { page ->
-            if (isAutoScrolling) {
-                AnimatedContent(targetState = page) { index ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CarouselAddsCards(text = state[index])
-                    }
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    CarouselAddsCards(text = state[page])
+    LaunchedEffect(isDragged) {
+        if (!isDragged) {
+            while (true) {
+                delay(5000)
+                if (pagerState.pageCount > 0) {
+                    val target = (pagerState.currentPage + 1) % pagerState.pageCount
+                    pagerState.animateScrollToPage(target)
                 }
             }
-
         }
+    }
 
+    HorizontalPager(
+        state = pagerState,
+        contentPadding = PaddingValues(horizontal = 32.dp),
+        pageSpacing = 16.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) { page ->
+        CoursePromotionalCard(
+            course = dummyCourses[page],
+            style = page % 3,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -112,15 +341,6 @@ fun CarouselAdds() {
 @Composable
 @Preview
 fun CarouselAddsCards(text: String = " Enter\nAR Lab") {
-    //HoloverseTheme() {
-//        GlassCard(
-//            modifier = Modifier
-//                .height(160.dp)
-//                .width(320.dp),
-//            color = MaterialTheme.colorScheme.primaryFixedDim,
-//            onClick = {},
-//            enable = true
-//        )
     Box(
         modifier = Modifier.clip(
             shape = RoundedCornerShape(12.dp)
@@ -139,11 +359,27 @@ fun CarouselAddsCards(text: String = " Enter\nAR Lab") {
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = text,
-                color = MaterialTheme.colorScheme.onPrimaryFixed,
+                color = Color.White,
                 fontWeight = FontWeight.Bold
             )
         }
     }
-    // }
+}
 
+@Preview(showBackground = true)
+@Composable
+fun PreviewCoursePromotionalCards() {
+    val sampleCourse = Courses(
+        name = "Mastering Augmented Reality with ARCore",
+        category = "3D Design",
+        price = 49.99,
+        rating = 4.9,
+        numEnrolled = 1250,
+        imageUrl = "https://example.com/image.jpg"
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(16.dp)) {
+        CoursePromotionalCard(course = sampleCourse, style = 0)
+        CoursePromotionalCard(course = sampleCourse, style = 1)
+        CoursePromotionalCard(course = sampleCourse, style = 2)
+    }
 }

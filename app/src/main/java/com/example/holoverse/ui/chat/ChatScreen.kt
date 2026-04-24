@@ -1,20 +1,51 @@
 package com.example.holoverse.ui.chat
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 @Composable
-fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
+fun ChatScreen(
+    darkTheme: Boolean,
+    mentorId: String? = null,
+    viewModel: ChatViewModel = hiltViewModel(),
+    onNavigateToConversation: ((String) -> Unit)? = null,
+    onBackClick: (() -> Unit)? = null
+) {
     val uiState by viewModel.uiState.collectAsState()
 
+    androidx.compose.runtime.LaunchedEffect(mentorId) {
+        if (mentorId != null) {
+            viewModel.onContactSelectedById(mentorId)
+        }
+    }
+
     if (uiState.currentChatId == null) {
-        ChatListScreen(uiState, viewModel)
+        if (mentorId != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            ChatListScreen(
+                uiState = uiState,
+                viewModel = viewModel,
+                darkTheme = darkTheme,
+                onContactSelected = { id ->
+                    onNavigateToConversation?.invoke(id)
+                }
+            )
+        }
     } else {
         ConversationScreen(
             uiState = uiState,
-            viewModel = viewModel
+            viewModel = viewModel,
+            onBackClick = onBackClick
         )
     }
 }

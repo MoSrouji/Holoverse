@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,6 +47,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -76,6 +78,8 @@ import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
+import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.ui.theme.HoloverseTheme
 
 data class ProfileItemData(
@@ -91,6 +95,7 @@ data class ProfileItemData(
 @Composable
 fun ProfileScreen(
     navController: AppNavigator,
+    darkTheme: Boolean,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -205,103 +210,137 @@ fun ProfileScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.profile), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color(0xFF009688))
+                CircularProgressIndicator()
             }
         } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Box {
-                    Box(
+                // Top Header Section
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    SpatialBackground(
+                        modifier = Modifier.matchParentSize(),
+                        darkTheme = !darkTheme
+                    )
+                    
+                    Column(
                         modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(Color.LightGray)
-                            .border(4.dp, Color(0xFF009688), CircleShape),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        if (uiState.profileImageUrl != null) {
-                            AsyncImage(
-                                model = uiState.profileImageUrl,
-                                contentDescription = "Profile Image",
-                                modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = Color.Gray
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .offset(x = (-8).dp, y = (-4).dp)
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White)
-                            .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            modifier = Modifier.clickable(onClick = {
-                                showBottomSheet = true
-                            }),
-                            contentDescription = "Edit Image",
-                            tint = Color(0xFF009688),
-                            imageVector = Icons.Default.Image,
+                        Text(
+                            text = stringResource(R.string.profile),
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = IbarraNovaFont
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.align(Alignment.Start)
                         )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Box {
+                            Box(
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .border(4.dp, Color(0xFF009688), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (uiState.profileImageUrl != null) {
+                                    AsyncImage(
+                                        model = uiState.profileImageUrl,
+                                        contentDescription = "Profile Image",
+                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(64.dp),
+                                        tint = Color.Gray
+                                    )
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .offset(x = (-8).dp, y = (-4).dp)
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    modifier = Modifier.clickable(onClick = {
+                                        showBottomSheet = true
+                                    }),
+                                    contentDescription = "Edit Image",
+                                    tint = Color(0xFF009688),
+                                    imageVector = Icons.Default.Image,
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(uiState.fullName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(uiState.email, color = Color.Gray, fontSize = 14.sp)
                     }
+                }
+
+                if (uiState.error != null) {
+                    Text(
+                        uiState.error!!, 
+                        color = Color.Red, 
+                        fontSize = 12.sp, 
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(uiState.fullName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                Text(uiState.email, color = Color.Gray, fontSize = 14.sp)
-                
-                if (uiState.error != null) {
-                    Text(uiState.error!!, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(2.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                 ) {
                     LazyColumn {
                         items(profileItems.size) { index ->
                             val item = profileItems[index]
                             ProfileItem(item = item)
                             if (index < profileItems.lastIndex) {
-                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
                             }
                         }
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -493,6 +532,6 @@ fun ProfileItem(item: ProfileItemData) {
 @Composable
 fun ProfileScreenPreview() {
     HoloverseTheme(darkTheme = true) {
-        ProfileScreen(navController = AppNavigator())
+        ProfileScreen(navController = AppNavigator(), darkTheme = true)
     }
 }

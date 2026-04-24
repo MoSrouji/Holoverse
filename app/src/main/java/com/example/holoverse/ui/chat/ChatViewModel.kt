@@ -48,19 +48,24 @@ class ChatViewModel @Inject constructor(
 
     private fun loadInitialData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val user = authRepository.getCurrentUser()
-            val mentors = fetchDataRepository.fetchMentors()
-            
-            _uiState.update { it.copy(
-                currentUser = user,
-                contacts = mentors,
-                isLoading = false
-            ) }
+            try {
+                _uiState.update { it.copy(isLoading = true) }
+                val user = authRepository.getCurrentUser()
+                val mentors = fetchDataRepository.fetchMentors()
+                
+                _uiState.update { it.copy(
+                    currentUser = user,
+                    contacts = mentors,
+                    filteredContacts = mentors,
+                    isLoading = false
+                ) }
 
-            user?.userId?.let { userId ->
-                // This triggers the repository to start syncing and exposing the flow
-                chatRepository.getChats(userId).collectLatest { /* Handled by observeRepositoryState */ }
+                user?.userId?.let { userId ->
+                    // This triggers the repository to start syncing and exposing the flow
+                    chatRepository.getChats(userId).collectLatest { /* Handled by observeRepositoryState */ }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
@@ -69,22 +74,23 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 chatRepository.chatsState,
-                chatRepository.messagesState,
-                _uiState
-            ) { repoChats, repoMessagesMap, currentState ->
-                val currentChatId = currentState.currentChatId
-                val messagesForCurrentChat = if (currentChatId != null) {
-                    repoMessagesMap[currentChatId] ?: emptyList()
-                } else {
-                    emptyList()
-                }
+                chatRepository.messagesState
+            ) { repoChats, repoMessagesMap ->
+                repoChats to repoMessagesMap
+            }.collect { (repoChats, repoMessagesMap) ->
+                _uiState.update { currentState ->
+                    val currentChatId = currentState.currentChatId
+                    val messagesForCurrentChat = if (currentChatId != null) {
+                        repoMessagesMap[currentChatId] ?: emptyList()
+                    } else {
+                        emptyList()
+                    }
 
-                currentState.copy(
-                    chats = repoChats,
-                    messages = messagesForCurrentChat
-                )
-            }.collect { updatedState ->
-                _uiState.value = updatedState
+                    currentState.copy(
+                        chats = repoChats,
+                        messages = messagesForCurrentChat
+                    )
+                }
             }
         }
     }
@@ -93,35 +99,93 @@ class ChatViewModel @Inject constructor(
         _uiState.update { it.copy(inputText = newText) }
     }
 
-    fun onContactSelected(mentor: User.Mentor) {
-        val currentUser = _uiState.value.currentUser ?: return
-        val otherUserId = mentor.userId ?: return
-        val currentUserId = currentUser.userId ?: return
-        
-        _uiState.update { it.copy(
-            selectedChatPartnerName = mentor.fullName ?: "Chat",
-            isLoading = true 
-        ) }
-
-        viewModelScope.launch {
-            val chatId = chatRepository.createOrGetChat(
-                currentUserId = currentUserId,
-                otherUserId = otherUserId,
-                currentUserName = currentUser.fullName ?: "User",
-                otherUserName = mentor.fullName ?: "Mentor"
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { state ->
+            val filtered = if (query.isBlank()) {
+                state.contacts
+            } else {
+                state.contacts.filter {
+                    it.fullName?.contains(query, ignoreCase = true) == true ||
+                            it.specialization.name.contains(query, ignoreCase = true) == true ||
+                            it.subjects?.any { subject -> subject.contains(query, ignoreCase = true) } == true
+                }
+            }
+            state.copy(
+                searchQuery = query,
+                filteredContacts = filtered
             )
-            _uiState.update { it.copy(currentChatId = chatId, isLoading = false) }
-            // Trigger message observation in repo
-            chatRepository.getMessages(chatId).collectLatest { }
+        }
+    }
+
+    fun onContactSelected(mentor: User.Mentor) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isLoading = true) }
+
+                // Ensure we have a current user before proceeding
+                val currentUser = _uiState.value.currentUser ?: authRepository.getCurrentUser()
+                
+                if (currentUser == null) {
+                    _uiState.update { it.copy(isLoading = false) }
+                    return@launch
+                }
+
+                val otherUserId = mentor.userId ?: return@launch
+                val currentUserId = currentUser.userId ?: return@launch
+                
+                _uiState.update { it.copy(
+                    selectedChatPartnerName = mentor.fullName ?: "Chat",
+                    selectedChatPartnerImageUrl = mentor.profileImageUrl,
+                    currentUser = currentUser
+                ) }
+
+                val chatId = chatRepository.createOrGetChat(
+                    currentUserId = currentUserId,
+                    otherUserId = otherUserId,
+                    currentUserName = currentUser.fullName ?: "User",
+                    otherUserName = mentor.fullName ?: "Mentor",
+                    currentUserImageUrl = (currentUser as? User.Student)?.profileImageUrl ?: (currentUser as? User.Mentor)?.profileImageUrl,
+                    otherUserImageUrl = mentor.profileImageUrl
+                )
+                _uiState.update { it.copy(currentChatId = chatId, isLoading = false) }
+                // Trigger message observation in repo
+                chatRepository.getMessages(chatId).collectLatest { }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun onContactSelectedById(mentorId: String) {
+        val mentor = _uiState.value.contacts.find { it.userId == mentorId }
+        if (mentor != null) {
+            onContactSelected(mentor)
+        } else {
+            viewModelScope.launch {
+                try {
+                    _uiState.update { it.copy(isLoading = true) }
+                    val fetchedMentor = fetchDataRepository.fetchMentorById(mentorId)
+                    if (fetchedMentor != null) {
+                        onContactSelected(fetchedMentor)
+                    } else {
+                        _uiState.update { it.copy(isLoading = false) }
+                    }
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+            }
         }
     }
     
     fun onChatSelected(chat: Chat) {
         val currentUserId = _uiState.value.currentUser?.userId ?: return
-        val partnerName = chat.participantNames.filterKeys { it != currentUserId }.values.firstOrNull() ?: "Chat"
+        val partnerId = chat.participants.find { it != currentUserId }
+        val partnerName = chat.participantNames[partnerId] ?: "Chat"
+        val partnerImageUrl = chat.participantProfileImages[partnerId]
         
         _uiState.update { it.copy(
             selectedChatPartnerName = partnerName,
+            selectedChatPartnerImageUrl = partnerImageUrl,
             currentChatId = chat.id
         ) }
         

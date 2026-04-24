@@ -15,7 +15,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.R
-import com.example.holoverse.chat_system.domain.model.Message
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import com.example.holoverse.ui.chat.components.ChatInput
 import com.example.holoverse.ui.chat.components.EmojiPicker
 import com.example.holoverse.ui.chat.components.MessageBubble
@@ -30,7 +32,8 @@ import androidx.core.content.ContextCompat
 @Composable
 fun ConversationScreen(
     uiState: ChatUiState,
-    viewModel: ChatViewModel
+    viewModel: ChatViewModel,
+    onBackClick: (() -> Unit)? = null
 ) {
     var showEmojiPicker by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
@@ -47,9 +50,43 @@ fun ConversationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(uiState.selectedChatPartnerName) },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(40.dp),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                if (uiState.selectedChatPartnerImageUrl != null) {
+                                    AsyncImage(
+                                        model = uiState.selectedChatPartnerImageUrl,
+                                        contentDescription = uiState.selectedChatPartnerName,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Text(
+                                        uiState.selectedChatPartnerName.take(1).uppercase(),
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(uiState.selectedChatPartnerName)
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = { viewModel.backToChatList() }) {
+                    IconButton(onClick = { 
+                        if (onBackClick != null) {
+                            onBackClick()
+                        } else {
+                            viewModel.backToChatList()
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -104,23 +141,23 @@ fun ConversationScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
-                reverseLayout = false,
+                reverseLayout = true,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(uiState.messages) { message ->
+                if (uiState.isSendingAudio) {
+                    item {
+                        SendingVoiceBubble()
+                    }
+                }
+
+                items(uiState.messages.asReversed()) { message ->
                     MessageBubble(
                         message = message,
                         isCurrentUser = (uiState.currentUser?.userId ?: "") == message.senderId,
                         isPlaying = uiState.playingAudioUrl == message.audioUrl && message.audioUrl != null,
                         onPlayClick = { message.audioUrl?.let { viewModel.playAudio(it) } }
                     )
-                }
-
-                if (uiState.isSendingAudio) {
-                    item {
-                        SendingVoiceBubble()
-                    }
                 }
             }
 

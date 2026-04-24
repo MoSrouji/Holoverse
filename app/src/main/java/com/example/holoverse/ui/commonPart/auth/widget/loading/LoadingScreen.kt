@@ -19,14 +19,15 @@ import com.example.holoverse.ui.theme.ColorVerdigris
 fun LoadingScreen() {
 
 
-    BoxWithConstraints(
+    Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {}
             .background(ColorGunmetal50)
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(50.dp), color = ColorVerdigris)
-
+        CircularProgressIndicator(
+            color = ColorVerdigris
+        )
     }
 }

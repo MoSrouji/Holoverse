@@ -1,5 +1,7 @@
 package com.example.holoverse.di
 
+import com.example.holoverse.reviews.data.ReviewRepositoryImpl
+import com.example.holoverse.reviews.domain.ReviewRepository
 import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.data.CourseRepoImpl
 import com.example.holoverse.search.data.repository.SearchRepositoryImpl
@@ -25,5 +27,11 @@ object RepositoryModule {
     @Singleton
     fun provideSearchRepository(firestore: FirebaseFirestore): SearchRepository {
         return SearchRepositoryImpl(firestore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReviewRepository(firestore: FirebaseFirestore): ReviewRepository {
+        return ReviewRepositoryImpl(firestore)
     }
 }

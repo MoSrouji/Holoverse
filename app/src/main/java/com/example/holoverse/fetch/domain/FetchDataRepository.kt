@@ -7,6 +7,7 @@ interface FetchDataRepository {
 
     suspend fun fetchCourses(forceRefresh: Boolean = false): List<Courses>
     suspend fun fetchMentors(forceRefresh: Boolean = false): List<User.Mentor>
+    suspend fun fetchMentorById(mentorId: String): User.Mentor?
     suspend fun fetchAds()
 
 

@@ -1,6 +1,5 @@
 package com.example.holoverse.ui.spatialTheme
 
-import androidx.activity.viewModels
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -11,34 +10,26 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.example.holoverse.ui.theme.primaryLight
-import com.example.holoverse.ui.theme.secondaryLight
-import com.example.holoverse.utils.SplashViewModel
-import kotlin.getValue
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlin.math.sin
-import androidx.activity.viewModels
-import androidx.lifecycle.viewmodel.compose.viewModel
-
 
 @Composable
 fun SpatialBackground(
     modifier: Modifier = Modifier,
     darkTheme: Boolean = !isSystemInDarkTheme()
-
 ) {
-
-
     val colorScheme = MaterialTheme.colorScheme
+    val primaryColor = colorScheme.primary
+    val secondaryColor = colorScheme.secondary
 
-    // This simulates the Three.js particle background using standard Canvas
     val infiniteTransition = rememberInfiniteTransition(label = "background")
     val time by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -47,48 +38,62 @@ fun SpatialBackground(
         label = "time"
     )
 
-    Canvas(modifier = modifier.fillMaxSize()) {
+    val density = LocalDensity.current
+    // Reduced particle count from 51 to 25 for better performance
+    val particleProps = remember(density) {
+        List(25) { i ->
+            val speed = (i % 5 + 1) * 0.4f
+            val radiusPx = with(density) { (i % 2 + 1).dp.toPx() }
+            val isPrimary = i % 2 == 0
+            val xOffsetFactor = i * 137.5f
+            val yOffsetFactor = i * 100f
+            ParticleData(speed, radiusPx, isPrimary, xOffsetFactor, yOffsetFactor)
+        }
+    }
+
+    Canvas(
+        modifier = modifier
+            .fillMaxSize()
+            .graphicsLayer() // Use graphics layer to isolate rendering
+    ) {
         val width = size.width
         val height = size.height
 
         if (darkTheme) {
-            // Light Theme Gradient: Lighter blue to a soft indigo
             drawRect(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFE2DFFF), // primaryContainerLight
-                        Color(0xFF9CF1F0)  // secondaryContainerLight
-                    )
+                    colors = listOf(Color(0xFFE2DFFF), Color(0xFF9CF1F0))
                 )
             )
         } else {
-            // Dark Theme Gradient: Deep space colors
             drawRect(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF050510),
-                        Color(0xFF1A1A2E)
-                    )
+                    colors = listOf(Color(0xFF050510), Color(0xFF1A1A2E))
                 )
             )
         }
 
-
-        // Draw moving particles
-        // Using a deterministic pseudo-random pattern based on index
-        for (i in 0..50) {
-            val xOffset = (i * 137.5f) % width // Golden angle approximation
-            val speed = (i % 5 + 1) * 0.5f
-            val yPos = (height - ((time * speed * 10 + i * 100) % height))
-
-            val alpha = (sin((time / 50f) + i) + 1) / 2 * 0.5f + 0.2f
+        val basePhase = time / 50f
+        particleProps.forEachIndexed { i, p ->
+            val xOffset = p.xOffsetFactor % width
+            val yPos = (height - ((time * p.speed * 8 + p.yOffsetFactor) % height))
+            // Simplified alpha calculation
+            val alpha = (sin(basePhase + i) + 1) * 0.2f + 0.1f
 
             drawCircle(
-                color = if (i % 2 == 0) colorScheme.primary else colorScheme.secondary,
-                radius = (i % 3 + 1).dp.toPx(),
+                color = if (p.isPrimary) primaryColor else secondaryColor,
+                radius = p.radiusPx,
                 center = Offset(xOffset, yPos),
-                alpha = if (darkTheme) alpha else alpha * 0.6f // Subtle particles in light mode
+                alpha = if (darkTheme) alpha else alpha * 0.7f
             )
         }
     }
 }
+
+private data class ParticleData(
+    val speed: Float,
+    val radiusPx: Float,
+    val isPrimary: Boolean,
+    val xOffsetFactor: Float,
+    val yOffsetFactor: Float
+)

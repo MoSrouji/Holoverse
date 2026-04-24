@@ -1,5 +1,6 @@
 package com.example.holoverse.ui.home
 
+import TeacherCard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,7 +55,6 @@ import com.example.holoverse.ui.home.component.FabMenuItem
 import com.example.holoverse.ui.home.component.FloatingActionButtonMenu
 import com.example.holoverse.ui.home.component.HomeSearchBar
 import com.example.holoverse.ui.home.component.SubTitle
-import com.example.holoverse.ui.home.component.TeacherCard
 import com.example.holoverse.ui.home.component.TextListButton
 import com.example.holoverse.ui.home.component.TextListTextButton
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
@@ -70,6 +70,7 @@ fun HomeScreen(
     onCategoryClick: () -> Unit,
     onPopularCoursesClick: () -> Unit,
     onTopMentorClick: () -> Unit,
+    onMentorClick: (String) -> Unit,
     darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -89,23 +90,31 @@ fun HomeScreen(
         }
     }
 
-    val fabMenuItems = listOf(
-        FabMenuItem("Create Course", Icons.Default.Add) {
-            appNavigator.navigateTo(AppDestination.CreateCourse)
-        },
-        FabMenuItem("Analytics", Icons.Default.Analytics) {
-            /* Navigate to Analytics */
-        },
-        FabMenuItem("Students", Icons.Default.Groups) {
-            /* Navigate to Students List */
-        },
-        FabMenuItem("Messages", Icons.Default.Chat) {
-            appNavigator.navigateTo(AppDestination.ChatScreen)
-        },
-        FabMenuItem("Announcements", Icons.Default.Campaign) {
-            /* Open Announcement Dialog */
-        }
-    )
+    val createCourseLabel = stringResource(R.string.create_course)
+    val analyticsLabel = stringResource(R.string.analytics)
+    val studentsLabel = stringResource(R.string.students)
+    val messagesLabel = stringResource(R.string.messages)
+    val announcementsLabel = stringResource(R.string.announcements)
+
+    val fabMenuItems = remember(createCourseLabel, analyticsLabel, studentsLabel, messagesLabel, announcementsLabel) {
+        listOf(
+            FabMenuItem(createCourseLabel, Icons.Default.Add) {
+                appNavigator.navigateTo(AppDestination.CreateCourse)
+            },
+            FabMenuItem(analyticsLabel, Icons.Default.Analytics) {
+                /* Navigate to Analytics */
+            },
+            FabMenuItem(studentsLabel, Icons.Default.Groups) {
+                /* Navigate to Students List */
+            },
+            FabMenuItem(messagesLabel, Icons.Default.Chat) {
+                appNavigator.navigateTo(AppDestination.ChatScreen())
+            },
+            FabMenuItem(announcementsLabel, Icons.Default.Campaign) {
+                /* Open Announcement Dialog */
+            }
+        )
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -153,12 +162,12 @@ fun HomeScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = getGreeting(),
+                                    text = stringResource(getGreeting()),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                 )
                                 Text(
-                                    text = uiState.currentUser?.fullName ?: "Guest",
+                                    text = uiState.currentUser?.fullName ?: stringResource(R.string.guest),
                                     style = MaterialTheme.typography.headlineSmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = (-0.5).sp
@@ -175,7 +184,7 @@ fun HomeScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.NotificationsNone,
-                                    contentDescription = "Notifications",
+                                    contentDescription = stringResource(R.string.notifications_desc),
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -279,6 +288,35 @@ fun HomeScreen(
                             )
                             TextListButton()
 
+                            // 1. Recommended Courses (Personalized)
+                            if (uiState.recommendedCourses.isNotEmpty()) {
+                                SectionHeader(
+                                    titleId = R.string.for_you_courses,
+                                    onClick = { appNavigator.navigateTo(AppDestination.Recommended) }
+                                )
+                                HorizontalCourseList(
+                                    courses = uiState.recommendedCourses,
+                                    isLoading = uiState.isLoading,
+                                    onCourseClick = { course ->
+                                        appNavigator.navigateTo(AppDestination.CourseDetail(course.id))
+                                    }
+                                )
+                            }
+
+                            // 2. Recommended Mentors (Personalized)
+                            if (uiState.recommendedMentors.isNotEmpty()) {
+                                SectionHeader(
+                                    titleId = R.string.for_you_mentor,
+                                    onClick = { appNavigator.navigateTo(AppDestination.RecommendedMentors) }
+                                )
+                                HorizontalMentorList(
+                                    mentors = uiState.recommendedMentors,
+                                    isLoading = uiState.isLoading,
+                                    onMentorClick = onMentorClick
+                                )
+                            }
+
+                            // 3. Popular Courses (Global)
                             SectionHeader(
                                 titleId = R.string.popular_Courses,
                                 onClick = onPopularCoursesClick
@@ -293,11 +331,16 @@ fun HomeScreen(
                                 }
                             )
 
+                            // 4. Top Mentors (Global)
                             SectionHeader(
                                 titleId = R.string.top_Mentor,
                                 onClick = onTopMentorClick
                             )
-                            HorizontalMentorList(mentors = uiState.mentors, isLoading = uiState.isLoading)
+                            HorizontalMentorList(
+                                mentors = uiState.mentors,
+                                isLoading = uiState.isLoading,
+                                onMentorClick = onMentorClick
+                            )
                         }
                     }
 
@@ -313,19 +356,19 @@ fun HomeScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Ongoing Learning",
+                                text = stringResource(R.string.ongoing_learning),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.align(Alignment.Start)
                             )
                             Spacer(modifier = Modifier.height(32.dp))
-                            EmptyStateText("You haven't enrolled in any courses yet.")
+                            EmptyStateText(stringResource(R.string.no_enrolled_courses))
                             Button(
                                 onClick = { viewModel.onTabSelected(HomeTab.Explore) },
                                 modifier = Modifier.padding(top = 16.dp),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("Start Exploring")
+                                Text(stringResource(R.string.start_exploring))
                             }
                         }
                     }
@@ -345,7 +388,7 @@ fun SectionHeader(titleId: Int, onClick: () -> Unit) {
 
 @Composable
 fun HorizontalCourseList(
-    courses: List<com.example.holoverse.courses.domain.Courses>, 
+    courses: List<com.example.holoverse.courses.domain.Courses>,
     isLoading: Boolean,
     onCourseClick: (com.example.holoverse.courses.domain.Courses) -> Unit
 ) {
@@ -357,7 +400,7 @@ fun HorizontalCourseList(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (courses.isEmpty() && !isLoading) {
-            EmptyStateText("No courses available yet")
+            EmptyStateText(stringResource(R.string.no_courses_available))
         } else {
             courses.forEach { course ->
                 CourseCard(
@@ -370,7 +413,11 @@ fun HorizontalCourseList(
 }
 
 @Composable
-fun HorizontalMentorList(mentors: List<com.example.holoverse.auth.domain.entities.User.Mentor>, isLoading: Boolean) {
+fun HorizontalMentorList(
+    mentors: List<com.example.holoverse.auth.domain.entities.User.Mentor>,
+    isLoading: Boolean,
+    onMentorClick: (String) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -379,10 +426,13 @@ fun HorizontalMentorList(mentors: List<com.example.holoverse.auth.domain.entitie
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (mentors.isEmpty() && !isLoading) {
-            EmptyStateText("No mentors found")
+            EmptyStateText(stringResource(R.string.no_mentors_found))
         } else {
             mentors.forEach { mentor ->
-                TeacherCard(mentor = mentor)
+                TeacherCard(
+                    mentor = mentor,
+                    onClick = { onMentorClick(mentor.userId!!) }
+                )
             }
         }
     }
@@ -398,12 +448,12 @@ fun EmptyStateText(text: String) {
     )
 }
 
-private fun getGreeting(): String {
+private fun getGreeting(): Int {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     return when (hour) {
-        in 0..11 -> "Good Morning"
-        in 12..16 -> "Good Afternoon"
-        else -> "Good Evening"
+        in 0..11 -> R.string.good_morning
+        in 12..16 -> R.string.good_afternoon
+        else -> R.string.good_evening
     }
 }
 
@@ -416,6 +466,7 @@ fun HomeScreenPreview() {
             onCategoryClick = {},
             onPopularCoursesClick = {},
             onTopMentorClick = {},
+            onMentorClick = {},
             darkTheme = true
         )
     }
