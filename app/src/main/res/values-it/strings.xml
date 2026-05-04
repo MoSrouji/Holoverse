@@ -71,4 +71,6 @@
     <string name="following">Seguito</string>
     <string name="message">Messaggio</string>
     <string name="students">Studenti</string>
+    <string name="retry">Riprova</string>
+    <string name="offline_mode">Modalità offline - Visualizzazione dati memorizzati nella cache</string>
 </resources>

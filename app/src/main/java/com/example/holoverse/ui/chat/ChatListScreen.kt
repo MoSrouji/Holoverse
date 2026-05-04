@@ -28,6 +28,7 @@ import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.chat_system.domain.model.Chat
 import com.example.holoverse.ui.chat.components.ChatListItem
 import com.example.holoverse.ui.chat.components.ContactListItem
+import com.example.holoverse.ui.spatialTheme.Brush
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.IbarraNovaFont
 
@@ -40,7 +41,7 @@ fun ChatListScreen(
     onContactSelected: (String) -> Unit
 ) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color.Transparent
     ) { padding ->
         Column(
             modifier = Modifier
@@ -52,13 +53,9 @@ fun ChatListScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(Brush(darkTheme))
+
             ) {
-                SpatialBackground(
-                    modifier = Modifier.matchParentSize(),
-                    isDark = darkTheme
-                )
-                
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -70,14 +67,14 @@ fun ChatListScreen(
                             fontWeight = FontWeight.Bold,
                             fontFamily = IbarraNovaFont
                         ),
-                        color = MaterialTheme.colorScheme.onSurface
+
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Connect with your mentors and peers",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        color = Color.White.copy(alpha = 0.7f)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -87,7 +84,12 @@ fun ChatListScreen(
                         onValueChange = { viewModel.onSearchQueryChange(it) },
                         modifier = Modifier
                             .fillMaxWidth(),
-                        placeholder = { Text("Search mentors...") },
+                        placeholder = { 
+                            Text(
+                                "Search mentors...",
+                             //   color = Color.White.copy(alpha = 0.5f)
+                            ) 
+                        },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         trailingIcon = if (uiState.searchQuery.isNotEmpty()) {
                             {
@@ -98,19 +100,14 @@ fun ChatListScreen(
                         } else null,
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                            focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedIndicatorColor = MaterialTheme.colorScheme.primary
-                        )
                     )
                 }
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
                 if (uiState.chats.isNotEmpty()) {
                     item {
                         Text(
@@ -158,4 +155,5 @@ fun ChatListScreen(
             }
         }
     }
+}
 }

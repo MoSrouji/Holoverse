@@ -81,6 +81,7 @@ import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.ui.spatialTheme.Brush
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.ui.theme.HoloverseTheme
@@ -97,22 +98,22 @@ data class ProfileItemData(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    navController: AppNavigator,
+    onEditProfileClick: () -> Unit,
+    onTermsAndConditionsClick: () -> Unit,
+    onSignOutSuccess: () -> Unit,
     darkTheme: Boolean,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    
+
     LaunchedEffect(Unit) {
         viewModel.updateLanguageName(context)
     }
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) {
-            navController.navigateTo(AppDestination.AuthGraph) {
-                popUpTo(AppDestination.HomeGraph) { inclusive = true }
-            }
+            onSignOutSuccess()
         }
     }
 
@@ -124,30 +125,33 @@ fun ProfileScreen(
         ProfileItemData(
             Icons.Default.Person,
             stringResource(R.string.edit_profile),
-            onClick = { navController.navigateTo(AppDestination.EditProfile) }),
+            onClick = { onEditProfileClick() }),
         ProfileItemData(Icons.Default.Payment, stringResource(R.string.payment_option)),
         ProfileItemData(Icons.Default.Notifications, stringResource(R.string.notifications)),
         ProfileItemData(Icons.Default.GppGood, stringResource(R.string.security)),
         ProfileItemData(
-            Icons.Default.Language, 
-            stringResource(R.string.language), 
+            Icons.Default.Language,
+            stringResource(R.string.language),
             uiState.selectedLanguageName,
             onClick = { showLanguageSheet = true }
         ),
         ProfileItemData(
-            Icons.Default.DarkMode, 
+            Icons.Default.DarkMode,
             stringResource(R.string.dark_mode),
             uiState.selectedThemeMode.replaceFirstChar { it.uppercase() },
             onClick = { showThemeSheet = true }
         ),
         ProfileItemData(
-            Icons.Default.Policy, 
+            Icons.Default.Policy,
             stringResource(R.string.terms_conditions),
-            onClick = { navController.navigateTo(AppDestination.TermsAndConditions) }
+            onClick = { onTermsAndConditionsClick() }
         ),
-        ProfileItemData(Icons.AutoMirrored.Filled.HelpOutline, stringResource(R.string.help_center)),
         ProfileItemData(
-            Icons.AutoMirrored.Filled.Message, 
+            Icons.AutoMirrored.Filled.HelpOutline,
+            stringResource(R.string.help_center)
+        ),
+        ProfileItemData(
+            Icons.AutoMirrored.Filled.Message,
             stringResource(R.string.invite_friends),
             onClick = {
                 val sendIntent: Intent = Intent().apply {
@@ -239,7 +243,6 @@ fun ProfileScreen(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Color.White,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -248,7 +251,6 @@ fun ProfileScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -265,13 +267,9 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                        .background(MaterialTheme.colorScheme.surface)
+                        .background(Brush(darkTheme))
+
                 ) {
-                    SpatialBackground(
-                        modifier = Modifier.matchParentSize(),
-                        isDark = darkTheme
-                    )
-                    
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -284,10 +282,9 @@ fun ProfileScreen(
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = IbarraNovaFont
                             ),
-                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.align(Alignment.Start)
                         )
-                        
+
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Box {
@@ -303,7 +300,9 @@ fun ProfileScreen(
                                     AsyncImage(
                                         model = uiState.profileImageUrl,
                                         contentDescription = "Profile Image",
-                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape),
                                         contentScale = ContentScale.Crop
                                     )
                                 } else {
@@ -322,7 +321,11 @@ fun ProfileScreen(
                                     .size(36.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(MaterialTheme.colorScheme.surface)
-                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
+                                    .border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.outlineVariant,
+                                        RoundedCornerShape(8.dp)
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -338,16 +341,25 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text(uiState.fullName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Text(uiState.email, color = Color.Gray, fontSize = 14.sp)
+                        Text(
+                            uiState.fullName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            uiState.email,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp
+                        )
                     }
                 }
 
                 if (uiState.error != null) {
                     Text(
-                        uiState.error!!, 
-                        color = Color.Red, 
-                        fontSize = 12.sp, 
+                        uiState.error!!,
+                        color = Color.Red,
+                        fontSize = 12.sp,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
@@ -362,7 +374,10 @@ fun ProfileScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
                     ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
                 ) {
                     LazyColumn {
                         items(profileItems.size) { index ->
@@ -377,7 +392,7 @@ fun ProfileScreen(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -508,7 +523,7 @@ fun ProfileImageBottomSheet(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
-            
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -520,7 +535,7 @@ fun ProfileImageBottomSheet(
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(text = "See your Image", fontSize = 16.sp)
             }
-            
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -528,7 +543,11 @@ fun ProfileImageBottomSheet(
                     .padding(vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = Color(0xFF009688))
+                Icon(
+                    Icons.Default.PhotoLibrary,
+                    contentDescription = null,
+                    tint = Color(0xFF009688)
+                )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(text = "Upload a new image", fontSize = 16.sp)
             }
@@ -570,6 +589,11 @@ fun ProfileItem(item: ProfileItemData) {
 @Composable
 fun ProfileScreenPreview() {
     HoloverseTheme(darkTheme = true) {
-        ProfileScreen(navController = AppNavigator(), darkTheme = true)
+        ProfileScreen(
+            onEditProfileClick = {},
+            onTermsAndConditionsClick = {},
+            onSignOutSuccess = {},
+            darkTheme = true,
+        )
     }
 }

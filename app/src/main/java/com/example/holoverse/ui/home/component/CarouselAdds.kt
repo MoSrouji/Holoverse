@@ -252,58 +252,59 @@ fun PromotionalStyleDynamicSplit(course: Courses, modifier: Modifier = Modifier)
 }
 
 @Composable
-@Preview
 fun CarouselAdds() {
-    val dummyCourses = listOf(
-        Courses(
-            name = "Mastering Augmented Reality",
-            category = "3D Design",
-            price = 49.99,
-            rating = 4.9,
-            numEnrolled = 1250,
-            imageUrl = "https://images.unsplash.com/photo-1633177317976-3f9bc45e1d1d?q=80&w=320&h=160&auto=format&fit=crop"
-        ),
-        Courses(
-            name = "VR World Building",
-            category = "Development",
-            price = 59.99,
-            rating = 4.8,
-            numEnrolled = 850,
-            imageUrl = "https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?q=80&w=320&h=160&auto=format&fit=crop"
-        ),
-        Courses(
-            name = "Spatial UI Design",
-            category = "Design",
-            price = 39.99,
-            rating = 4.7,
-            numEnrolled = 2100,
-            imageUrl = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=320&h=160&auto=format&fit=crop"
-        ),
-        Courses(
-            name = "Advanced Holographics",
-            category = "Science",
-            price = 79.99,
-            rating = 5.0,
-            numEnrolled = 450,
-            imageUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=320&h=160&auto=format&fit=crop"
-        ),
-        Courses(
-            name = "Mixed Reality for Beginners",
-            category = "Technology",
-            price = 29.99,
-            rating = 4.5,
-            numEnrolled = 3000,
-            imageUrl = "https://images.unsplash.com/photo-1592477383748-47209930f46c?q=80&w=320&h=160&auto=format&fit=crop"
-        ),
-        Courses(
-            name = "Unity XR Foundations",
-            category = "Coding",
-            price = 69.99,
-            rating = 4.6,
-            numEnrolled = 1100,
-            imageUrl = "https://images.unsplash.com/photo-1478416215748-28c169d5180f?q=80&w=320&h=160&auto=format&fit=crop"
+    val dummyCourses = remember {
+        listOf(
+            Courses(
+                name = "Mastering Augmented Reality",
+                category = "3D Design",
+                price = 49.99,
+                rating = 4.9,
+                numEnrolled = 1250,
+                imageUrl = "https://images.unsplash.com/photo-1633177317976-3f9bc45e1d1d?q=80&w=320&h=160&auto=format&fit=crop"
+            ),
+            Courses(
+                name = "VR World Building",
+                category = "Development",
+                price = 59.99,
+                rating = 4.8,
+                numEnrolled = 850,
+                imageUrl = "https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?q=80&w=320&h=160&auto=format&fit=crop"
+            ),
+            Courses(
+                name = "Spatial UI Design",
+                category = "Design",
+                price = 39.99,
+                rating = 4.7,
+                numEnrolled = 2100,
+                imageUrl = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=320&h=160&auto=format&fit=crop"
+            ),
+            Courses(
+                name = "Advanced Holographics",
+                category = "Science",
+                price = 79.99,
+                rating = 5.0,
+                numEnrolled = 450,
+                imageUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=320&h=160&auto=format&fit=crop"
+            ),
+            Courses(
+                name = "Mixed Reality for Beginners",
+                category = "Technology",
+                price = 29.99,
+                rating = 4.5,
+                numEnrolled = 3000,
+                imageUrl = "https://images.unsplash.com/photo-1592477383748-47209930f46c?q=80&w=320&h=160&auto=format&fit=crop"
+            ),
+            Courses(
+                name = "Unity XR Foundations",
+                category = "Coding",
+                price = 69.99,
+                rating = 4.6,
+                numEnrolled = 1100,
+                imageUrl = "https://images.unsplash.com/photo-1478416215748-28c169d5180f?q=80&w=320&h=160&auto=format&fit=crop"
+            )
         )
-    )
+    }
 
     val pagerState = rememberPagerState(
         initialPage = 0,

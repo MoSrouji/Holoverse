@@ -59,6 +59,9 @@ sealed interface AppDestination {
     data object RecommendedMentors : AppDestination
 
     @Serializable
+    data object TopMentors : AppDestination
+
+    @Serializable
     data object Search : AppDestination
 
     @Serializable

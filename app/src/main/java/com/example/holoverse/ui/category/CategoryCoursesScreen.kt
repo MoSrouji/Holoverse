@@ -35,12 +35,14 @@ import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.ui.home.coursesList.CourseItem
+import com.example.holoverse.ui.spatialTheme.Brush
 import com.example.holoverse.utils.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryCoursesScreen(
-    appNavigator: AppNavigator,
+    onBackClick: () -> Unit,
+    onCourseClick: (String) -> Unit,
     darkTheme: Boolean,
     viewModel: CategoryViewModel = hiltViewModel()
 ) {
@@ -48,7 +50,6 @@ fun CategoryCoursesScreen(
     val categoryName = viewModel.categoryName.value
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -60,13 +61,9 @@ fun CategoryCoursesScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(Brush(darkTheme))
+
             ) {
-                SpatialBackground(
-                    modifier = Modifier.matchParentSize(),
-                    isDark = darkTheme
-                )
-                
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -77,13 +74,12 @@ fun CategoryCoursesScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
-                            onClick = { appNavigator.popBackStack() },
+                            onClick = { onBackClick() },
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                         
@@ -93,7 +89,6 @@ fun CategoryCoursesScreen(
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = IbarraNovaFont
                             ),
-                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
@@ -102,7 +97,6 @@ fun CategoryCoursesScreen(
                     Text(
                         text = "Explore top rated courses in $categoryName",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         modifier = Modifier.padding(start = 48.dp)
                     )
                 }
@@ -135,6 +129,7 @@ fun CategoryCoursesScreen(
                             items(courses) { course ->
                                 CourseItem(
                                     course = course,
+                                    onClick = { onCourseClick(course.id) }
                                 )
                             }
                         }

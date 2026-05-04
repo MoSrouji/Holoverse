@@ -34,7 +34,10 @@ import com.example.holoverse.ui.reviews.ui.ReviewViewModel
 import com.example.holoverse.ui.reviews.ui.components.ReviewItem
 import com.example.holoverse.ui.reviews.ui.components.WriteReviewDialog
 import com.example.holoverse.ui.home.component.CourseTypeWithButton
+import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloverseTheme
+import com.example.holoverse.ui.theme.IbarraNovaFont
 
 @Composable
 fun MentorProfileScreen(
@@ -43,85 +46,102 @@ fun MentorProfileScreen(
     onCourseClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
     viewModel: MentorProfileViewModel = hiltViewModel(),
-    reviewViewModel: ReviewViewModel = hiltViewModel()
+    reviewViewModel: ReviewViewModel = hiltViewModel(),
+    darkTheme: Boolean = true
 ) {
-    HoloverseTheme {
-        val uiState by viewModel.uiState.collectAsState()
-        val reviewState by reviewViewModel.uiState.collectAsState()
-        var showReviewDialog by remember { mutableStateOf(false) }
-        val currentUser = reviewState.currentUser
-        val existingReview = reviewState.reviews.find { it.userId == currentUser?.userId }
+    val uiState by viewModel.uiState.collectAsState()
+    val reviewState by reviewViewModel.uiState.collectAsState()
+    var showReviewDialog by remember { mutableStateOf(false) }
+    val currentUser = reviewState.currentUser
+    val existingReview = reviewState.reviews.find { it.userId == currentUser?.userId }
 
-        LaunchedEffect(mentorId) {
-            viewModel.loadMentorProfile(mentorId)
-            reviewViewModel.loadReviews(mentorId)
-        }
+    LaunchedEffect(mentorId) {
+        viewModel.loadMentorProfile(mentorId)
+        reviewViewModel.loadReviews(mentorId)
+    }
 
-        Scaffold(
-            topBar = {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.padding(16.dp)
+    Scaffold(
+        containerColor = Color.Transparent,
+        topBar = {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.back)
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        text = "Mentor Profile",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontFamily = IbarraNovaFont,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color.White,
+                        modifier = Modifier.padding(start = 8.dp)
                     )
                 }
-            }
-        ) { paddingValues ->
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (uiState.error != null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = uiState.error ?: stringResource(R.string.unknown_error))
-                }
-            } else {
-                uiState.mentor?.let { mentor ->
-                    MentorProfileContent(
-                        mentor = mentor,
-                        courses = uiState.courses,
-                        reviews = reviewState.reviews,
-                        existingReview = existingReview,
-                        isFollowing = uiState.isFollowing,
-                        isUserLoggedIn = uiState.isUserLoggedIn,
-                        isOwnProfile = uiState.isOwnProfile,
-                        onFollowClick = { viewModel.toggleFollow() },
-                        onCourseClick = onCourseClick,
-                        onMessageClick = onMessageClick,
-                        onWriteReviewClick = { showReviewDialog = true },
-                        modifier = Modifier.padding(paddingValues)
-                    )
-                }
-            }
 
-            if (showReviewDialog) {
-                WriteReviewDialog(
-                    onDismiss = { showReviewDialog = false },
-                    onSubmit = { rating, comment ->
-                        if (currentUser != null) {
-                            val review = Review(
-                                targetId = mentorId,
-                                userId = currentUser.userId ?: "",
-                                userName = currentUser.fullName ?: "Anonymous User",
-                                userImageUrl = when(currentUser) {
-                                    is User.Student -> currentUser.profileImageUrl ?: ""
-                                    is User.Mentor -> currentUser.profileImageUrl ?: ""
-                                },
-                                rating = rating,
-                                comment = comment
-                            )
-                            reviewViewModel.submitReview(review)
-                            showReviewDialog = false
-                        }
-                    },
-                    isSubmitting = reviewState.isSubmitting,
-                    initialRating = existingReview?.rating ?: 0f,
-                    initialComment = existingReview?.comment ?: ""
+        }
+    ) { paddingValues ->
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (uiState.error != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = uiState.error ?: stringResource(R.string.unknown_error))
+            }
+        } else {
+            uiState.mentor?.let { mentor ->
+                MentorProfileContent(
+                    mentor = mentor,
+                    courses = uiState.courses,
+                    reviews = reviewState.reviews,
+                    existingReview = existingReview,
+                    isFollowing = uiState.isFollowing,
+                    isUserLoggedIn = uiState.isUserLoggedIn,
+                    isOwnProfile = uiState.isOwnProfile,
+                    onFollowClick = { viewModel.toggleFollow() },
+                    onCourseClick = onCourseClick,
+                    onMessageClick = onMessageClick,
+                    onWriteReviewClick = { showReviewDialog = true },
+                    modifier = Modifier.padding(paddingValues)
                 )
             }
+        }
+
+        if (showReviewDialog) {
+            WriteReviewDialog(
+                onDismiss = { showReviewDialog = false },
+                onSubmit = { rating, comment ->
+                    if (currentUser != null) {
+                        val review = Review(
+                            targetId = mentorId,
+                            userId = currentUser.userId ?: "",
+                            userName = currentUser.fullName ?: "Anonymous User",
+                            userImageUrl = when (currentUser) {
+                                is User.Student -> currentUser.profileImageUrl ?: ""
+                                is User.Mentor -> currentUser.profileImageUrl ?: ""
+                            },
+                            rating = rating,
+                            comment = comment
+                        )
+                        reviewViewModel.submitReview(review)
+                        showReviewDialog = false
+                    }
+                },
+                isSubmitting = reviewState.isSubmitting,
+                initialRating = existingReview?.rating ?: 0f,
+                initialComment = existingReview?.comment ?: ""
+            )
         }
     }
 }
@@ -171,7 +191,9 @@ fun MentorProfileContent(
             )
 
             Text(
-                text = "${mentor.specialization.name.lowercase().replaceFirstChar { it.uppercase() }}${stringResource(R.string.at_google)}",
+                text = "${
+                    mentor.specialization.name.lowercase().replaceFirstChar { it.uppercase() }
+                }${stringResource(R.string.at_google)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -182,10 +204,22 @@ fun MentorProfileContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(label = stringResource(R.string.courses), value = (mentor.coursesCreated?.size ?: 0).toString())
-                StatItem(label = stringResource(R.string.students), value = formatValue(mentor.followersCount ?: 0))
-                StatItem(label = stringResource(R.string.following), value = formatValue(mentor.followingCount ?: 0))
-                StatItem(label = stringResource(R.string.ratings), value = String.format(Locale.US, "%.1f", mentor.averageRating ?: 0.0))
+                StatItem(
+                    label = stringResource(R.string.courses),
+                    value = (mentor.coursesCreated?.size ?: 0).toString()
+                )
+                StatItem(
+                    label = stringResource(R.string.students),
+                    value = formatValue(mentor.followersCount ?: 0)
+                )
+                StatItem(
+                    label = stringResource(R.string.following),
+                    value = formatValue(mentor.followingCount ?: 0)
+                )
+                StatItem(
+                    label = stringResource(R.string.ratings),
+                    value = String.format(Locale.US, "%.1f", mentor.averageRating ?: 0.0)
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -210,7 +244,9 @@ fun MentorProfileContent(
                         elevation = null
                     ) {
                         Text(
-                            text = if (isFollowing) stringResource(R.string.following) else stringResource(R.string.follow),
+                            text = if (isFollowing) stringResource(R.string.following) else stringResource(
+                                R.string.follow
+                            ),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -325,7 +361,7 @@ fun MentorProfileContent(
                     color = MaterialTheme.colorScheme.outlineVariant
                 )
             }
-            
+
             if (reviews.isEmpty()) {
                 item {
                     Box(
@@ -386,7 +422,7 @@ fun MentorCourseItem(course: Courses, onClick: () -> Unit) {
 
         Column(modifier = Modifier.weight(1f)) {
             CourseTypeWithButton(category = course.category)
-            
+
             Text(
                 text = course.name,
                 style = MaterialTheme.typography.bodyLarge,
@@ -419,7 +455,12 @@ fun MentorCourseItem(course: Courses, onClick: () -> Unit) {
                     modifier = Modifier.size(14.dp)
                 )
                 Text(
-                    text = " ${course.rating}  |  ${stringResource(R.string.enrolled_count, formatValue(course.numEnrolled))}",
+                    text = " ${course.rating}  |  ${
+                        stringResource(
+                            R.string.enrolled_count,
+                            formatValue(course.numEnrolled)
+                        )
+                    }",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -68,6 +68,7 @@ import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeViewModel
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import java.util.Locale
@@ -75,8 +76,10 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PopularCoursesScreen(
+    onCourseClick: (String) -> Unit,
     onBackClick: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    darkTheme: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val courses = uiState.courses
@@ -94,32 +97,37 @@ fun PopularCoursesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Popular Courses",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontFamily = IbarraNovaFont,
-                            fontWeight = FontWeight.Bold
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            ) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Popular Courses",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = IbarraNovaFont,
+                                fontWeight = FontWeight.Bold,
+                            )
                         )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                            )
+                        }
+                    },
+
                 )
-            )
+            }
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
             // Search Bar
@@ -214,7 +222,7 @@ fun PopularCoursesScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(coursesToShow, key = { it.id }) { course ->
-                            CourseItem(course = course)
+                            CourseItem(course = course, onClick = { onCourseClick(course.id) })
                         }
                     }
                 }
@@ -254,7 +262,7 @@ fun EmptyState() {
 }
 
 @Composable
-fun CourseItem(course: Courses) {
+fun CourseItem(course: Courses, onClick: () -> Unit) {
     var isBookmarked by remember { mutableStateOf(false) }
 
     Card(
@@ -263,7 +271,7 @@ fun CourseItem(course: Courses) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Handle course click */ }
+            .clickable { onClick() }
     ) {
         Row(
             modifier = Modifier
@@ -395,6 +403,6 @@ private fun formatEnrolled(num: Int): String {
 @Composable
 fun PopularCoursesScreenPreview() {
     HoloverseTheme {
-        PopularCoursesScreen(onBackClick = {})
+        PopularCoursesScreen(onBackClick = {}, onCourseClick = {})
     }
 }

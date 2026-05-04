@@ -38,8 +38,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloCyan
 import com.example.holoverse.ui.theme.HoloPurple
+import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.utils.Response
 
 data class CourseSession(
@@ -52,7 +55,8 @@ data class CourseSession(
 fun CourseDetailScreen(
     viewModel: CourseDetailViewModel = hiltViewModel(),
     onBackClick: () -> Unit,
-    onApplyClick: (String) -> Unit
+    onApplyClick: (String) -> Unit,
+    darkTheme: Boolean = true
 ) {
     val courseState by viewModel.courseState
 
@@ -64,13 +68,15 @@ fun CourseDetailScreen(
                 )
             }
         }
+
         is Response.Success -> {
             val course = (courseState as Response.Success<Courses?>).data
             if (course != null) {
                 CourseDetailContent(
                     course = course,
                     onBackClick = onBackClick,
-                    onApplyClick = { onApplyClick(course.id) }
+                    onApplyClick = { onApplyClick(course.id) },
+                    darkTheme = darkTheme
                 )
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -78,9 +84,13 @@ fun CourseDetailScreen(
                 }
             }
         }
+
         is Response.Error -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = (courseState as Response.Error).massage, color = MaterialTheme.colorScheme.error)
+                Text(
+                    text = (courseState as Response.Error).massage,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -95,10 +105,11 @@ enum class CourseDetailTab {
 fun CourseDetailContent(
     course: Courses,
     onBackClick: () -> Unit,
-    onApplyClick: () -> Unit
+    onApplyClick: () -> Unit,
+    darkTheme: Boolean
 ) {
     var selectedTab by remember { mutableStateOf(CourseDetailTab.Courses) }
-    
+
     val sessions = listOf(
         CourseSession("Introduction", "7/2/2026", "10:30 -> 11:30"),
         CourseSession("Fundamentals of Design", "9/2/2025", "12:00 -> 14:20"),
@@ -107,20 +118,36 @@ fun CourseDetailContent(
     )
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("Course Details", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                    .background(Brush(darkTheme))
+
+            ) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Course Details",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = IbarraNovaFont,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                            )
+                        }
+                    },
+
+                    )
+            }
         },
         bottomBar = {
             Surface(
@@ -198,7 +225,10 @@ fun CourseDetailContent(
                                 .fillMaxSize()
                                 .background(
                                     Brush.verticalGradient(
-                                        listOf(HoloPurple.copy(alpha = 0.7f), HoloCyan.copy(alpha = 0.7f))
+                                        listOf(
+                                            HoloPurple.copy(alpha = 0.7f),
+                                            HoloCyan.copy(alpha = 0.7f)
+                                        )
                                     )
                                 ),
                             contentAlignment = Alignment.Center
@@ -225,14 +255,14 @@ fun CourseDetailContent(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Default.Star, 
-                            contentDescription = null, 
-                            tint = Color(0xFFFFC107), 
+                            Icons.Default.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFC107),
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
@@ -261,7 +291,7 @@ fun CourseDetailContent(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
@@ -277,7 +307,7 @@ fun CourseDetailContent(
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it }
                     )
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
@@ -296,7 +326,7 @@ fun CourseDetailContent(
                     RatingSection(course)
                 }
             }
-            
+
             item {
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -391,7 +421,9 @@ fun RatingSection(course: Courses) {
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = null,
-                            tint = if (index < course.rating.toInt()) Color(0xFFFFC107) else Color.Gray.copy(alpha = 0.5f),
+                            tint = if (index < course.rating.toInt()) Color(0xFFFFC107) else Color.Gray.copy(
+                                alpha = 0.5f
+                            ),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -403,9 +435,11 @@ fun RatingSection(course: Courses) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
             // Simplified Rating Bars
-            Column(modifier = Modifier.weight(1f).padding(start = 32.dp)) {
+            Column(modifier = Modifier
+                .weight(1f)
+                .padding(start = 32.dp)) {
                 RatingBar(5, 0.8f)
                 RatingBar(4, 0.15f)
                 RatingBar(3, 0.03f)
@@ -413,9 +447,9 @@ fun RatingSection(course: Courses) {
                 RatingBar(1, 0.01f)
             }
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         // Placeholder for individual reviews
         Text(
             text = "Latest Reviews",
@@ -423,7 +457,7 @@ fun RatingSection(course: Courses) {
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Example Review
         ReviewItem(
             name = "Alex Johnson",
@@ -460,8 +494,14 @@ fun RatingBar(stars: Int, percentage: Float) {
 @Composable
 fun ReviewItem(name: String, rating: Int, comment: String) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                alpha = 0.2f
+            )
+        ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -473,12 +513,21 @@ fun ReviewItem(name: String, rating: Int, comment: String) {
                 Text(text = name, fontWeight = FontWeight.Bold)
                 Row {
                     repeat(rating) {
-                        Icon(Icons.Default.Star, null, tint = Color(0xFFFFC107), modifier = Modifier.size(14.dp))
+                        Icon(
+                            Icons.Default.Star,
+                            null,
+                            tint = Color(0xFFFFC107),
+                            modifier = Modifier.size(14.dp)
+                        )
                     }
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = comment, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = comment,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -494,9 +543,9 @@ fun InfoChip(icon: ImageVector, label: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                icon, 
-                contentDescription = null, 
-                modifier = Modifier.size(16.dp), 
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
                 tint = HoloCyan
             )
             Spacer(modifier = Modifier.width(6.dp))
@@ -529,11 +578,11 @@ fun TimelineItem(
                 val circleRadius = 8.dp.toPx()
                 val strokeWidth = 3.dp.toPx()
                 val circleCenterY = 24.dp.toPx()
-                
+
                 // Draw vertical line
                 val startY = if (isFirst) circleCenterY else 0f
                 val endY = if (isLast) circleCenterY else size.height
-                
+
                 drawLine(
                     color = HoloCyan.copy(alpha = 0.5f),
                     start = Offset(centerX, startY),
@@ -570,7 +619,10 @@ fun TimelineItem(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
             ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -581,17 +633,17 @@ fun TimelineItem(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.Default.CalendarMonth, 
-                        contentDescription = null, 
-                        modifier = Modifier.size(14.dp), 
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
                         tint = HoloCyan
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -602,9 +654,9 @@ fun TimelineItem(
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Icon(
-                        Icons.Default.AccessTime, 
-                        contentDescription = null, 
-                        modifier = Modifier.size(14.dp), 
+                        Icons.Default.AccessTime,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
                         tint = HoloCyan
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -634,7 +686,8 @@ fun CourseDetailScreenPreview() {
                 numReviews = 124
             ),
             onBackClick = {},
-            onApplyClick = {}
+            onApplyClick = {},
+            darkTheme = true
         )
     }
 }

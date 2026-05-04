@@ -63,6 +63,7 @@ import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.home.HomeViewModel
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import java.util.Locale
@@ -71,7 +72,9 @@ import java.util.Locale
 @Composable
 fun RecommendedMentorsScreen(
     onBackClick: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    onMentorClick: (String) -> Unit,
+    viewModel: HomeViewModel = hiltViewModel(),
+    darkTheme: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val mentors = uiState.recommendedMentors
@@ -86,32 +89,35 @@ fun RecommendedMentorsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.for_you_mentor),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontFamily = IbarraNovaFont,
-                            fontWeight = FontWeight.Bold
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            ) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(R.string.for_you_mentor),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = IbarraNovaFont,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back))
+                        }
+                    },
+
                 )
-            )
+            }
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
             // Search Bar
@@ -178,7 +184,10 @@ fun RecommendedMentorsScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(mentorsToShow, key = { it.userId ?: it.fullName ?: "" }) { mentor ->
-                            RecommendedMentorItem(mentor = mentor)
+                            RecommendedMentorItem(
+                                mentor = mentor,
+                                onClick = { mentor.userId?.let { onMentorClick(it) } }
+                            )
                         }
                     }
                 }
@@ -218,14 +227,17 @@ private fun RecommendedMentorsEmptyState() {
 }
 
 @Composable
-private fun RecommendedMentorItem(mentor: User.Mentor) {
+private fun RecommendedMentorItem(
+    mentor: User.Mentor,
+    onClick: () -> Unit
+) {
     Card(
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Handle mentor click */ }
+            .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
@@ -331,6 +343,6 @@ private fun formatValue(num: Int): String {
 @Composable
 fun RecommendedMentorsScreenPreview() {
     HoloverseTheme {
-        RecommendedMentorsScreen(onBackClick = {})
+        RecommendedMentorsScreen(onBackClick = {}, onMentorClick = {})
     }
 }

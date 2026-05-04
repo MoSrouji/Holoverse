@@ -5,12 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
@@ -34,8 +36,10 @@ class SplashViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _currentUser.value = preferenceManager.getUser()
-            delay(100) // Reduced delay for faster startup
+            val user = withContext(Dispatchers.IO) {
+                preferenceManager.getUser()
+            }
+            _currentUser.value = user
             _isLoading.value = false
         }
     }

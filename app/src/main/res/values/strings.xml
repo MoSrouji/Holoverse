@@ -139,6 +139,8 @@
     <string name="good_evening">Good Evening</string>
     <string name="guest">Guest</string>
     <string name="notifications_desc">Notifications</string>
+    <string name="retry">Retry</string>
+    <string name="offline_mode">Offline Mode - Showing cached data</string>
     <!-- Recommendation Screen -->
     <string name="recommendation_title">Recommendation</string>
     <string name="search_recommendation_placeholder">Search recommendation courses...</string>

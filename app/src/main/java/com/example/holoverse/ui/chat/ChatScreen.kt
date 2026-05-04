@@ -45,7 +45,8 @@ fun ChatScreen(
         ConversationScreen(
             uiState = uiState,
             viewModel = viewModel,
-            onBackClick = onBackClick
+            onBackClick = onBackClick,
+            darkTheme = darkTheme
         )
     }
 }

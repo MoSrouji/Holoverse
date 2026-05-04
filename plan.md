@@ -88,3 +88,14 @@ The goal is to reduce the perceived and actual time it takes to open AR mode, lo
     - [x] Update `MentorProfileViewModel` to handle follow/unfollow actions and track `isFollowing` state.
     - [x] Update `MentorProfileScreen` to display follower/following counts and provide a toggleable Follow button.
     - [x] Add loading states and error handling for follow operations.
+
+## Home Screen Performance & Freeze Fix
+1. **Identify Performance Bottlenecks**:
+    - [x] Detected non-lazy horizontal lists (`Row` + `horizontalScroll`) inside a vertical scrollable `Column`.
+    - [x] Multiple instances of `SpatialBackground` causing high GPU/CPU usage due to continuous animations.
+2. **Optimization Steps**:
+    - [x] Replace `Row` with `LazyRow` in `HorizontalCourseList` and `HorizontalMentorList` to implement view recycling.
+    - [x] Optimize `SpatialBackground` usage by removing redundant instances (kept global one in `AppNavHost`).
+    - [x] Move data filtering logic in `HomeViewModel` to `Dispatchers.Default`.
+    - [x] Use `key` in `LazyRow` items to improve recomposition performance.
+    - [x] Refactor `CarouselAdds` to use `remember` for its data list to avoid reallocation on recomposition.

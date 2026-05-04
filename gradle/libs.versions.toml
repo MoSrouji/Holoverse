@@ -36,7 +36,7 @@ firebaseCrashlytics = "20.0.3"
 googleFirebaseCrashlytics = "3.0.6"
 firebasePerf = "22.0.4"
 googleFirebaseFirebasePerf = "2.0.2"
-navigationCompose = "2.9.6"
+navigationCompose = "2.9.8"
 material3 = "1.4.0"
 foundation = "1.9.5"
 uiText = "1.10.0"
@@ -57,6 +57,10 @@ sceneview = "4.0.1"
 arcore = "1.53.0"
 testCore = "1.7.0"
 testRunner = "1.7.0"
+baselineprofile = "1.4.1"
+profileinstaller = "1.4.1"
+uiautomator = "2.3.0"
+benchmarkMacroJunit4 = "1.4.1"
 
 [libraries]
 androidx-compose-adaptive-android = { module = "androidx.compose.material3.adaptive:adaptive-android", version.ref = "adaptiveAndroid" }
@@ -133,6 +137,9 @@ arsceneview = { group = "io.github.sceneview", name = "arsceneview", version.ref
 arcore = { group = "com.google.ar", name = "core", version.ref = "arcore" }
 androidx-core = { group = "androidx.test", name = "core", version.ref = "testCore" }
 androidx-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -142,3 +149,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
 google-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "googleFirebaseCrashlytics" }
 google-firebase-firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "googleFirebaseFirebasePerf" }
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }

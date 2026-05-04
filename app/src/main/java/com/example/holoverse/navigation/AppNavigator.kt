@@ -1,29 +1,37 @@
 package com.example.holoverse.navigation
 
-import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+
+sealed interface NavigationIntent {
+    data class NavigateTo(
+        val route: Any,
+        val builder: NavOptionsBuilder.() -> Unit = {}
+    ) : NavigationIntent
+
+    data class NavigateAndPopUpTo(
+        val route: Any,
+        val popUpToRoute: Any,
+        val inclusive: Boolean = false
+    ) : NavigationIntent
+
+    data object NavigateBack : NavigationIntent
+}
 
 @Singleton
 class AppNavigator @Inject constructor() {
 
-    private var _navController: NavController? = null
-    val navController: NavController
-        get() = _navController ?: throw IllegalStateException("NavController not initialized")
+    private val _navigationIntents = Channel<NavigationIntent>(Channel.CONFLATED)
+    val navigationIntents = _navigationIntents.receiveAsFlow()
 
-    fun init(navController: NavController) {
-        this._navController = navController
-    }
-
-    fun <T : Any> navigateTo(
-        destination: T,
+    fun navigateTo(
+        destination: Any,
         builder: NavOptionsBuilder.() -> Unit = {}
     ) {
-        navController.navigate(destination) {
-            launchSingleTop = true
-            builder()
-        }
+        _navigationIntents.trySend(NavigationIntent.NavigateTo(destination, builder))
     }
 
     fun navigateAndPopUpTo(
@@ -31,15 +39,16 @@ class AppNavigator @Inject constructor() {
         popUpTo: Any,
         inclusive: Boolean = false
     ) {
-        navController.navigate(destination) {
-            launchSingleTop = true
-            popUpTo(popUpTo) {
-                this.inclusive = inclusive
-            }
-        }
+        _navigationIntents.trySend(
+            NavigationIntent.NavigateAndPopUpTo(
+                route = destination,
+                popUpToRoute = popUpTo,
+                inclusive = inclusive
+            )
+        )
     }
 
     fun popBackStack() {
-        navController.popBackStack()
+        _navigationIntents.trySend(NavigationIntent.NavigateBack)
     }
 }

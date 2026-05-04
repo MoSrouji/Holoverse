@@ -1,9 +1,16 @@
 package com.example.holoverse.ui.chat
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -11,29 +18,29 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.holoverse.R
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.layout.ContentScale
+import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
+import com.example.holoverse.R
 import com.example.holoverse.ui.chat.components.ChatInput
 import com.example.holoverse.ui.chat.components.EmojiPicker
 import com.example.holoverse.ui.chat.components.MessageBubble
 import com.example.holoverse.ui.chat.components.SendingVoiceBubble
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
+import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationScreen(
     uiState: ChatUiState,
     viewModel: ChatViewModel,
-    onBackClick: (() -> Unit)? = null
+    onBackClick: (() -> Unit)? = null,
+    darkTheme: Boolean = true
 ) {
     var showEmojiPicker by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
@@ -48,53 +55,68 @@ fun ConversationScreen(
     }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(40.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.secondaryContainer
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+//                    .clip(
+//                        RoundedCornerShape(
+//                            bottomStart = 32.dp,
+//                            bottomEnd = 32.dp
+//                        )
+//                    )
+                    . background (Brush(darkTheme))
+
+            ) {
+                TopAppBar(
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                if (uiState.selectedChatPartnerImageUrl != null) {
-                                    AsyncImage(
-                                        model = uiState.selectedChatPartnerImageUrl,
-                                        contentDescription = uiState.selectedChatPartnerName,
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Text(
-                                        uiState.selectedChatPartnerName.take(1).uppercase(),
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
+                            Surface(
+                                modifier = Modifier.size(40.dp),
+                                shape = CircleShape,
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    if (uiState.selectedChatPartnerImageUrl != null) {
+                                        AsyncImage(
+                                            model = uiState.selectedChatPartnerImageUrl,
+                                            contentDescription = uiState.selectedChatPartnerName,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Text(
+                                            uiState.selectedChatPartnerName.take(1).uppercase(),
+                                            style = MaterialTheme.typography.titleMedium,
+                                        )
+                                    }
                                 }
                             }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                uiState.selectedChatPartnerName,
+                            )
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(uiState.selectedChatPartnerName)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { 
-                        if (onBackClick != null) {
-                            onBackClick()
-                        } else {
-                            viewModel.backToChatList()
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            if (onBackClick != null) {
+                                onBackClick()
+                            } else {
+                                viewModel.backToChatList()
+                            }
+                        }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                            )
                         }
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    },
+
                 )
-            )
+            }
         },
         bottomBar = {
             ChatInput(
@@ -112,6 +134,7 @@ fun ConversationScreen(
                         ) -> {
                             viewModel.startRecording()
                         }
+
                         else -> {
                             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }

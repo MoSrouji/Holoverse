@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -31,7 +32,7 @@ import com.example.holoverse.ui.theme.rubik_glitch_pop
 
 @Composable
 fun SignInScreen(
-    navController: AppNavigator,
+    onSignUpClick: () -> Unit,
     navToHomeScreen: () -> Unit,
     viewModel: SignInViewModel = hiltViewModel(),
     darkTheme: Boolean
@@ -69,7 +70,7 @@ fun SignInScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(Color.Transparent)
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -163,7 +164,7 @@ fun SignInScreen(
             Spacer(modifier = Modifier.height(60.dp))
 
             Row(modifier = Modifier.clickable {
-                navController.navigateTo(AppDestination.SignUp)
+                onSignUpClick()
             }) {
                 Text(
                     text = stringResource(id = R.string.do_not_have_an_account),

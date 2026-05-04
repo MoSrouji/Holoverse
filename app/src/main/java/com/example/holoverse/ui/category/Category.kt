@@ -61,6 +61,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -78,12 +83,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.ui.platform.LocalContext
 import com.example.holoverse.navigation.AppDestination
+import com.example.holoverse.ui.spatialTheme.Brush
 
 data class Category(val key: String, val nameRes: Int, val icon: ImageVector)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryScreen(appNavigator: AppNavigator, darkTheme: Boolean) {
+fun CategoryScreen(
+    onBackClick: () -> Unit,
+    onCategorySelected: (String) -> Unit,
+    darkTheme: Boolean
+) {
     val context = LocalContext.current
     val categories = remember {
         listOf(
@@ -129,7 +139,7 @@ fun CategoryScreen(appNavigator: AppNavigator, darkTheme: Boolean) {
     var searchQuery by remember { mutableStateOf("") }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -141,19 +151,24 @@ fun CategoryScreen(appNavigator: AppNavigator, darkTheme: Boolean) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(Brush(darkTheme))
+
             ) {
-                SpatialBackground(
-                    modifier = Modifier.matchParentSize(),
-                    isDark = darkTheme
-                )
-                
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(24.dp)
                 ) {
-
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back),
+                            )
+                        }
                         
                         Text(
                             text = stringResource(R.string.all_categories),
@@ -161,9 +176,9 @@ fun CategoryScreen(appNavigator: AppNavigator, darkTheme: Boolean) {
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = IbarraNovaFont
                             ),
-                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = 16.dp)
                         )
+                    }
 
                     
                     Spacer(modifier = Modifier.height(24.dp))
@@ -176,22 +191,15 @@ fun CategoryScreen(appNavigator: AppNavigator, darkTheme: Boolean) {
                             Text(
                                 text = stringResource(R.string.search_for), 
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            ) 
+                            )
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                        ),
+
                         trailingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = stringResource(R.string.search_icon),
-                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                         },
@@ -200,16 +208,18 @@ fun CategoryScreen(appNavigator: AppNavigator, darkTheme: Boolean) {
                 }
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                items(categories) { category ->
-                    CategoryItem(category) {
-                        appNavigator.navigateTo(AppDestination.CategoryCourses(category.key))
+            Box(modifier = Modifier.fillMaxSize()) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    items(categories) { category ->
+                        CategoryItem(category) {
+                            onCategorySelected(category.key)
+                        }
                     }
                 }
             }
@@ -273,6 +283,10 @@ fun CategoryItem(category: Category, onClick: () -> Unit) {
 @Composable
 fun CategoryScreenPreview() {
     HoloverseTheme(darkTheme = true) {
-        CategoryScreen(appNavigator = AppNavigator(), darkTheme = true)
+        CategoryScreen(
+            onBackClick = {},
+            onCategorySelected = {},
+            darkTheme = true
+        )
     }
 }

@@ -17,6 +17,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+import java.io.IOException
+import android.util.Log
+
 enum class HomeTab {
     Explore, YourCourses
 }
@@ -26,13 +29,15 @@ data class HomeUiState(
     val currentUser: User? = null,
     val courses: List<Courses> = emptyList(),
     val allCourses: List<Courses> = emptyList(),
+    val categories: List<String> = listOf("All"),
     val recommendedCourses: List<Courses> = emptyList(),
     val mentors: List<User.Mentor> = emptyList(),
     val allMentors: List<User.Mentor> = emptyList(),
     val recommendedMentors: List<User.Mentor> = emptyList(),
     val selectedTab: HomeTab = HomeTab.Explore,
     val selectedCategory: String = "All",
-    val error: String? = null
+    val error: String? = null,
+    val isOffline: Boolean = false
 )
 
 @HiltViewModel
@@ -80,10 +85,10 @@ class HomeViewModel @Inject constructor(
                         userInterests.any { fav ->
                             val nFav = fav.trim().replace("_", " ")
                             val nCat = course.category.trim().replace("_", " ")
-                            
+
                             if (nCat.contains(nFav, ignoreCase = true) || nFav.contains(nCat, ignoreCase = true)) return@any true
-                            
-                            val catEnum = com.example.holoverse.auth.domain.entities.MentorCategory.entries.find { 
+
+                            val catEnum = com.example.holoverse.auth.domain.entities.MentorCategory.entries.find {
                                 it.name.replace("_", " ").equals(nCat, ignoreCase = true) ||
                                 it.name.equals(course.category.trim(), ignoreCase = true)
                             }
@@ -98,11 +103,11 @@ class HomeViewModel @Inject constructor(
                         userInterests.any { fav ->
                             val nFav = fav.trim().replace("_", " ")
                             val nSpecName = mentor.specialization.name.replace("_", " ")
-                            
+
                             nSpecName.contains(nFav, ignoreCase = true) ||
                             nFav.contains(nSpecName, ignoreCase = true) ||
-                            mentor.specialization.specializations.any { spec -> 
-                                spec.replace("_", " ").contains(nFav, ignoreCase = true) || 
+                            mentor.specialization.specializations.any { spec ->
+                                spec.replace("_", " ").contains(nFav, ignoreCase = true) ||
                                 nFav.contains(spec.replace("_", " "), ignoreCase = true)
                             }
                         }
@@ -113,24 +118,40 @@ class HomeViewModel @Inject constructor(
 
                 val (mentors, recommendedCourses, recommendedMentors) = processedData
 
+                val categories = listOf("All") + courses
+                    .mapNotNull { it.category.takeIf { cat -> cat.isNotBlank() } }
+                    .distinct()
+                    .sorted()
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         currentUser = user,
                         allCourses = courses,
+                        categories = categories,
                         recommendedCourses = recommendedCourses,
                         allMentors = mentors,
-                        recommendedMentors = recommendedMentors
+                        recommendedMentors = recommendedMentors,
+                        isOffline = false
                     )
                 }
                 // Apply filter after data is loaded
                 applyFilter(_uiState.value.selectedCategory)
 
             } catch (e: Exception) {
+                // Log to analytics/crash reporting
+                Log.e("HomeViewModel", "Error fetching home data", e)
+                
+                val errorMessage = when (e) {
+                    is IOException -> "Network error. Please check your connection."
+                    else -> e.localizedMessage ?: "Failed to fetch home data"
+                }
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = e.localizedMessage ?: "Failed to fetch home data"
+                        error = errorMessage,
+                        isOffline = e is IOException // Set offline flag if network error
                     )
                 }
             }

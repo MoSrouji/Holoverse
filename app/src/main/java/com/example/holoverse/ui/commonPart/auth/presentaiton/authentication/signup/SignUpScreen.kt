@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -37,7 +38,8 @@ import com.example.holoverse.utils.Response
 
 @Composable
 fun SignUpScreen(
-    navController: AppNavigator,
+    onBackClick: () -> Unit,
+    onNavigateToTeacherProfile: () -> Unit,
     navToHomeScreen: () -> Unit,
     viewModel: SignUpViewModel = hiltViewModel(),
     darkTheme: Boolean
@@ -82,7 +84,7 @@ fun SignUpScreen(
             is Response.Success -> {
                 if (signUpState.data) {
                     Toast.makeText(context, R.string.fill_the_form, Toast.LENGTH_LONG).show()
-                    navController.navigateTo(AppDestination.SignUpTeacherProfile)
+                    onNavigateToTeacherProfile()
                 }
             }
             is Response.Error -> {
@@ -93,7 +95,7 @@ fun SignUpScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(Color.Transparent)
     ) {
         Column(
             verticalArrangement = Arrangement.Top,
@@ -110,7 +112,7 @@ fun SignUpScreen(
                     .width(40.dp)
                     .height(30.dp)
                     .clickable {
-                        navController.popBackStack()
+                        onBackClick()
                     },
                 contentDescription = "back"
             )

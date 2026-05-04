@@ -1,46 +1,36 @@
 package com.example.holoverse.ui.three_D_Part.ar
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.google.ar.core.Anchor
-import com.google.ar.core.CameraConfig
-import com.google.ar.core.CameraConfigFilter
-import com.google.ar.core.Config
-import com.google.ar.core.TrackingState
-import com.google.ar.core.Plane
-import com.google.ar.core.Frame
-import com.google.ar.core.Point
-import com.google.ar.core.InstantPlacementPoint
+import com.google.ar.core.*
+import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.createAnchorOrNull
-import io.github.sceneview.ar.node.AnchorNode
-import io.github.sceneview.ar.node.HitResultNode
-import io.github.sceneview.node.CubeNode
-import java.util.EnumSet
-import io.github.sceneview.rememberOnGestureListener
-import io.github.sceneview.ar.ARScene
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
 import io.github.sceneview.math.Scale
+import io.github.sceneview.node.CubeNode
 import io.github.sceneview.node.ModelNode
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.model.ModelInstance
+import io.github.sceneview.rememberOnGestureListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * Performance-optimized AR viewer designed for stability and "lightness".
+ * Optimized for simultaneous use with video calls by capping FPS and simplifying CV tasks.
+ */
 @Composable
 fun ArViewer(
     modelPath: String?,
@@ -57,40 +47,37 @@ fun ArViewer(
     var anchor by remember { mutableStateOf<Anchor?>(null) }
     var modelNodeInstance by remember { mutableStateOf<ModelNode?>(null) }
     var baseScale by remember { mutableStateOf<Scale?>(null) }
+    var surfaceDetectionQuality by remember { mutableStateOf(SurfaceDetectionQuality.SCANNING) }
+    
+    // Stability smoothing to prevent flickering labels
+    var surfaceStabilityCount by remember { mutableIntStateOf(0) }
+    val requiredStabilityFrames = 10 
+
+    // Frame processing throttle: 33ms (30fps) is ideal for logic vs performance balance
+    var lastFrameProcessTime by remember { mutableLongStateOf(0L) }
+    val frameProcessInterval = 33L 
 
     LaunchedEffect(modelNodeInstance, baseScale, scale, rotation) {
-        val node = modelNodeInstance
-        val base = baseScale
-        if (node != null) {
-            if (base != null) {
-                node.scale = Scale(base.x * scale, base.y * scale, base.z * scale)
-            }
-            node.rotation = Rotation(y = rotation)
-        }
+        val node = modelNodeInstance ?: return@LaunchedEffect
+        val base = baseScale ?: return@LaunchedEffect
+        node.scale = Scale(base.x * scale, base.y * scale, base.z * scale)
+        node.rotation = Rotation(y = rotation)
     }
 
     var modelInstance by remember { mutableStateOf<ModelInstance?>(null) }
     var isLoadingModel by remember { mutableStateOf(true) }
     var loadError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(modelPath, anchor) {
+    LaunchedEffect(modelPath) {
         if (modelPath == null) return@LaunchedEffect
-
-        modelInstance = null
-        modelNodeInstance = null
-        baseScale = null
         isLoadingModel = true
-        loadError = null
-
         try {
-            val instance = modelLoader.loadModelInstance(modelPath)
-            if (instance == null) {
-                loadError = "Failed to load model"
-            } else {
-                modelInstance = instance
+            val instance = withContext(Dispatchers.IO) {
+                modelLoader.loadModelInstance(modelPath)
             }
+            modelInstance = instance
         } catch (e: Exception) {
-            loadError = e.localizedMessage ?: "Unknown error"
+            loadError = e.localizedMessage
         } finally {
             isLoadingModel = false
         }
@@ -102,75 +89,89 @@ fun ArViewer(
         val widthPx = with(density) { maxWidth.toPx() }
         val heightPx = with(density) { maxHeight.toPx() }
 
-        ARScene(
+        ARSceneView(
             modifier = Modifier.fillMaxSize(),
             engine = engine,
             modelLoader = modelLoader,
             planeRenderer = true,
-            isOpaque = false,
             sessionCameraConfig = { session ->
-                val filter = CameraConfigFilter(session)
-                    .setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_60, CameraConfig.TargetFps.TARGET_FPS_30))
+                val filter = CameraConfigFilter(session).apply {
+                    // FORCE 30 FPS: This is critical for keeping the phone cool during video calls
+                    setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30))
+                    // Prefer depth but allow fallback to ensure 100% device compatibility
+                    setDepthSensorUsage(EnumSet.of(
+                        CameraConfig.DepthSensorUsage.DO_NOT_USE,
+                        CameraConfig.DepthSensorUsage.REQUIRE_AND_USE
+                    ))
+                }
                 session.getSupportedCameraConfigs(filter).firstOrNull() ?: session.cameraConfig
             },
             sessionConfiguration = { session, config ->
-                if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-                    config.depthMode = Config.DepthMode.AUTOMATIC
-                }
-                config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
-                config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
-                config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
-                config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
-                config.focusMode = Config.FocusMode.AUTO
+                config.apply {
+                    // AUTOMATIC Depth is smoother and more accurate for stable placement than RAW
+                    depthMode = if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+                        Config.DepthMode.AUTOMATIC
+                    } else Config.DepthMode.DISABLED
 
-                // Enable Raw Depth for better accuracy if supported
-                if (session.isDepthModeSupported(Config.DepthMode.RAW_DEPTH_ONLY)) {
-                    config.depthMode = Config.DepthMode.RAW_DEPTH_ONLY
+                    // Enable both horizontal and vertical to help tracking stability
+                    planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
+                    // Use HDR light estimation for more realistic lighting and reflections
+                    lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+                    updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+                    focusMode = Config.FocusMode.AUTO
                 }
             },
-            onSessionUpdated = { _, frame ->
-                currentFrame.set(frame)
-                if (trackingState != frame.camera.trackingState) {
+            onSessionUpdated = { session, frame ->
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastFrameProcessTime >= frameProcessInterval) {
+                    lastFrameProcessTime = currentTime
+                    currentFrame.set(frame)
                     trackingState = frame.camera.trackingState
+                    
+                    val hasSurface = hasGoodSurfaceForPlacement(session)
+                    
+                    // Temporal smoothing logic: require multiple stable frames before green-lighting
+                    if (hasSurface) {
+                        if (surfaceStabilityCount < requiredStabilityFrames) surfaceStabilityCount++
+                    } else {
+                        if (surfaceStabilityCount > 0) surfaceStabilityCount--
+                    }
+
+                    surfaceDetectionQuality = when {
+                        trackingState != TrackingState.TRACKING -> SurfaceDetectionQuality.SCANNING
+                        surfaceStabilityCount >= requiredStabilityFrames -> SurfaceDetectionQuality.EXCELLENT
+                        surfaceStabilityCount > 0 -> SurfaceDetectionQuality.DETECTING
+                        else -> SurfaceDetectionQuality.SCANNING
+                    }
                 }
             },
             onGestureListener = rememberOnGestureListener(
-                onSingleTapConfirmed = { e, _ ->
-                    val frame = currentFrame.get()
-                    if (frame != null && frame.camera.trackingState == TrackingState.TRACKING) {
-                        val hit = frame.hitTest(e.x, e.y).firstOrNull { hitResult ->
-                            when (val trackable = hitResult.trackable) {
-                                is Plane -> trackable.isPoseInPolygon(hitResult.hitPose) && trackable.trackingState == TrackingState.TRACKING
-                                is Point -> trackable.orientationMode == Point.OrientationMode.ESTIMATED_SURFACE_NORMAL && trackable.trackingState == TrackingState.TRACKING
-                                is InstantPlacementPoint -> true
-                                else -> false
-                            }
-                        }
+                onSingleTapConfirmed = { motionEvent, _ ->
+                    val frame = currentFrame.get() ?: return@rememberOnGestureListener
+                    if (trackingState != TrackingState.TRACKING) return@rememberOnGestureListener
 
-                        if (hit != null) {
-                            anchor?.detach()
-                            // Keep the model instance to avoid reloading
-                            anchor = hit.createAnchorOrNull()
-                        }
+                    // Optimized hit testing preferring stable planes
+                    val bestHit = findBestSurfaceHit(frame, motionEvent.x, motionEvent.y)
+                    if (bestHit != null) {
+                        anchor?.detach()
+                        anchor = bestHit.createAnchorOrNull()
                     }
                 }
             )
         ) {
+            // Placement indicator
             if (anchor == null && trackingState == TrackingState.TRACKING) {
                 HitResultNode(
                     xPx = widthPx / 2f,
                     yPx = heightPx / 2f,
-                    planeTypes = setOf(Plane.Type.HORIZONTAL_UPWARD_FACING, Plane.Type.VERTICAL),
+                    planeTypes = setOf(Plane.Type.HORIZONTAL_UPWARD_FACING),
                     instantPlacementPoint = true
                 ) {
-                    CubeNode(
-                        engine = engine,
-                        size = Scale(0.02f),
-                        center = Position(0f, 0f, 0f)
-                    )
+                    CubeNode(engine = engine, size = Scale(0.01f), center = Position(0f, 0f, 0f))
                 }
             }
 
+            // The Model
             anchor?.let { currentAnchor ->
                 key(currentAnchor) {
                     AnchorNode(anchor = currentAnchor) {
@@ -178,8 +179,7 @@ fun ArViewer(
                             ModelNode(
                                 modelInstance = instance,
                                 scaleToUnits = 0.5f,
-                                centerOrigin = Position(x = 0f, y = 0f, z = 0f),
-                                isEditable = false,
+                                centerOrigin = Position(0f, 0f, 0f),
                                 apply = {
                                     modelNodeInstance = this
                                     baseScale = this.scale
@@ -191,14 +191,12 @@ fun ArViewer(
             }
         }
 
-        if (isLoadingModel) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+        // Feedback UI
+        if (isLoadingModel || isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
-
+        
+        // Error display
         loadError?.let { error ->
             Surface(
                 color = Color.Red.copy(alpha = 0.8f),
@@ -217,24 +215,58 @@ fun ArViewer(
         }
 
         Surface(
-            color = Color.Black.copy(alpha = 0.5f),
-            shape = MaterialTheme.shapes.medium,
+            color = Color.Black.copy(alpha = 0.6f),
+            shape = CircleShape,
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 100.dp)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
         ) {
-            val instruction = when (trackingState) {
-                TrackingState.TRACKING -> "Tap on a surface to place the model"
-                TrackingState.PAUSED -> "Move your phone to scan the area"
-                else -> "AR is initializing..."
+            AnimatedContent(
+                targetState = surfaceDetectionQuality,
+                transitionSpec = {
+                    fadeIn() togetherWith fadeOut()
+                },
+                label = "StatusText"
+            ) { quality ->
+                val statusText = when (quality) {
+                    SurfaceDetectionQuality.EXCELLENT -> "✓ Ready to place"
+                    SurfaceDetectionQuality.DETECTING -> "Detecting floor..."
+                    SurfaceDetectionQuality.SCANNING -> "Move phone slowly"
+                }
+                Text(
+                    text = statusText,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelMedium
+                )
             }
-            Text(
-                text = instruction,
-                color = Color.White,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold
-            )
         }
     }
 }
+
+private fun findBestSurfaceHit(frame: Frame, x: Float, y: Float): HitResult? {
+    // Strategy: Prefer Persistent Planes for 100% stability
+    val planeHit = frame.hitTest(x, y).firstOrNull { hit ->
+        val trackable = hit.trackable
+        trackable is Plane && 
+        trackable.isPoseInPolygon(hit.hitPose) && 
+        trackable.trackingState == TrackingState.TRACKING
+    }
+    if (planeHit != null) return planeHit
+
+    // Fallback to depth-based hit test
+    return frame.hitTest(x, y).firstOrNull { hit ->
+        hit.trackable.trackingState == TrackingState.TRACKING
+    }
+}
+
+private fun hasGoodSurfaceForPlacement(session: Session): Boolean {
+    // Check all trackables instead of just "updated" ones to prevent flickering when stationary
+    return session.getAllTrackables(Plane::class.java).any { plane ->
+        plane.trackingState == TrackingState.TRACKING && 
+        plane.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
+        plane.subsumedBy == null
+    }
+}
+
+private enum class SurfaceDetectionQuality { SCANNING, DETECTING, EXCELLENT }

@@ -7,32 +7,38 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
-import com.example.holoverse.navigation.AppDestination
-import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
 import com.example.holoverse.utils.Response
+import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
+import com.example.holoverse.ui.theme.IbarraNovaFont
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCourseScreen(
+    onCourseCreated: () -> Unit,
     viewModel: CreateCourseViewModel = hiltViewModel(),
-    appNavigator: AppNavigator
+    darkTheme: Boolean = true
 ) {
     val context = LocalContext.current
     val createCourseState by viewModel.createCourseState
@@ -86,9 +92,7 @@ fun CreateCourseScreen(
         when (createCourseState) {
             is Response.Success -> {
                 Toast.makeText(context, "Course created successfully!", Toast.LENGTH_SHORT).show()
-                appNavigator.navigateTo(AppDestination.HomeScreen) {
-                    popUpTo(AppDestination.CreateCourse) { inclusive = true }
-                }
+                onCourseCreated()
             }
             is Response.Error -> {
                 Toast.makeText(context, (createCourseState as Response.Error).massage, Toast.LENGTH_SHORT).show()
@@ -98,10 +102,35 @@ fun CreateCourseScreen(
     }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("Create New Course") }
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            ) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Create New Course",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = IbarraNovaFont,
+                                fontWeight = FontWeight.Bold,
+
+                            )
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { onCourseCreated() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                            )
+                        }
+                    },
+
+                )
+            }
         }
     ) { paddingValues ->
         Column(

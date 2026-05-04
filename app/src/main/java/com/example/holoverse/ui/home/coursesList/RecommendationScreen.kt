@@ -66,6 +66,7 @@ import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeViewModel
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import java.util.Locale
@@ -73,8 +74,10 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecommendationScreen(
+    onCourseClick: (String) -> Unit,
     onBackClick: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    darkTheme: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val courses = uiState.recommendedCourses
@@ -87,32 +90,37 @@ fun RecommendationScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.recommendation_title),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontFamily = IbarraNovaFont,
-                            fontWeight = FontWeight.Bold
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            ) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(R.string.recommendation_title),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = IbarraNovaFont,
+                                fontWeight = FontWeight.Bold,
+                            )
                         )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back),
+                            )
+                        }
+                    },
+
                 )
-            )
+            }
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
             // Search Bar
@@ -179,7 +187,7 @@ fun RecommendationScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(coursesToShow, key = { it.id }) { course ->
-                            RecommendationCourseItem(course = course)
+                            RecommendationCourseItem(course = course, onClick = { onCourseClick(course.id) })
                         }
                     }
                 }
@@ -219,7 +227,7 @@ private fun RecommendationEmptyState() {
 }
 
 @Composable
-private fun RecommendationCourseItem(course: Courses) {
+private fun RecommendationCourseItem(course: Courses, onClick: () -> Unit) {
     var isBookmarked by remember { mutableStateOf(false) }
 
     Card(
@@ -228,7 +236,7 @@ private fun RecommendationCourseItem(course: Courses) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Handle course click */ }
+            .clickable { onClick() }
     ) {
         Row(
             modifier = Modifier
@@ -359,6 +367,6 @@ private fun formatEnrolled(num: Int): String {
 @Composable
 fun RecommendationScreenPreview() {
     HoloverseTheme {
-        RecommendationScreen(onBackClick = {})
+        RecommendationScreen(onBackClick = {}, onCourseClick = {})
     }
 }

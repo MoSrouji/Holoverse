@@ -64,13 +64,8 @@ fun FullGalleryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                        .background(MaterialTheme.colorScheme.surface)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
                 ) {
-                    SpatialBackground(
-                        modifier = Modifier.matchParentSize(),
-                        isDark = darkTheme
-                    )
-
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()

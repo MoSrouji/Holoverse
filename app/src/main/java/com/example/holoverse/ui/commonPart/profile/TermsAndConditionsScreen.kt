@@ -22,19 +22,37 @@ import androidx.compose.ui.unit.sp
 import com.example.holoverse.R
 import com.example.holoverse.navigation.AppNavigator
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TermsAndConditionsScreen(navController: AppNavigator) {
+fun TermsAndConditionsScreen(onBackClick: () -> Unit, darkTheme: Boolean = true) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.terms_conditions), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            ) {
+                SpatialBackground(isDark = darkTheme)
+                TopAppBar(
+                    title = { Text(stringResource(R.string.terms_conditions), fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    )
+                )
+            }
         }
     ) { paddingValues ->
         Column(

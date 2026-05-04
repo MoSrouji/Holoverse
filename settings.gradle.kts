@@ -24,4 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Holoverse"
 include(":app")
+include(":baselineprofile")
  

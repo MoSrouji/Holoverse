@@ -34,7 +34,6 @@ import com.example.holoverse.ui.commonPart.auth.widget.CheckBoxMenu
 import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
 import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
 import com.example.holoverse.ui.collectUserData.teacher.viewModels.TeacherProfessionalViewModel
-import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
 import com.example.holoverse.ui.theme.IbarraNovaSemiBoldPlatinum17

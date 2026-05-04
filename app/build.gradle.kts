@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.google.firebase.crashlytics)
     alias(libs.plugins.google.firebase.firebase.perf)
+    alias(libs.plugins.androidx.baselineprofile)
 
     id("com.google.devtools.ksp")
     id("kotlin-parcelize")
@@ -32,7 +33,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -52,10 +54,12 @@ android {
     kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
-            // Enable incremental compilation for Compose
+            // Enable incremental compilation and performance features
             freeCompilerArgs.addAll(
                 "-P",
-                "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true"
+                "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true",
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=true"
             )
         }
     }
@@ -158,6 +162,7 @@ dependencies {
     // UI Tools, Material and AR
     implementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.cloudinary.android)
     implementation(libs.material)
     implementation(libs.sceneview) {
@@ -185,4 +190,6 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    baselineProfile(project(":baselineprofile"))
 }

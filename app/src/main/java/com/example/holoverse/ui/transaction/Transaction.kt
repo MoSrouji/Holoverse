@@ -38,7 +38,8 @@ data class TransactionItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionScreen(
-    appNavigator: AppNavigator
+    appNavigator: AppNavigator,
+    darkTheme: Boolean
 ) {
     val transactions = listOf(
         TransactionItem("Build Personal Branding", "Web Designer", "Paid"),
@@ -49,47 +50,54 @@ fun TransactionScreen(
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-      //  SpatialBackground()
+        SpatialBackground(isDark = darkTheme)
         
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Transactions",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontFamily = IbarraNovaFont,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 24.sp,
-                                color = Color.White
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                ) {
+                    SpatialBackground(isDark = darkTheme)
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "Transactions",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontFamily = IbarraNovaFont,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 24.sp,
+                                    color = Color.White
+                                )
                             )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { appNavigator.popBackStack() }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { /* TODO */ }) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Search",
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            navigationIconContentColor = Color.White,
+                            titleContentColor = Color.White,
+                            actionIconContentColor = Color.White
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { appNavigator.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { /* TODO */ }) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        navigationIconContentColor = Color.White,
-                        titleContentColor = Color.White,
-                        actionIconContentColor = Color.White
                     )
-                )
+                }
             },
             containerColor = Color.Transparent
         ) { padding ->
@@ -182,7 +190,7 @@ fun TransactionCard(transaction: TransactionItem) {
 @Composable
 fun TransactionScreenPreview() {
     HoloverseTheme(darkTheme = true ) {
-        TransactionScreen(appNavigator = AppNavigator())
+        TransactionScreen(appNavigator = AppNavigator(), darkTheme = true)
 
     }
 }

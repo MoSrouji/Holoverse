@@ -66,4 +66,6 @@
     <string name="following">Siguiendo</string>
     <string name="message">Mensaje</string>
     <string name="students">Estudiantes</string>
+    <string name="retry">Reintentar</string>
+    <string name="offline_mode">Modo sin conexión - Mostrando datos en caché</string>
 </resources>

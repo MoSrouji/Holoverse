@@ -84,4 +84,6 @@
     <string name="following">متابع</string>
     <string name="message">رسالة</string>
     <string name="students">الطلاب</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="offline_mode">وضع عدم الاتصال - عرض البيانات المخزنة مؤقتاً</string>
 </resources>

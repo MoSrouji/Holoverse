@@ -34,6 +34,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,26 +53,50 @@ import coil3.compose.AsyncImage
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.home.component.CourseCard
+import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.ColorBlue
+import com.example.holoverse.ui.theme.IbarraNovaFont
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    appNavigator: AppNavigator,
-    viewModel: SearchViewModel = hiltViewModel()
+    onBackClick: () -> Unit,
+    onCourseClick: (String) -> Unit,
+    onMentorClick: (String) -> Unit,
+    viewModel: SearchViewModel = hiltViewModel(),
+    darkTheme: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("Search") },
-                navigationIcon = {
-                    IconButton(onClick = { appNavigator.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            ) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Search",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = IbarraNovaFont,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { onBackClick() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                            )
+                        }
+                    },
+
+                )
+            }
         }
     ) { paddingValues ->
         Column(
@@ -101,7 +127,11 @@ fun SearchScreen(
                     onRemoveClick = viewModel::removeRecentSearch
                 )
             } else {
-                SearchResultsSection(uiState = uiState)
+                SearchResultsSection(
+                    uiState = uiState,
+                    onCourseClick = onCourseClick,
+                    onMentorClick = onMentorClick
+                )
             }
         }
     }
@@ -220,7 +250,11 @@ fun RecentSearchesSection(
 }
 
 @Composable
-fun SearchResultsSection(uiState: SearchUiState) {
+fun SearchResultsSection(
+    uiState: SearchUiState,
+    onCourseClick: (String) -> Unit,
+    onMentorClick: (String) -> Unit
+) {
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -247,11 +281,19 @@ fun SearchResultsSection(uiState: SearchUiState) {
             ) {
                 if (uiState.searchType == SearchType.COURSES) {
                     items(uiState.searchResults.courses) { course ->
-                        CourseCard(course = course, modifier = Modifier.fillMaxWidth())
+                        CourseCard(
+                            course = course,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onCourseClick(course.id) }
+                        )
                     }
                 } else {
                     items(uiState.searchResults.mentors) { mentor ->
-                        MentorSearchResultItem(mentor = mentor)
+                        MentorSearchResultItem(
+                            mentor = mentor,
+                            onClick = { onMentorClick(mentor.userId ?: "") }
+                        )
                     }
                 }
             }
@@ -260,11 +302,12 @@ fun SearchResultsSection(uiState: SearchUiState) {
 }
 
 @Composable
-fun MentorSearchResultItem(mentor: User.Mentor) {
+fun MentorSearchResultItem(mentor: User.Mentor, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -312,5 +355,9 @@ fun MentorSearchResultItem(mentor: User.Mentor) {
 @Preview(showBackground = true)
 @Composable
 fun SearchScreenPreview() {
-    SearchScreen(appNavigator = AppNavigator())
+    SearchScreen(
+        onBackClick = {},
+        onCourseClick = {},
+        onMentorClick = {}
+    )
 }

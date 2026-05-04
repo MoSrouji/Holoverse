@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.google.gms.google.services) apply false
     alias(libs.plugins.google.firebase.crashlytics) apply false
     alias(libs.plugins.google.firebase.firebase.perf) apply false
+    alias(libs.plugins.androidx.baselineprofile) apply false
     id("com.google.devtools.ksp") version "2.3.2" apply false
     //id("kotlin-parcelize")
 }
