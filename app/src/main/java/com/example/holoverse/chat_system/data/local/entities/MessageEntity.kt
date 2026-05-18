@@ -13,5 +13,9 @@ data class MessageEntity(
     val senderType: String,
     val text: String,
     val audioUrl: String? = null,
+    val imageUrl: String? = null,
+    val videoUrl: String? = null,
+    val fileUrl: String? = null,
+    val fileName: String? = null,
     val timestamp: Long
 )

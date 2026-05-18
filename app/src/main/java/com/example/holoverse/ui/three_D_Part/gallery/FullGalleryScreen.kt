@@ -28,6 +28,7 @@ import coil3.compose.AsyncImage
 import com.example.holoverse.three_d_model.domain.model.Model
 import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.IbarraNovaFont
+import com.example.composeautoshimmer.components.ShimmerBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,30 +135,48 @@ fun FullGalleryScreen(
                     }
                 }
 
-                if (models.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (searchQuery.isEmpty() && selectedCategory == "All") "No models available" else "No models found",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(models, key = { it.id }) { model ->
-                            ModelGridItem(
-                                model = model,
-                                onClick = { onModelSelected(model) }
+                ShimmerBox(
+                    isLoading = isLoading,
+                    baseColor = Color.DarkGray,
+                    durationMillis = 800
+                ) {
+                    if (models.isEmpty() && !isLoading) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (searchQuery.isEmpty() && selectedCategory == "All") "No models available" else "No models found",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                    } else {
+                        val displayModels = if (isLoading && models.isEmpty()) {
+                            List(6) {
+                                Model(
+                                    id = "shimmer_$it",
+                                    name = "Loading...",
+                                    path = "",
+                                    description = "",
+                                    category = ""
+                                )
+                            }
+                        } else models
+
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            contentPadding = PaddingValues(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(displayModels, key = { it.id }) { model ->
+                                ModelGridItem(
+                                    model = model,
+                                    onClick = { if (!isLoading) onModelSelected(model) }
+                                )
+                            }
                         }
                     }
                 }

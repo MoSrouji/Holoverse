@@ -1,16 +1,16 @@
 package com.example.holoverse.three_d_model.data.remote
 
-import com.example.holoverse.three_d_model.data.remote.dto.KhronosAssetDto
+import com.example.holoverse.three_d_model.data.remote.dto.ModelResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Url
 
 interface ApiService {
     @GET
-    suspend fun getKhronosModels(
-        @Url url: String = "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/model-index.json"
-    ): List<KhronosAssetDto>
+    suspend fun getModels(
+        @Url url: String = "https://cdn.jsdelivr.net/gh/MoSrouji/3dSample@master/index.json"
+    ): ModelResponseDto
 
     companion object {
-        const val BASE_URL = "https://raw.githubusercontent.com/KhronosGroup/"
+        const val BASE_URL = "https://cdn.jsdelivr.net/"
     }
 }

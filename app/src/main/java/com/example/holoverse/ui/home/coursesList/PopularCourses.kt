@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeViewModel
@@ -92,7 +93,10 @@ fun PopularCoursesScreen(
 
     val filteredCourses = courses.filter {
         (selectedCategory == "All" || it.category == selectedCategory) &&
-                (it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(searchQuery, ignoreCase = true))
+                (it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(
+                    searchQuery,
+                    ignoreCase = true
+                ))
     }
 
     Scaffold(
@@ -121,7 +125,7 @@ fun PopularCoursesScreen(
                         }
                     },
 
-                )
+                    )
             }
         }
     ) { paddingValues ->
@@ -137,8 +141,19 @@ fun PopularCoursesScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search courses...", style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                placeholder = {
+                    Text(
+                        "Search courses...",
+                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
@@ -204,32 +219,50 @@ fun PopularCoursesScreen(
                 )
             }
 
-            AnimatedContent(
-                targetState = uiState.isLoading to filteredCourses,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                }, label = ""
-            ) { (isLoading, coursesToShow) ->
-                if (isLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else if (coursesToShow.isEmpty()) {
+            ShimmerBox(
+                isLoading = uiState.isLoading,
+                baseColor = Color.DarkGray,
+                durationMillis = 800
+            ) {
+                if (filteredCourses.isEmpty() && !uiState.isLoading) {
                     EmptyState()
                 } else {
+                    val displayCourses = if (uiState.isLoading && filteredCourses.isEmpty()) {
+                        List(6) {
+                            Courses(
+                                id = "shimmer_$it",
+                                name = "Loading Course Name...",
+                                category = "Category",
+                                price = 0.0,
+                                rating = 0.0,
+                                numReviews = 0,
+                                numEnrolled = 0
+                            )
+                        }
+                    } else filteredCourses
+
                     LazyColumn(
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = 16.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(coursesToShow, key = { it.id }) { course ->
-                            CourseItem(course = course, onClick = { onCourseClick(course.id) })
+                        items(displayCourses, key = { it.id }) { course ->
+                            CourseItem(
+                                course = course,
+                                onClick = { if (!uiState.isLoading) onCourseClick(course.id) }
+                            )
                         }
                     }
                 }
             }
+            }
         }
     }
-}
+
+
 
 @Composable
 fun EmptyState() {

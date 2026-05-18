@@ -1,6 +1,5 @@
 package com.example.holoverse.ui.home.component
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -27,9 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -252,7 +249,7 @@ fun PromotionalStyleDynamicSplit(course: Courses, modifier: Modifier = Modifier)
 }
 
 @Composable
-fun CarouselAdds() {
+fun CarouselAdds(isLoading: Boolean = false) {
     val dummyCourses = remember {
         listOf(
             Courses(
@@ -324,17 +321,23 @@ fun CarouselAdds() {
         }
     }
 
-    HorizontalPager(
-        state = pagerState,
-        contentPadding = PaddingValues(horizontal = 32.dp),
-        pageSpacing = 16.dp,
-        modifier = Modifier.fillMaxWidth()
-    ) { page ->
-        CoursePromotionalCard(
-            course = dummyCourses[page],
-            style = page % 3,
+    com.example.composeautoshimmer.components.ShimmerBox(
+        isLoading = isLoading,
+        baseColor = Color.DarkGray,
+        durationMillis = 800
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 32.dp),
+            pageSpacing = 16.dp,
             modifier = Modifier.fillMaxWidth()
-        )
+        ) { page ->
+            CoursePromotionalCard(
+                course = dummyCourses[page],
+                style = page % 3,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

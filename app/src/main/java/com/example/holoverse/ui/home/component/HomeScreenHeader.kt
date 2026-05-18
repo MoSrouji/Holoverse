@@ -33,6 +33,7 @@ import java.util.Calendar
 @Composable
 fun HomeScreenHeader(
     fullName: String?,
+    isLoading: Boolean,
     darkTheme: Boolean,
     onNavigateToSearch: () -> Unit,
     onNavigateToNotifications: () -> Unit,
@@ -88,7 +89,7 @@ fun HomeScreenHeader(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            CarouselAdds()
+            CarouselAdds(isLoading = isLoading)
 
             Spacer(modifier = Modifier.height(8.dp))
         }

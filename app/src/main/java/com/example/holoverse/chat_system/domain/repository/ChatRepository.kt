@@ -25,6 +25,10 @@ interface ChatRepository {
         senderId: String,
         senderName: String,
         senderType: String,
-        audioUrl: String? = null
+        audioUrl: String? = null,
+        imageUrl: String? = null,
+        videoUrl: String? = null,
+        fileUrl: String? = null,
+        fileName: String? = null
     )
 }

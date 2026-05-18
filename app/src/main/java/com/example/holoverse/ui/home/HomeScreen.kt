@@ -18,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.courses.domain.Courses
@@ -110,6 +111,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -117,6 +119,7 @@ fun HomeScreen(
             ) {
                 HomeScreenHeader(
                     fullName = uiState.currentUser?.fullName,
+                    isLoading = uiState.isLoading,
                     darkTheme = darkTheme,
                     onNavigateToSearch = onNavigateToSearch,
                     onNavigateToNotifications = { /* Navigate to Notifications */ },
@@ -140,28 +143,29 @@ fun HomeScreen(
                     onTabSelected = viewModel::onTabSelected
                 )
 
-                HomeContentSections(
-                    uiState = uiState,
-                    onTabSelected = viewModel::onTabSelected,
-                    onCategorySelected = {
-                        viewModel.onCategorySelected(it)
-                        onCategorySelected(it)
-                    },
-                    onFilterCategorySelected = viewModel::onCategorySelected,
-                    onCategoryClick = onCategoryClick,
-                    onPopularCoursesClick = onPopularCoursesClick,
-                    onRecommendedCoursesClick = onRecommendedCoursesClick,
-                    onTopMentorClick = onTopMentorClick,
-                    onTopMentorsListClick = onTopMentorsListClick,
-                    onMentorClick = onMentorClick,
-                    onCourseClick = onCourseClick
-                )
-                
+                    HomeContentSections(
+                        uiState = uiState,
+                        onTabSelected = viewModel::onTabSelected,
+                        onCategorySelected = {
+                            viewModel.onCategorySelected(it)
+                            onCategorySelected(it)
+                        },
+                        onFilterCategorySelected = viewModel::onCategorySelected,
+                        onCategoryClick = onCategoryClick,
+                        onPopularCoursesClick = onPopularCoursesClick,
+                        onRecommendedCoursesClick = onRecommendedCoursesClick,
+                        onTopMentorClick = onTopMentorClick,
+                        onTopMentorsListClick = onTopMentorsListClick,
+                        onMentorClick = onMentorClick,
+                        onCourseClick = onCourseClick
+                    )
+                }
                 // Extra spacer to ensure content isn't hidden by FAB
                 Spacer(modifier = Modifier.height(80.dp))
+
             }
         }
-    }
+
 }
 
 @Composable
@@ -220,4 +224,7 @@ fun HomeScreenPreview() {
             darkTheme = true
         )
     }
+
+
 }
+

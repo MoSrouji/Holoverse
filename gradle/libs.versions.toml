@@ -54,7 +54,8 @@ moshi = "1.15.2"
 datastorePreferences = "1.2.1"
 material = "1.13.0"
 sceneview = "4.0.1"
-arcore = "1.53.0"
+arcore = "1.54.0"
+compose-auto-shimmer = "1.0.1"
 testCore = "1.7.0"
 testRunner = "1.7.0"
 baselineprofile = "1.4.1"
@@ -135,6 +136,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 sceneview = { group = "io.github.sceneview", name = "sceneview", version.ref = "sceneview" }
 arsceneview = { group = "io.github.sceneview", name = "arsceneview", version.ref = "sceneview" }
 arcore = { group = "com.google.ar", name = "core", version.ref = "arcore" }
+compose-auto-shimmer = { group = "com.github.ChFardeelAzhar", name = "compose-auto-shimmer", version.ref = "compose-auto-shimmer" }
 androidx-core = { group = "androidx.test", name = "core", version.ref = "testCore" }
 androidx-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }

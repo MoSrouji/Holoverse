@@ -16,27 +16,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import com.example.composeautoshimmer.components.ShimmerBox
 
 @Composable
 fun TextListButton(
     categories: List<String>,
+    isLoading: Boolean = false,
     selectedCategory: String? = null,
     onCategoryClick: (String) -> Unit = {}
 ) {
-    LazyRow(
-        modifier = Modifier.padding(5.dp) ,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ShimmerBox(
+        isLoading = isLoading && categories.size <= 1,
+        baseColor = Color.DarkGray,
+        durationMillis = 800
     ) {
-        items(categories) { item ->
-            val isSelected = (selectedCategory ?: "All") == item
-            Text(
-                text = item,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryFixedVariant,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.W600,
-                modifier = Modifier.clickable { onCategoryClick(item) }
-            )
+        val displayCategories = if (isLoading && categories.size <= 1) {
+            listOf("Loading...", "Loading...", "Loading...", "Loading...")
+        } else categories
+
+        LazyRow(
+            modifier = Modifier.padding(5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(displayCategories) { item ->
+                val isSelected = (selectedCategory ?: "All") == item
+                Text(
+                    text = item,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryFixedVariant,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.W600,
+                    modifier = Modifier.clickable(enabled = !isLoading) { onCategoryClick(item) }
+                )
+            }
         }
     }
 }
@@ -44,29 +57,41 @@ fun TextListButton(
 @Composable
 fun TextListTextButton(
     categories: List<String>,
+    isLoading: Boolean = false,
     selectedCategory: String? = null,
     onCategoryClick: (String) -> Unit = {}
 ) {
-    LazyRow(
-        modifier = Modifier.padding(5.dp) ,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ShimmerBox(
+        isLoading = isLoading && categories.size <= 1,
+        baseColor = Color.DarkGray,
+        durationMillis = 800
     ) {
-        items(categories) { item ->
-            val isSelected = (selectedCategory ?: "All") == item
-            TextButton(
-                onClick = { onCategoryClick(item) },
-                modifier = Modifier.background(
-                    if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondary,
-                    shape = RoundedCornerShape(12.dp)
-                )
-            ) {
-                Text(
-                    text = item,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.surfaceDim,
-                    fontWeight = FontWeight.W600
-                )
+        val displayCategories = if (isLoading && categories.size <= 1) {
+            listOf("Loading...", "Loading...", "Loading...", "Loading...")
+        } else categories
+
+        LazyRow(
+            modifier = Modifier.padding(5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(displayCategories) { item ->
+                val isSelected = (selectedCategory ?: "All") == item
+                TextButton(
+                    onClick = { onCategoryClick(item) },
+                    enabled = !isLoading,
+                    modifier = Modifier.background(
+                        if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondary,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                ) {
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.surfaceDim,
+                        fontWeight = FontWeight.W600
+                    )
+                }
             }
         }
     }

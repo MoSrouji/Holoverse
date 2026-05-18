@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.home.HomeViewModel
@@ -204,27 +205,33 @@ fun TopMentorsScreen(
                 )
             }
 
-            AnimatedContent(
-                targetState = uiState.isLoading to filteredMentors,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                }, label = ""
-            ) { (isLoading, mentorsToShow) ->
-                if (isLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else if (mentorsToShow.isEmpty()) {
+            ShimmerBox(
+                isLoading = uiState.isLoading,
+                baseColor = Color.DarkGray,
+                durationMillis = 800
+            ) {
+                if (filteredMentors.isEmpty() && !uiState.isLoading) {
                     EmptyMentorState()
                 } else {
+                    val displayMentors = if (uiState.isLoading && filteredMentors.isEmpty()) {
+                        List(6) {
+                            User.Mentor(
+                                userId = "shimmer_$it",
+                                fullName = "Loading Mentor...",
+                                profileImageUrl = null,
+                                bio = "Loading mentor bio information..."
+                            )
+                        }
+                    } else filteredMentors
+
                     LazyColumn(
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(mentorsToShow, key = { it.userId ?: it.fullName ?: "" }) { mentor ->
+                        items(displayMentors, key = { it.userId ?: "shimmer_${it.hashCode()}" }) { mentor ->
                             MentorListItem(
                                 mentor = mentor,
-                                onClick = { mentor.userId?.let { onMentorClick(it) } }
+                                onClick = { if (!uiState.isLoading) mentor.userId?.let { onMentorClick(it) } }
                             )
                         }
                     }

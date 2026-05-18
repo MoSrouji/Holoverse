@@ -12,9 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.auth.domain.entities.User
@@ -47,35 +49,32 @@ fun HomeContentSections(
             )
             TextListButton(
                 categories = uiState.categories,
+                isLoading = uiState.isLoading,
                 selectedCategory = uiState.selectedCategory,
                 onCategoryClick = onCategorySelected
             )
 
             // 1. Recommended Courses (Personalized)
-            if (uiState.recommendedCourses.isNotEmpty()) {
-                SectionHeader(
-                    titleId = R.string.for_you_courses,
-                    onClick = onRecommendedCoursesClick
-                )
-                HorizontalCourseList(
-                    courses = uiState.recommendedCourses,
-                    isLoading = uiState.isLoading,
-                    onCourseClick = onCourseClick
-                )
-            }
+            SectionHeader(
+                titleId = R.string.for_you_courses,
+                onClick = onRecommendedCoursesClick
+            )
+            HorizontalCourseList(
+                courses = uiState.recommendedCourses,
+                isLoading = uiState.isLoading,
+                onCourseClick = onCourseClick
+            )
 
             // 2. Recommended Mentors (Personalized)
-            if (uiState.recommendedMentors.isNotEmpty()) {
-                SectionHeader(
-                    titleId = R.string.for_you_mentor,
-                    onClick = onTopMentorClick
-                )
-                HorizontalMentorList(
-                    mentors = uiState.recommendedMentors,
-                    isLoading = uiState.isLoading,
-                    onMentorClick = onMentorClick
-                )
-            }
+            SectionHeader(
+                titleId = R.string.for_you_mentor,
+                onClick = onTopMentorClick
+            )
+            HorizontalMentorList(
+                mentors = uiState.recommendedMentors,
+                isLoading = uiState.isLoading,
+                onMentorClick = onMentorClick
+            )
 
             // 3. Popular Courses (Global)
             SectionHeader(
@@ -84,6 +83,7 @@ fun HomeContentSections(
             )
             TextListTextButton(
                 categories = uiState.categories,
+                isLoading = uiState.isLoading,
                 selectedCategory = uiState.selectedCategory,
                 onCategoryClick = onFilterCategorySelected
             )
@@ -151,25 +151,35 @@ private fun HorizontalCourseList(
     isLoading: Boolean,
     onCourseClick: (Courses) -> Unit
 ) {
-    if (courses.isEmpty() && !isLoading) {
-        EmptyStateText(
-            text = stringResource(R.string.no_courses_available),
-            modifier = Modifier.padding(horizontal = 24.dp)
-        )
-    } else {
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(
-                items = courses,
-                key = { it.id }
-            ) { course ->
-                CourseCard(
-                    course = course,
-                    onClick = { onCourseClick(course) }
-                )
+    ShimmerBox(
+        isLoading = isLoading,
+        baseColor = Color.DarkGray,
+        durationMillis = 800
+    ) {
+        if (courses.isEmpty() && !isLoading) {
+            EmptyStateText(
+                text = stringResource(R.string.no_courses_available),
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+        } else {
+            val displayCourses = if (isLoading && courses.isEmpty()) {
+                List(3) { Courses(id = "shimmer_$it", name = "Loading...") }
+            } else courses
+
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(
+                    items = displayCourses,
+                    key = { it.id }
+                ) { course ->
+                    CourseCard(
+                        course = course,
+                        onClick = { if (!isLoading) onCourseClick(course) }
+                    )
+                }
             }
         }
     }
@@ -181,27 +191,39 @@ private fun HorizontalMentorList(
     isLoading: Boolean,
     onMentorClick: (String) -> Unit
 ) {
-    if (mentors.isEmpty() && !isLoading) {
-        EmptyStateText(
-            text = stringResource(R.string.no_mentors_found),
-            modifier = Modifier.padding(horizontal = 24.dp)
-        )
-    } else {
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(
-                items = mentors,
-                key = { it.userId ?: it.fullName ?: it.hashCode() }
-            ) { mentor ->
-                TeacherCard(
-                    mentor = mentor,
-                    onClick = { 
-                        mentor.userId?.let { onMentorClick(it) }
-                    }
-                )
+    ShimmerBox(
+        isLoading = isLoading,
+        baseColor = Color.DarkGray,
+        durationMillis = 800
+    ) {
+        if (mentors.isEmpty() && !isLoading) {
+            EmptyStateText(
+                text = stringResource(R.string.no_mentors_found),
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+        } else {
+            val displayMentors = if (isLoading && mentors.isEmpty()) {
+                List(3) { User.Mentor(userId = "shimmer_$it", fullName = "Loading...") }
+            } else mentors
+
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(
+                    items = displayMentors,
+                    key = { it.userId ?: it.fullName ?: it.hashCode() }
+                ) { mentor ->
+                    TeacherCard(
+                        mentor = mentor,
+                        onClick = {
+                            if (!isLoading) {
+                                mentor.userId?.let { onMentorClick(it) }
+                            }
+                        }
+                    )
+                }
             }
         }
     }

@@ -385,23 +385,32 @@ private fun NavGraphBuilder.modelGraph(
     darkTheme: Boolean
 ) {
     navigation<AppDestination.ModelGraph>(startDestination = AppDestination.GalleryScreen) {
-        composable<AppDestination.GalleryScreen> {
-            val viewModel: ModelViewModel = hiltViewModel()
+        composable<AppDestination.GalleryScreen> { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(AppDestination.ModelGraph)
+            }
+            val viewModel: ModelViewModel = hiltViewModel(parentEntry)
             GalleryScreen(
                 appNavigator = navigator,
                 darkTheme = darkTheme,
                 viewModel = viewModel
             )
         }
-        composable<AppDestination.ViewerScreen> {
-            val viewModel: ModelViewModel = hiltViewModel()
+        composable<AppDestination.ViewerScreen> { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(AppDestination.ModelGraph)
+            }
+            val viewModel: ModelViewModel = hiltViewModel(parentEntry)
             ViewerScreen(
                 appNavigator = navigator,
                 viewModel = viewModel
             )
         }
-        composable<AppDestination.ArScreen> {
-            val viewModel: ModelViewModel = hiltViewModel()
+        composable<AppDestination.ArScreen> { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(AppDestination.ModelGraph)
+            }
+            val viewModel: ModelViewModel = hiltViewModel(parentEntry)
             ArScreen(
                 appNavigator = navigator,
                 viewModel = viewModel

@@ -9,5 +9,9 @@ data class Message(
     val senderType: String = "", // "Student" or "Mentor"
     val text: String = "",
     val audioUrl: String? = null,
+    val imageUrl: String? = null,
+    val videoUrl: String? = null,
+    val fileUrl: String? = null,
+    val fileName: String? = null,
     val timestamp: Timestamp? = null
 )

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -22,18 +23,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.ui.graphics.vector.ImageVector
 import coil3.compose.AsyncImage
 import com.example.holoverse.three_d_model.domain.model.Model
+import com.example.holoverse.ui.three_D_Part.DownloadProgress
+import java.util.Locale
 
 @Composable
 fun ModelGalleryOverlay(
     models: List<Model>,
     selectedModel: Model?,
+    downloadProgress: Map<String, DownloadProgress>,
     onModelSelected: (Model) -> Unit,
     onAddLocalModel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val currentProgress = selectedModel?.let { downloadProgress[it.id] }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -56,6 +61,14 @@ fun ModelGalleryOverlay(
                 .padding(bottom = 24.dp, top = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Show detailed download progress for the selected model
+            if (currentProgress != null && currentProgress.progress < 1.0f) {
+                ModelDownloadStatus(
+                    progress = currentProgress,
+                    modifier = Modifier.padding(start = 32.dp, end = 32.dp, bottom = 8.dp)
+                )
+            }
+
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -64,16 +77,77 @@ fun ModelGalleryOverlay(
                 item {
                     AddLocalModelCard(onClick = onAddLocalModel)
                 }
-                items(models) { model ->
+                items(models, key = { it.id }) { model ->
                     ModelCard(
                         model = model,
                         isSelected = model.id == selectedModel?.id,
+                        progress = downloadProgress[model.id],
                         onClick = { onModelSelected(model) }
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+fun ModelDownloadStatus(
+    progress: DownloadProgress,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Color.Black.copy(alpha = 0.4f),
+                shape = RoundedCornerShape(20.dp)
+            )
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Downloading Model...",
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "${formatSize(progress.downloadedSize)} / ${formatSize(progress.totalSize)}",
+                color = Color.White.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(10.dp))
+        
+        LinearProgressIndicator(
+            progress = { progress.progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = Color.White.copy(alpha = 0.2f),
+            strokeCap = StrokeCap.Round
+        )
+    }
+}
+
+private fun formatSize(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+    val units = arrayOf("B", "KB", "MB", "GB", "TB")
+    val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
+    return String.format(
+        Locale.US,
+        "%.1f %s",
+        bytes / Math.pow(1024.0, digitGroups.toDouble()),
+        units[digitGroups]
+    )
 }
 
 @Composable
@@ -115,6 +189,7 @@ fun AddLocalModelCard(
 fun ModelCard(
     model: Model,
     isSelected: Boolean,
+    progress: DownloadProgress?,
     onClick: () -> Unit
 ) {
     val scale by animateFloatAsState(
@@ -172,6 +247,35 @@ fun ModelCard(
                     fontWeight = FontWeight.Black,
                     color = contentColor.copy(alpha = 0.15f)
                 )
+            }
+
+            // Download progress overlay
+            if (progress != null && progress.progress < 1.0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(
+                            progress = { progress.progress },
+                            modifier = Modifier.size(32.dp),
+                            color = Color.White,
+                            strokeWidth = 3.dp,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        val totalMB = progress.totalSize / (1024f * 1024f)
+                        if (totalMB > 0) {
+                            Text(
+                                text = String.format(Locale.US, "%.1f MB", totalMB),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
             }
             
             Text(

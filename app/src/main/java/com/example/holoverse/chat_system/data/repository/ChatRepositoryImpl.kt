@@ -164,7 +164,11 @@ class ChatRepositoryImpl @Inject constructor(
         senderId: String,
         senderName: String,
         senderType: String,
-        audioUrl: String?
+        audioUrl: String?,
+        imageUrl: String?,
+        videoUrl: String?,
+        fileUrl: String?,
+        fileName: String?
     ) {
         val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
         val messageRef = chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document()
@@ -178,11 +182,22 @@ class ChatRepositoryImpl @Inject constructor(
             "timestamp" to serverTime
         )
         audioUrl?.let { messageMap["audioUrl"] = it }
+        imageUrl?.let { messageMap["imageUrl"] = it }
+        videoUrl?.let { messageMap["videoUrl"] = it }
+        fileUrl?.let { messageMap["fileUrl"] = it }
+        fileName?.let { messageMap["fileName"] = it }
 
         firestore.runBatch { batch ->
             batch.set(messageRef, messageMap)
+            val lastMessageText = when {
+                imageUrl != null -> "Image"
+                videoUrl != null -> "Video"
+                fileUrl != null -> fileName ?: "Document"
+                audioUrl != null && text.isEmpty() -> "Audio message"
+                else -> text
+            }
             val chatUpdate = mutableMapOf(
-                "lastMessage" to if (audioUrl != null && text.isEmpty()) "Audio message" else text,
+                "lastMessage" to lastMessageText,
                 "lastMessageTimestamp" to serverTime,
                 "lastSenderId" to senderId,
                 "lastSenderName" to senderName,
@@ -244,6 +259,10 @@ class ChatRepositoryImpl @Inject constructor(
             senderType = this.senderType,
             text = this.text,
             audioUrl = this.audioUrl,
+            imageUrl = this.imageUrl,
+            videoUrl = this.videoUrl,
+            fileUrl = this.fileUrl,
+            fileName = this.fileName,
             timestamp = this.timestamp?.seconds ?: 0L
         )
     }
@@ -256,6 +275,10 @@ class ChatRepositoryImpl @Inject constructor(
             senderType = this.senderType,
             text = this.text,
             audioUrl = this.audioUrl,
+            imageUrl = this.imageUrl,
+            videoUrl = this.videoUrl,
+            fileUrl = this.fileUrl,
+            fileName = this.fileName,
             timestamp = if (this.timestamp != 0L) Timestamp(this.timestamp, 0) else null
         )
     }

@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeViewModel
@@ -169,25 +170,37 @@ fun RecommendationScreen(
                 )
             }
 
-            AnimatedContent(
-                targetState = uiState.isLoading to filteredCourses,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                }, label = ""
-            ) { (isLoading, coursesToShow) ->
-                if (isLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else if (coursesToShow.isEmpty()) {
+            ShimmerBox(
+                isLoading = uiState.isLoading,
+                baseColor = Color.DarkGray,
+                durationMillis = 800
+            ) {
+                if (filteredCourses.isEmpty() && !uiState.isLoading) {
                     RecommendationEmptyState()
                 } else {
+                    val displayCourses = if (uiState.isLoading && filteredCourses.isEmpty()) {
+                        List(6) {
+                            Courses(
+                                id = "shimmer_$it",
+                                name = "Loading Recommendation...",
+                                category = "Category",
+                                price = 0.0,
+                                rating = 0.0,
+                                numReviews = 0,
+                                numEnrolled = 0
+                            )
+                        }
+                    } else filteredCourses
+
                     LazyColumn(
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(coursesToShow, key = { it.id }) { course ->
-                            RecommendationCourseItem(course = course, onClick = { onCourseClick(course.id) })
+                        items(displayCourses, key = { it.id }) { course ->
+                            RecommendationCourseItem(
+                                course = course,
+                                onClick = { if (!uiState.isLoading) onCourseClick(course.id) }
+                            )
                         }
                     }
                 }

@@ -53,7 +53,7 @@ fun ViewerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val cacheManager = remember { ModelCacheManager(context) }
+    val cacheManager = viewModel.cacheManager
     var cachedModelPath by remember { mutableStateOf<String?>(null) }
     val arStatus = rememberArStatus()
     val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
@@ -75,10 +75,16 @@ fun ViewerScreen(
 
     LaunchedEffect(uiState.selectedModel) {
         uiState.selectedModel?.let { model ->
-            if (model.path.startsWith("content://") || model.path.startsWith("file://")) {
-                cachedModelPath = model.path
-            } else {
-                cachedModelPath = cacheManager.getModelPath(model.id, model.path)
+            try {
+                if (model.path.startsWith("content://") || model.path.startsWith("file://")) {
+                    cachedModelPath = model.path
+                } else {
+                    cachedModelPath = cacheManager.getModelPath(model.id, model.path)
+                }
+            } catch (e: Exception) {
+                // Handle the error gracefully without crashing
+                cachedModelPath = null
+                // We can potentially update the UI state with this error if needed
             }
         }
     }
@@ -98,14 +104,26 @@ fun ViewerScreen(
                         .align(Alignment.Center)
                 )
             } else {
-                cachedModelPath?.let { path ->
-                    SceneViewer(modelPath = path, modifier = Modifier.fillMaxSize())
+                Box(modifier = Modifier.fillMaxSize()) {
+                    cachedModelPath?.let { path ->
+                        if (path.startsWith("http") && !path.startsWith("file://") && !path.startsWith("content://")) {
+                            // This means getModelPath is still downloading or failed
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        } else {
+                            SceneViewer(modelPath = path, modifier = Modifier.fillMaxSize())
+                        }
+                    }
+
+                    if (uiState.isLoading && uiState.selectedModel != null) {
+                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
                 }
 
                 if (uiState.showModelGallery) {
                     ModelGalleryOverlay(
                         models = uiState.models,
                         selectedModel = uiState.selectedModel,
+                        downloadProgress = uiState.downloadProgress,
                         onModelSelected = { viewModel.selectModel(it) },
                         onAddLocalModel = {
                             filePickerLauncher.launch(arrayOf("*/*")) // You can restrict to ".glb", ".gltf" if possible

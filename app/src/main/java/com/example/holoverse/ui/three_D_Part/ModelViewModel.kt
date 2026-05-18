@@ -2,6 +2,7 @@ package com.example.holoverse.ui.three_D_Part
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.holoverse.three_d_model.data.local.ModelCacheManager
 import com.example.holoverse.three_d_model.domain.model.Model
 import com.example.holoverse.three_d_model.domain.usecase.GetModelsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +16,8 @@ import kotlin.text.category
 
 @HiltViewModel
 class ModelViewModel @Inject constructor(
-    private val getModelsUseCase: GetModelsUseCase
+    private val getModelsUseCase: GetModelsUseCase,
+    val cacheManager: ModelCacheManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ModelUiState())
@@ -45,14 +47,16 @@ class ModelViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val models = getModelsUseCase(forceRefresh)
+                val modelsList = getModelsUseCase(forceRefresh)
+                val firstModel = modelsList.firstOrNull()
                 _uiState.update {
                     it.copy(
-                        models = models,
-                        selectedModel = models.firstOrNull(),
+                        models = modelsList,
                         isLoading = false
                     )
                 }
+                // Select the first model if available
+                firstModel?.let { selectModel(it) }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -77,7 +81,31 @@ class ModelViewModel @Inject constructor(
     }
 
     fun selectModel(model: Model) {
-        _uiState.value = _uiState.value.copy(selectedModel = model)
+        _uiState.update { state ->
+            // Move the selected model to the first position in the list
+            val updatedModels = state.models.filter { it.id != model.id }.toMutableList()
+            updatedModels.add(0, model)
+            
+            state.copy(
+                selectedModel = model,
+                models = updatedModels,
+                error = null
+            )
+        }
+        // Pre-cache the model in the background as soon as it's selected
+        viewModelScope.launch {
+            try {
+                cacheManager.getModelPath(model.id, model.path) { progress, downloaded, total ->
+                    _uiState.update { state ->
+                        val updatedProgress = state.downloadProgress.toMutableMap()
+                        updatedProgress[model.id] = DownloadProgress(progress, downloaded, total)
+                        state.copy(downloadProgress = updatedProgress)
+                    }
+                }
+            } catch (e: Exception) {
+                // Background caching failure is silent here; ArScreen will handle it if it fails again
+            }
+        }
     }
 
     fun setShowModelGallery(show: Boolean) {

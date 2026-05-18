@@ -277,6 +277,83 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun uploadAndSendFile(uri: Uri, type: String, fileName: String? = null) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isUploadingFile = true) }
+                
+                val uploadResult = cloudinaryRepository.uploadFile(uri)
+                uploadResult.onSuccess { url ->
+                    when (type) {
+                        "image" -> sendImageMessage(url)
+                        "video" -> sendVideoMessage(url)
+                        "pdf" -> sendFileMessage(url, fileName ?: "document.pdf")
+                    }
+                }.onFailure {
+                    // Handle failure
+                }
+                _uiState.update { it.copy(isUploadingFile = false) }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update { it.copy(isUploadingFile = false) }
+            }
+        }
+    }
+
+    private fun sendImageMessage(imageUrl: String) {
+        sendMessageInternal(imageUrl = imageUrl)
+    }
+
+    private fun sendVideoMessage(videoUrl: String) {
+        sendMessageInternal(videoUrl = videoUrl)
+    }
+
+    private fun sendFileMessage(fileUrl: String, fileName: String) {
+        sendMessageInternal(fileUrl = fileUrl, fileName = fileName)
+    }
+
+    private fun sendVoiceMessage(audioUrl: String) {
+        sendMessageInternal(audioUrl = audioUrl)
+    }
+
+    private fun sendMessageInternal(
+        text: String = "",
+        audioUrl: String? = null,
+        imageUrl: String? = null,
+        videoUrl: String? = null,
+        fileUrl: String? = null,
+        fileName: String? = null
+    ) {
+        val state = _uiState.value
+        val user = state.currentUser
+        val chatId = state.currentChatId
+
+        if (user != null && chatId != null) {
+            viewModelScope.launch {
+                val senderId = user.userId ?: ""
+                val senderName = user.fullName ?: "Unknown"
+                val senderType = user.accountType.name
+
+                try {
+                    chatRepository.sendMessage(
+                        chatId = chatId,
+                        text = text,
+                        senderId = senderId,
+                        senderName = senderName,
+                        senderType = senderType,
+                        audioUrl = audioUrl,
+                        imageUrl = imageUrl,
+                        videoUrl = videoUrl,
+                        fileUrl = fileUrl,
+                        fileName = fileName
+                    )
+                } catch (e: Exception) {
+                    // Handle error
+                }
+            }
+        }
+    }
+
     fun cancelRecording() {
         try {
             mediaRecorder?.apply {
@@ -335,32 +412,5 @@ class ChatViewModel @Inject constructor(
         super.onCleared()
         mediaPlayer?.release()
         mediaRecorder?.release()
-    }
-
-    private fun sendVoiceMessage(audioUrl: String) {
-        val state = _uiState.value
-        val user = state.currentUser
-        val chatId = state.currentChatId
-
-        if (user != null && chatId != null) {
-            viewModelScope.launch {
-                val senderId = user.userId ?: ""
-                val senderName = user.fullName ?: "Unknown"
-                val senderType = user.accountType.name
-
-                try {
-                    chatRepository.sendMessage(
-                        chatId = chatId,
-                        text = "",
-                        senderId = senderId,
-                        senderName = senderName,
-                        senderType = senderType,
-                        audioUrl = audioUrl
-                    )
-                } catch (e: Exception) {
-                    // Handle error
-                }
-            }
-        }
     }
 }

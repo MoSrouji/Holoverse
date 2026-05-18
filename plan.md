@@ -99,3 +99,18 @@ The goal is to reduce the perceived and actual time it takes to open AR mode, lo
     - [x] Move data filtering logic in `HomeViewModel` to `Dispatchers.Default`.
     - [x] Use `key` in `LazyRow` items to improve recomposition performance.
     - [x] Refactor `CarouselAdds` to use `remember` for its data list to avoid reallocation on recomposition.
+
+## 3D Model Source Migration
+1. **Swap NASA 3D Resources with Poly Haven API**:
+    - [x] Create `PolyHavenAssetDto.kt` to match Poly Haven's assets schema.
+    - [x] Update `ApiService.kt` to point to Poly Haven's assets list.
+    - [x] Refactor `ModelRepositoryImpl.kt` to fetch and map Poly Haven models.
+    - [x] Remove NASA-related DTOs and code references.
+
+
+## Model Gallery Download Feedback
+1. **Implement Download Progress Chart**:
+    - [x] Create `ModelDownloadStatus` component to show detailed progress (Downloaded MB / Total MB).
+    - [x] Integrate the status component into `ModelGalleryOverlay` to show when a selected model is downloading.
+    - [x] Add a `LinearProgressIndicator` for a "chart" like visual representation.
+    - [x] Ensure formatting handles both MB and KB correctly.

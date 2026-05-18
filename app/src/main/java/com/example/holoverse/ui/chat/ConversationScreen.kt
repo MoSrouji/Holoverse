@@ -2,6 +2,7 @@ package com.example.holoverse.ui.chat
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -46,6 +47,31 @@ fun ConversationScreen(
     val sheetState = rememberModalBottomSheetState()
     val context = LocalContext.current
 
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { viewModel.uploadAndSendFile(it, "image") }
+    }
+
+    val videoPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { viewModel.uploadAndSendFile(it, "video") }
+    }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val fileName = context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                cursor.moveToFirst()
+                cursor.getString(nameIndex)
+            }
+            viewModel.uploadAndSendFile(it, "pdf", fileName)
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -57,6 +83,7 @@ fun ConversationScreen(
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
+            // ... (topBar content)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -124,7 +151,13 @@ fun ConversationScreen(
                 isRecording = uiState.isRecording,
                 onTextChange = viewModel::onTextChanged,
                 onSend = viewModel::sendMessage,
-                onMediaClick = { /* TODO: Implement multimedia sending */ },
+                onMediaClick = { type ->
+                    when (type) {
+                        "image" -> imagePickerLauncher.launch("image/*")
+                        "video" -> videoPickerLauncher.launch("video/*")
+                        "pdf" -> filePickerLauncher.launch("application/pdf")
+                    }
+                },
                 onEmojiClick = { showEmojiPicker = true },
                 onStartRecording = {
                     when (PackageManager.PERMISSION_GRANTED) {
@@ -168,6 +201,14 @@ fun ConversationScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
+                if (uiState.isSendingAudio || uiState.isUploadingFile) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                    }
+                }
+
                 if (uiState.isSendingAudio) {
                     item {
                         SendingVoiceBubble()

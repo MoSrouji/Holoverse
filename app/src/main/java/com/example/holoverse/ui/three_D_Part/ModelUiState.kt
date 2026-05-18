@@ -12,5 +12,12 @@ data class ModelUiState(
     val modelRotation: Float = 0f,
     val modelScale: Float = 1f,
     val searchQuery: String = "",
-    val selectedCategory: String = "All"
+    val selectedCategory: String = "All",
+    val downloadProgress: Map<String, DownloadProgress> = emptyMap()
+)
+
+data class DownloadProgress(
+    val progress: Float, // 0.0 to 1.0
+    val downloadedSize: Long,
+    val totalSize: Long
 )

@@ -1,17 +1,23 @@
 package com.example.holoverse.ui.chat.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.example.holoverse.chat_system.domain.model.Message
 
 @Composable
@@ -37,6 +43,70 @@ fun MessageBubble(
             modifier = Modifier.widthIn(max = 280.dp)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                if (message.imageUrl != null) {
+                    AsyncImage(
+                        model = message.imageUrl,
+                        contentDescription = "Image message",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                if (message.videoUrl != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Black.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.VideoLibrary,
+                                contentDescription = "Video message",
+                                tint = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Text(
+                                text = "Video message",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                if (message.fileUrl != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isCurrentUser) Color.White.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Description,
+                            contentDescription = "File",
+                            tint = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = message.fileName ?: "Document",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
+                            maxLines = 1
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
                 if (message.text.isNotBlank()) {
                     Text(
                         text = message.text,

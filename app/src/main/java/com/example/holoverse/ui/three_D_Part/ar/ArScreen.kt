@@ -31,7 +31,7 @@ fun ArScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val cacheManager = remember { ModelCacheManager(context) }
+    val cacheManager = viewModel.cacheManager
 
     var cachedModelPath by remember { mutableStateOf<String?>(null) }
     var isDownloading by remember { mutableStateOf(false) }
@@ -151,6 +151,7 @@ fun ArScreen(
                     ModelGalleryOverlay(
                         models = uiState.models,
                         selectedModel = uiState.selectedModel,
+                        downloadProgress = uiState.downloadProgress,
                         onModelSelected = { viewModel.selectModel(it) },
                         onAddLocalModel = {
                             filePickerLauncher.launch(arrayOf("model/*", "application/octet-stream"))

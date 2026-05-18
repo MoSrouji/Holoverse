@@ -26,10 +26,12 @@ object Three_d_Module {
     fun provideOkHttpClient(): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                level = HttpLoggingInterceptor.Level.HEADERS
             })
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(5, TimeUnit.MINUTES)
+            .readTimeout(5, TimeUnit.MINUTES)
+            .writeTimeout(5, TimeUnit.MINUTES)
+            .retryOnConnectionFailure(true)
             .build()
     }
 
@@ -46,13 +48,18 @@ object Three_d_Module {
 
     @Provides
     @Singleton
-    fun provideModelRepository(apiService: ApiService): ModelRepository {
+    fun provideModelRepository(
+        apiService: ApiService
+    ): ModelRepository {
         return ModelRepositoryImpl(apiService)
     }
 
     @Provides
     @Singleton
-    fun provideModelCacheManager(@ApplicationContext context: Context): ModelCacheManager {
-        return ModelCacheManager(context)
+    fun provideModelCacheManager(
+        @ApplicationContext context: Context,
+        okHttpClient: OkHttpClient
+    ): ModelCacheManager {
+        return ModelCacheManager(context, okHttpClient)
     }
 }

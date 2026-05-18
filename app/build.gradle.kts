@@ -192,4 +192,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     baselineProfile(project(":baselineprofile"))
+
+    implementation(libs.compose.auto.shimmer)
 }

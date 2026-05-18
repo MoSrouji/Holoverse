@@ -5,13 +5,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -20,12 +24,14 @@ fun ChatInput(
     isRecording: Boolean,
     onTextChange: (String) -> Unit,
     onSend: () -> Unit,
-    onMediaClick: () -> Unit,
+    onMediaClick: (String) -> Unit,
     onEmojiClick: () -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
     onCancelRecording: () -> Unit
 ) {
+    var showAttachmentMenu by remember { mutableStateOf(false) }
+
     Surface(
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
@@ -38,6 +44,7 @@ fun ChatInput(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isRecording) {
+                // ... (existing recording UI)
                 Text(
                     text = "Recording...",
                     color = Color.Red,
@@ -80,12 +87,51 @@ fun ChatInput(
                     ),
                     maxLines = 4
                 )
-                IconButton(onClick = onMediaClick) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Send multimedia",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                Box {
+                    IconButton(onClick = { showAttachmentMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Send multimedia",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showAttachmentMenu,
+                        onDismissRequest = { showAttachmentMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Photo") },
+                            onClick = {
+                                showAttachmentMenu = false
+                                onMediaClick("image")
+                            },
+                            leadingIcon = { Icon(Icons.Default.Image, contentDescription = null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Video") },
+                            onClick = {
+                                showAttachmentMenu = false
+                                onMediaClick("video")
+                            },
+                            leadingIcon = { Icon(Icons.Default.Movie, contentDescription = null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("PDF") },
+                            onClick = {
+                                showAttachmentMenu = false
+                                onMediaClick("pdf")
+                            },
+                            leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Voice") },
+                            onClick = {
+                                showAttachmentMenu = false
+                                onStartRecording()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Mic, contentDescription = null) }
+                        )
+                    }
                 }
                 IconButton(
                     onClick = { 
