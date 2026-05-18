@@ -2,17 +2,16 @@ package com.example.holoverse.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.UserType
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import javax.inject.Inject
-import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.onStart
+import kotlinx.serialization.json.Json
+import javax.inject.Inject
 
 
 class PreferenceManager @Inject constructor(@ApplicationContext context: Context) {

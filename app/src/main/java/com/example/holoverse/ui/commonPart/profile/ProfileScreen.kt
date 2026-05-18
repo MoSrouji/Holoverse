@@ -1,7 +1,6 @@
 package com.example.holoverse.ui.commonPart.profile
 
 import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,7 +24,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -53,7 +51,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,12 +76,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
-import com.example.holoverse.navigation.AppDestination
-import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.spatialTheme.Brush
-import com.example.holoverse.ui.spatialTheme.SpatialBackground
-import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.ui.theme.HoloverseTheme
+import com.example.holoverse.ui.theme.IbarraNovaFont
 
 data class ProfileItemData(
     val icon: ImageVector,

@@ -1,5 +1,6 @@
 package com.example.holoverse.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
@@ -15,10 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-
 import java.io.IOException
-import android.util.Log
+import javax.inject.Inject
 
 enum class HomeTab {
     Explore, YourCourses

@@ -1,6 +1,5 @@
 package com.example.holoverse.ui.commonPart.auth.validation.use_case
 
-import android.util.Patterns
 import com.example.holoverse.R
 import com.example.holoverse.ui.commonPart.auth.validation.interfaces.Validate
 import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationResultState

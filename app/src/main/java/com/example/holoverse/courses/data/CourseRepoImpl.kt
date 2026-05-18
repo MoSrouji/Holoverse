@@ -7,7 +7,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
-import java.lang.Exception
 
 class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
 

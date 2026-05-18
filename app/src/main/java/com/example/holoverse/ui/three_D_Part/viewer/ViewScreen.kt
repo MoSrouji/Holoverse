@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.rounded.ViewInAr
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -31,19 +30,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.three_d_model.data.local.ModelCacheManager
 import com.example.holoverse.ui.three_D_Part.ModelViewModel
+import com.example.holoverse.ui.three_D_Part.ar.ArStatus
 import com.example.holoverse.ui.three_D_Part.ar.rememberArStatus
 import com.example.holoverse.ui.three_D_Part.gallery.ModelGalleryOverlay
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.example.holoverse.ui.three_D_Part.ar.ArStatus
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable

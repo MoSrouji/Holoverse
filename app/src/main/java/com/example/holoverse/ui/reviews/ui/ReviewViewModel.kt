@@ -2,7 +2,6 @@ package com.example.holoverse.ui.reviews.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.holoverse.auth.domain.entities.User as AuthUser
 import com.example.holoverse.reviews.domain.Review
 import com.example.holoverse.reviews.domain.ReviewRepository
 import com.example.holoverse.utils.PreferenceManager
@@ -13,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.example.holoverse.auth.domain.entities.User as AuthUser
 
 data class ReviewUiState(
     val reviews: List<Review> = emptyList(),

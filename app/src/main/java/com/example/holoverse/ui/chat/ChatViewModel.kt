@@ -1,13 +1,19 @@
 package com.example.holoverse.ui.chat
 
+import android.content.Context
+import android.media.MediaPlayer
+import android.media.MediaRecorder
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.chat_system.domain.model.Chat
 import com.example.holoverse.chat_system.domain.repository.ChatRepository
+import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,15 +21,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-
-import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
 import java.io.File
-import android.media.MediaRecorder
-import android.media.MediaPlayer
-import android.content.Context
-import android.net.Uri
-import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(

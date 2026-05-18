@@ -31,11 +31,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.ui.spatialTheme.SpatialBackground
-import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.ui.home.coursesList.CourseItem
 import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.utils.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,8 +47,7 @@ fun CategoryCoursesScreen(
     val coursesState = viewModel.coursesState.value
     val categoryName = viewModel.categoryName.value
 
-    Scaffold(
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()

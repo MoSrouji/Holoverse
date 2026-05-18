@@ -4,7 +4,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.use_cases.AuthUseCases
-
 import com.example.holoverse.ui.commonPart.auth.presentaiton.base.BaseValidationViewModel
 import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
 import com.example.holoverse.ui.commonPart.auth.validation.interfaces.TextFieldId
@@ -14,7 +13,6 @@ import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel

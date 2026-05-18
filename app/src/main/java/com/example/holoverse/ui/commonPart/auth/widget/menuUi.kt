@@ -29,8 +29,6 @@ import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -51,7 +49,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -60,28 +57,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.FragmentManager
-
-import com.example.holoverse.ui.collectUserData.teacher.viewModels.SignUpTextField
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFieldId
 import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
 import com.example.holoverse.ui.theme.IbarraNovaNormalError13
 import com.example.holoverse.ui.theme.IbarraNovaNormalGray14
 import com.example.holoverse.ui.theme.IbarraNovaSemiBoldPlatinum16
-import com.google.android.libraries.places.api.model.LocalDate
-import com.google.android.material.datepicker.CalendarConstraints
-import com.google.android.material.datepicker.MaterialDatePicker
 import java.text.SimpleDateFormat
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
-import java.time.temporal.TemporalAccessor
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 
 @OptIn(ExperimentalMaterial3Api::class)
