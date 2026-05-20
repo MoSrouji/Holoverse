@@ -124,7 +124,8 @@ fun RadioButtonMenu(
     onItemSelected: (String) -> Unit,
     state: ValidationState = ValidationState(id = SignUpTextFieldId.FULL_NAME ),
     menuItems: List<String>,
-    showIcon: Boolean = true
+    showIcon: Boolean = true,
+    labelText: String? = null
 ) {
 
 
@@ -133,6 +134,13 @@ fun RadioButtonMenu(
             .fillMaxWidth(0.85f)
             .clip(RoundedCornerShape(5.dp))
     ) {
+        if (labelText != null) {
+            Text(
+                text = labelText,
+                style = IbarraNovaNormalGray14,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
         // Menu header
         Box(
             modifier = Modifier
@@ -204,17 +212,16 @@ fun RadioButtonMenu(
         }
 
     }
-    Column() {
-        if (state.hasError && state.errorMessageId != null) {
+    if (state.hasError && state.errorMessageId != null) {
 
-            Text(
-                text = stringResource(id = state.errorMessageId),
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(top = 10.dp),
-                style = IbarraNovaNormalError13
-            )
-        }
+        Text(
+            text = stringResource(id = state.errorMessageId),
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .padding(top = 10.dp),
+            style = IbarraNovaNormalError13,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
     }
 }
 
@@ -419,17 +426,16 @@ fun CheckBoxMenu(
             }
         }
     }
-    Column() {
-        if (state.hasError && state.errorMessageId != null) {
+    if (state.hasError && state.errorMessageId != null) {
 
-            Text(
-                text = stringResource(id = state.errorMessageId),
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(top = 10.dp),
-                style = IbarraNovaNormalError13
-            )
-        }
+        Text(
+            text = stringResource(id = state.errorMessageId),
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .padding(top = 10.dp),
+            style = IbarraNovaNormalError13,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
     }
 }
 

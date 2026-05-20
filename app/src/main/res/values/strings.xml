@@ -49,6 +49,8 @@
     <string name="subjects">subjects</string>
 
     <string name="hourlyRate">hourly rate</string>
+    <string name="university">University Name</string>
+    <string name="faculty">Faculty / College</string>
     <string name="skip">Skip</string>
     <string name="Warning">warning\n</string>
     <string name="skipPresed">this form it\'s help us to make recomedatin for you to get better exiprence</string>

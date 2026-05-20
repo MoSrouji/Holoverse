@@ -87,6 +87,7 @@ fun TeacherProfessionalInfoInput(
                         phoneNumber = mentorStates.value.phoneNumber,
                         address = mentorStates.value.address,
                         gender = mentorStates.value.gender,
+                        profileImageUrl = mentorStates.value.profileImageUrl,
                         yearsOfExperience = viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!.text,
                         specialization = viewModel.specializations,
                         subjects = viewModel.selectSubjects.toList(),
@@ -121,8 +122,8 @@ fun TeacherProfessionalInfoInput(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 30.dp)
         ) {
-            Spacer(modifier = Modifier.height(30.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -143,7 +144,6 @@ fun TeacherProfessionalInfoInput(
                     onClick = {
                         navToHomeScreen()
                     },
-                    modifier = Modifier.padding(end = 10.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.skip),
@@ -152,143 +152,143 @@ fun TeacherProfessionalInfoInput(
                 }
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = stringResource(id = R.string.create_account),
                 style = IbarraNovaBoldPlatinum25,
                 color = colorResource(R.color.white)
             )
-            Spacer(modifier = Modifier.height(5.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(id = R.string.please_complete_you_auth_to_continue),
+                text = "Tell us about your professional expertise",
                 style = IbarraNovaBoldPlatinum18,
-                color = colorResource(R.color.white)
+                color = colorResource(R.color.white).copy(alpha = 0.8f)
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(35.dp))
 
-            RadioButtonMenu(
-                isExpanded = isYearsExpanded,
-                onToggle = { isYearsExpanded = !isYearsExpanded },
-                selectedItem = viewModel.selectedYears,
-                onItemSelected = { item ->
-                    viewModel.selectedYears = item
-                    isYearsExpanded = false
-                    viewModel.onEvent(
-                        ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!.copy(text = item)
-                        )
-                    )
-                },
-                state = viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!,
-                menuItems = yearsItems,
-                showIcon = false
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            CheckBoxMenu(
-                isExpanded = isLanguageExpanded,
-                onToggle = { isLanguageExpanded = !isLanguageExpanded },
-                selectedItems = viewModel.selectLanguage,
-                onItemSelected = { item ->
-                    viewModel.updateLanguage(item)
-                    val currentText = viewModel.forms[SignUpTextFields.LANGUAGE_SPOKEN]?.text ?: ""
-                    viewModel.onEvent(
-                        ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextFields.LANGUAGE_SPOKEN]!!.copy(
-                                text = if (currentText.isEmpty()) item else "$currentText, $item"
+            // Professional Details Section
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                RadioButtonMenu(
+                    isExpanded = isYearsExpanded,
+                    onToggle = { isYearsExpanded = !isYearsExpanded },
+                    selectedItem = viewModel.selectedYears,
+                    onItemSelected = { item ->
+                        viewModel.selectedYears = item
+                        isYearsExpanded = false
+                        viewModel.onEvent(
+                            ValidationEvent.TextFieldValueChange(
+                                viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!.copy(text = item)
                             )
                         )
-                    )
-                },
-                state = viewModel.forms[SignUpTextFields.LANGUAGE_SPOKEN]!!,
-                menuItems = languageItems,
-                ifItEmptyText = "Select Your Language",
-                labelText = "Language :"
-            )
+                    },
+                    state = viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!,
+                    menuItems = yearsItems,
+                    showIcon = false,
+                    labelText = "Years of Experience"
+                )
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            RadioButtonMenu(
-                isExpanded = isCertificateExpanded,
-                onToggle = { isCertificateExpanded = !isCertificateExpanded },
-                selectedItem = viewModel.selectedCertificate,
-                onItemSelected = { item ->
-                    viewModel.selectedCertificate = item
-                    isCertificateExpanded = false
-                    viewModel.onEvent(
-                        ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextFields.CERTIFICATION]!!.copy(text = item)
-                        )
-                    )
-                },
-                state = viewModel.forms[SignUpTextFields.CERTIFICATION]!!,
-                menuItems = certificateItems,
-                showIcon = false
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            RadioButtonMenu(
-                isExpanded = isSpecializationsExpanded,
-                onToggle = { isSpecializationsExpanded = !isSpecializationsExpanded },
-                selectedItem = viewModel.selectSpecializations,
-                onItemSelected = { item ->
-                    viewModel.selectSpecializations = item
-                    viewModel.selectSubjects = emptySet<String>()
-                    isSpecializationsExpanded = false
-                    viewModel.onEvent(
-                        ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextFields.SPECIALIZATION]!!.copy(text = item)
-                        )
-                    )
-                    viewModel.specializations = MentorCategory.fromString(item)
-                    viewModel.subject = viewModel.specializations.specializations
-                },
-                state = viewModel.forms[SignUpTextFields.SPECIALIZATION]!!,
-                menuItems = specializations,
-                showIcon = false
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            CheckBoxMenu(
-                isExpanded = isSubjectExpanded,
-                onToggle = { isSubjectExpanded = !isSubjectExpanded },
-                selectedItems = viewModel.selectSubjects,
-                onItemSelected = { item ->
-                    viewModel.updateSubject(item)
-                    val currentText = viewModel.forms[SignUpTextFields.SUBJECTS]?.text ?: ""
-                    viewModel.onEvent(
-                        ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextFields.SUBJECTS]!!.copy(
-                                text = if (currentText.isEmpty()) item else "$currentText, $item"
+                CheckBoxMenu(
+                    isExpanded = isLanguageExpanded,
+                    onToggle = { isLanguageExpanded = !isLanguageExpanded },
+                    selectedItems = viewModel.selectLanguage,
+                    onItemSelected = { item ->
+                        viewModel.updateLanguage(item)
+                        val currentText = viewModel.selectLanguage.joinToString(", ")
+                        viewModel.onEvent(
+                            ValidationEvent.TextFieldValueChange(
+                                viewModel.forms[SignUpTextFields.LANGUAGE_SPOKEN]!!.copy(
+                                    text = currentText
+                                )
                             )
                         )
-                    )
-                },
-                state = viewModel.forms[SignUpTextFields.SUBJECTS]!!,
-                menuItems = viewModel.subject,
-                ifItEmptyText = "Select Your Subjects ",
-                labelText = "Subjects : "
-            )
+                    },
+                    state = viewModel.forms[SignUpTextFields.LANGUAGE_SPOKEN]!!,
+                    menuItems = languageItems,
+                    ifItEmptyText = "Select Your Languages",
+                    labelText = "Languages Spoken"
+                )
 
-            Spacer(modifier = Modifier.height(20.dp))
+                RadioButtonMenu(
+                    isExpanded = isCertificateExpanded,
+                    onToggle = { isCertificateExpanded = !isCertificateExpanded },
+                    selectedItem = viewModel.selectedCertificate,
+                    onItemSelected = { item ->
+                        viewModel.selectedCertificate = item
+                        isCertificateExpanded = false
+                        viewModel.onEvent(
+                            ValidationEvent.TextFieldValueChange(
+                                viewModel.forms[SignUpTextFields.CERTIFICATION]!!.copy(text = item)
+                            )
+                        )
+                    },
+                    state = viewModel.forms[SignUpTextFields.CERTIFICATION]!!,
+                    menuItems = certificateItems,
+                    showIcon = false,
+                    labelText = "Highest Qualification"
+                )
+
+                RadioButtonMenu(
+                    isExpanded = isSpecializationsExpanded,
+                    onToggle = { isSpecializationsExpanded = !isSpecializationsExpanded },
+                    selectedItem = viewModel.selectSpecializations,
+                    onItemSelected = { item ->
+                        viewModel.selectSpecializations = item
+                        viewModel.selectSubjects = emptySet()
+                        isSpecializationsExpanded = false
+                        viewModel.onEvent(
+                            ValidationEvent.TextFieldValueChange(
+                                viewModel.forms[SignUpTextFields.SPECIALIZATION]!!.copy(text = item)
+                            )
+                        )
+                        viewModel.specializations = MentorCategory.fromString(item)
+                        viewModel.subject = viewModel.specializations.specializations
+                    },
+                    state = viewModel.forms[SignUpTextFields.SPECIALIZATION]!!,
+                    menuItems = specializations,
+                    showIcon = false,
+                    labelText = "Main Specialization"
+                )
+
+                CheckBoxMenu(
+                    isExpanded = isSubjectExpanded,
+                    onToggle = { isSubjectExpanded = !isSubjectExpanded },
+                    selectedItems = viewModel.selectSubjects,
+                    onItemSelected = { item ->
+                        viewModel.updateSubject(item)
+                        val currentText = viewModel.selectSubjects.joinToString(", ")
+                        viewModel.onEvent(
+                            ValidationEvent.TextFieldValueChange(
+                                viewModel.forms[SignUpTextFields.SUBJECTS]!!.copy(
+                                    text = currentText
+                                )
+                            )
+                        )
+                    },
+                    state = viewModel.forms[SignUpTextFields.SUBJECTS]!!,
+                    menuItems = viewModel.subject,
+                    ifItEmptyText = "Select Your Subjects",
+                    labelText = "Specific Subjects"
+                )
+            }
+
             Spacer(modifier = Modifier.height(40.dp))
 
             AuthenticationButton(
                 modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(50.dp),
+                    .fillMaxWidth(0.7f)
+                    .height(55.dp),
                 textId = R.string.sign_up,
                 onClick = {
                     viewModel.onEvent(ValidationEvent.Submit)
                 },
             )
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 

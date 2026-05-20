@@ -33,6 +33,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.holoverse.chat_system.domain.model.Message
+import com.example.holoverse.chat_system.domain.model.MessageStatus
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Schedule
 
 @Composable
 fun MessageBubble(
@@ -147,6 +150,37 @@ fun MessageBubble(
                             color = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
                             style = MaterialTheme.typography.bodyMedium
                         )
+                    }
+                }
+
+                if (isCurrentUser) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        when (message.status) {
+                            MessageStatus.SENDING -> {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = "Sending",
+                                    modifier = Modifier.size(12.dp),
+                                    tint = Color.White.copy(alpha = 0.7f)
+                                )
+                            }
+                            MessageStatus.FAILED -> {
+                                Icon(
+                                    imageVector = Icons.Default.Error,
+                                    contentDescription = "Failed",
+                                    modifier = Modifier.size(12.dp),
+                                    tint = Color.Red
+                                )
+                            }
+                            MessageStatus.SENT -> {
+                                // Optional: Show a checkmark or nothing
+                            }
+                        }
                     }
                 }
             }

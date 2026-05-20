@@ -15,6 +15,9 @@ interface ChatDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChats(chats: List<ChatEntity>)
 
+    @Query("SELECT * FROM chats WHERE id = :chatId LIMIT 1")
+    suspend fun getChatById(chatId: String): ChatEntity?
+
     @Query("DELETE FROM chats")
     suspend fun clearChats()
 }

@@ -48,6 +48,7 @@ import com.example.holoverse.utils.Response
 fun SignUpScreen(
     onBackClick: () -> Unit,
     onNavigateToTeacherProfile: () -> Unit,
+    onNavigateToStudentProfile: () -> Unit,
     navToHomeScreen: () -> Unit,
     viewModel: SignUpViewModel = hiltViewModel(),
     darkTheme: Boolean
@@ -92,7 +93,11 @@ fun SignUpScreen(
             is Response.Success -> {
                 if (signUpState.data) {
                     Toast.makeText(context, R.string.fill_the_form, Toast.LENGTH_LONG).show()
-                    onNavigateToTeacherProfile()
+                    if (viewModel.getUserType() == UserType.Mentor) {
+                        onNavigateToTeacherProfile()
+                    } else {
+                        onNavigateToStudentProfile()
+                    }
                 }
             }
             is Response.Error -> {

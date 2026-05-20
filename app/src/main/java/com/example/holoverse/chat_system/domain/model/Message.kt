@@ -13,5 +13,10 @@ data class Message(
     val videoUrl: String? = null,
     val fileUrl: String? = null,
     val fileName: String? = null,
-    val timestamp: Timestamp? = null
+    val timestamp: Timestamp? = null,
+    val status: MessageStatus = MessageStatus.SENT
 )
+
+enum class MessageStatus {
+    SENDING, SENT, FAILED
+}

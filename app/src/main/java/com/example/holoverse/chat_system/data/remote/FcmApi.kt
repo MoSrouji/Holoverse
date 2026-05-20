@@ -22,7 +22,23 @@ data class FcmV1Request(
 data class FcmMessage(
     val token: String,
     val notification: NotificationData,
-    val data: Map<String, String>
+    val data: Map<String, String>? = null,
+    val android: AndroidConfig? = null
+)
+
+@Serializable
+data class AndroidConfig(
+    val priority: String = "high",
+    val notification: AndroidNotification? = null
+)
+
+@Serializable
+data class AndroidNotification(
+    val channel_id: String = "chat_notifications",
+    val notification_priority: String = "PRIORITY_HIGH",
+    val sound: String = "default",
+    val default_vibrate_timings: Boolean = true,
+    val default_sound: Boolean = true
 )
 
 @Serializable

@@ -1,5 +1,6 @@
 package com.example.holoverse.navigation
 
+import TeacherProfileInput
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,6 +27,9 @@ import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.category.CategoryCoursesScreen
 import com.example.holoverse.ui.category.CategoryScreen
 import com.example.holoverse.ui.chat.ChatScreen
+import com.example.holoverse.ui.collectUserData.student.screens.StudentPreferenceInfoInput
+import com.example.holoverse.ui.collectUserData.student.screens.StudentProfileInput
+import com.example.holoverse.ui.collectUserData.teacher.screens.TeacherProfessionalInfoInput
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signin.SignInScreen
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpScreen
 import com.example.holoverse.ui.commonPart.profile.EditProfileScreen
@@ -82,6 +86,7 @@ fun AppNavHost(
     }
 
     val sharedState = remember { MutableStateFlow(User.Mentor()) }
+    val studentSharedState = remember { MutableStateFlow(User.Student()) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -112,7 +117,12 @@ fun AppNavHost(
             popEnterTransition = { NavAnimations.slideInFromLeft() },
             popExitTransition = { NavAnimations.slideOutToRight() }
         ) {
-            authGraph(navigator, mentorState = sharedState, darkTheme = darkTheme)
+            authGraph(
+                navigator,
+                mentorState = sharedState,
+                studentState = studentSharedState,
+                darkTheme = darkTheme
+            )
             homeGraph(navigator, navController, darkTheme)
             subGraph(navigator, navController, darkTheme)
             modelGraph(navigator, navController, darkTheme)
@@ -123,6 +133,7 @@ fun AppNavHost(
 private fun NavGraphBuilder.authGraph(
     navigator: AppNavigator,
     mentorState: MutableStateFlow<User.Mentor>,
+    studentState: MutableStateFlow<User.Student>,
     darkTheme: Boolean
 ) {
     navigation<AppDestination.AuthGraph>(startDestination = AppDestination.HoloIntro) {
@@ -151,6 +162,7 @@ private fun NavGraphBuilder.authGraph(
             SignUpScreen(
                 onBackClick = { navigator.popBackStack() },
                 onNavigateToTeacherProfile = { navigator.navigateTo(AppDestination.SignUpTeacherProfile) },
+                onNavigateToStudentProfile = { navigator.navigateTo(AppDestination.SignUpStudentProfile) },
                 navToHomeScreen = {
                     navigator.navigateAndPopUpTo(
                         AppDestination.HomeGraph,
@@ -158,6 +170,66 @@ private fun NavGraphBuilder.authGraph(
                         true
                     )
                 },
+                darkTheme = darkTheme
+            )
+        }
+
+        composable<AppDestination.SignUpTeacherProfile> {
+            TeacherProfileInput(
+                navController = navigator,
+                navToHomeScreen = {
+                    navigator.navigateAndPopUpTo(
+                        AppDestination.HomeGraph,
+                        AppDestination.AuthGraph,
+                        true
+                    )
+                },
+                mentorStates = mentorState,
+                darkTheme = darkTheme
+            )
+        }
+
+        composable<AppDestination.SignUpTeacherProfessional> {
+            TeacherProfessionalInfoInput(
+                navController = navigator,
+                navToHomeScreen = {
+                    navigator.navigateAndPopUpTo(
+                        AppDestination.HomeGraph,
+                        AppDestination.AuthGraph,
+                        true
+                    )
+                },
+                mentorStates = mentorState,
+                darkTheme = darkTheme
+            )
+        }
+
+        composable<AppDestination.SignUpStudentProfile> {
+            StudentProfileInput(
+                navController = navigator,
+                navToHomeScreen = {
+                    navigator.navigateAndPopUpTo(
+                        AppDestination.HomeGraph,
+                        AppDestination.AuthGraph,
+                        true
+                    )
+                },
+                studentStates = studentState,
+                darkTheme = darkTheme
+            )
+        }
+
+        composable<AppDestination.SignUpStudentPreference> {
+            StudentPreferenceInfoInput(
+                navController = navigator,
+                navToHomeScreen = {
+                    navigator.navigateAndPopUpTo(
+                        AppDestination.HomeGraph,
+                        AppDestination.AuthGraph,
+                        true
+                    )
+                },
+                studentStates = studentState,
                 darkTheme = darkTheme
             )
         }

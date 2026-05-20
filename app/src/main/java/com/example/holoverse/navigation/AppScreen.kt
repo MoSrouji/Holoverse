@@ -29,6 +29,12 @@ sealed interface AppDestination {
     data object SignUpTeacherProfessional : AppDestination
 
     @Serializable
+    data object SignUpStudentProfile : AppDestination
+
+    @Serializable
+    data object SignUpStudentPreference : AppDestination
+
+    @Serializable
     data object HomeScreen : AppDestination
 
     @Serializable

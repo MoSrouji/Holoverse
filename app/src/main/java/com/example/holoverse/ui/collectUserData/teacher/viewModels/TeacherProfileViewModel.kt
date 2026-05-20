@@ -1,5 +1,6 @@
 package com.example.holoverse.ui.collectUserData.teacher.viewModels
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -20,6 +21,7 @@ class TeacherProfileViewModel @Inject constructor() : BaseValidationViewModel() 
     private val _teacherScreenState = MutableStateFlow(TeacherState())
     val teacherScreenState: StateFlow<TeacherState> = _teacherScreenState.asStateFlow()
 
+    var selectedImageUri by mutableStateOf<Uri?>(null)
 
     var selectedItem by mutableStateOf("Select Your Gender")
 
@@ -35,11 +37,15 @@ class TeacherProfileViewModel @Inject constructor() : BaseValidationViewModel() 
     private var genderValidationState =
         ValidationState(type = TextFieldType.Text, id = SignUpTextField.Gender)
 
+    private var dateOfBirthValidationState =
+        ValidationState(type = TextFieldType.Text, id = SignUpTextField.DATE_OF_BIRTH)
+
     init {
         forms[SignUpTextField.Bio] = bioValidationState
         forms[SignUpTextField.ADDRESS] = addressValidationState
         forms[SignUpTextField.PHONE_NUMBER] = phoneNumberValidationState
         forms[SignUpTextField.Gender] = genderValidationState
+        forms[SignUpTextField.DATE_OF_BIRTH] = dateOfBirthValidationState
     }
 
 

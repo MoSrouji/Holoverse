@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
+import com.example.holoverse.chat_system.domain.model.Message
 import com.example.holoverse.ui.chat.components.ChatInput
 import com.example.holoverse.ui.chat.components.EmojiPicker
 import com.example.holoverse.ui.chat.components.MessageBubble
@@ -124,6 +125,7 @@ fun ConversationScreen(
                             Surface(
                                 modifier = Modifier.size(40.dp),
                                 shape = CircleShape,
+                                color = MaterialTheme.colorScheme.secondaryContainer
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     if (uiState.selectedChatPartnerImageUrl != null) {
@@ -135,7 +137,7 @@ fun ConversationScreen(
                                         )
                                     } else {
                                         Text(
-                                            uiState.selectedChatPartnerName.take(1).uppercase(),
+                                            if (uiState.selectedChatPartnerName.isEmpty()) "L" else uiState.selectedChatPartnerName.take(1).uppercase(),
                                             style = MaterialTheme.typography.titleMedium,
                                         )
                                     }
@@ -143,7 +145,7 @@ fun ConversationScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                uiState.selectedChatPartnerName,
+                                text = uiState.selectedChatPartnerName.ifEmpty { "Chat" },
                             )
                         }
                     },
@@ -223,7 +225,10 @@ fun ConversationScreen(
             ) {
                 if (uiState.isSendingAudio || uiState.isUploadingFile) {
                     item {
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         }
                     }

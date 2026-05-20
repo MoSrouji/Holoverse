@@ -1,17 +1,21 @@
 package com.example.holoverse.chat_system.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.chat_system.data.local.dao.ChatDao
 import com.example.holoverse.chat_system.data.local.dao.MessageDao
 import com.example.holoverse.chat_system.data.local.entities.ChatEntity
 import com.example.holoverse.chat_system.data.local.entities.MessageEntity
+import com.example.holoverse.chat_system.data.remote.AndroidConfig
+import com.example.holoverse.chat_system.data.remote.AndroidNotification
 import com.example.holoverse.chat_system.data.remote.FcmApi
 import com.example.holoverse.chat_system.data.remote.FcmMessage
 import com.example.holoverse.chat_system.data.remote.FcmV1Request
 import com.example.holoverse.chat_system.data.remote.NotificationData
 import com.example.holoverse.chat_system.domain.model.Chat
 import com.example.holoverse.chat_system.domain.model.Message
+import com.example.holoverse.chat_system.domain.model.MessageStatus
 import com.example.holoverse.chat_system.domain.repository.ChatRepository
 import com.example.holoverse.utils.NetworkConstant
 import com.google.auth.oauth2.GoogleCredentials
@@ -31,6 +35,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 
 class ChatRepositoryImpl @Inject constructor(
@@ -134,10 +139,41 @@ class ChatRepositoryImpl @Inject constructor(
         val participants = listOf(currentUserId, otherUserId).sorted()
         val chatId = participants.joinToString("_")
 
-        val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
-        val snapshot = chatRef.get().await()
+        // 1. Check local first
+        val localChat = chatDao.getChatById(chatId)
+        if (localChat != null) {
+            return chatId
+        }
 
-        if (!snapshot.exists()) {
+        // 2. Try remote if not found locally
+        try {
+            val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            val snapshot = chatRef.get().await()
+
+            if (!snapshot.exists()) {
+                val namesMap = mutableMapOf(
+                    currentUserId to currentUserName,
+                    otherUserId to otherUserName
+                )
+                val imagesMap = mutableMapOf<String, String>()
+                currentUserImageUrl?.let { imagesMap[currentUserId] = it }
+                otherUserImageUrl?.let { imagesMap[otherUserId] = it }
+
+                val chatData = Chat(
+                    id = chatId,
+                    participants = participants,
+                    participantNames = namesMap,
+                    participantProfileImages = imagesMap
+                )
+                chatRef.set(chatData).await()
+                chatDao.insertChats(listOf(chatData.toEntity()))
+            } else {
+                val remoteChat = snapshot.toObject(Chat::class.java)?.copy(id = snapshot.id)
+                remoteChat?.let { chatDao.insertChats(listOf(it.toEntity())) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // In offline mode, if it's not in local DB, create a temporary local entry
             val namesMap = mutableMapOf(
                 currentUserId to currentUserName,
                 otherUserId to otherUserName
@@ -146,14 +182,13 @@ class ChatRepositoryImpl @Inject constructor(
             currentUserImageUrl?.let { imagesMap[currentUserId] = it }
             otherUserImageUrl?.let { imagesMap[otherUserId] = it }
 
-            val chatData = Chat(
+            val tempChat = Chat(
                 id = chatId,
                 participants = participants,
                 participantNames = namesMap,
                 participantProfileImages = imagesMap
             )
-            chatRef.set(chatData).await()
-            chatDao.insertChats(listOf(chatData.toEntity()))
+            chatDao.insertChats(listOf(tempChat.toEntity()))
         }
         return chatId
     }
@@ -170,82 +205,143 @@ class ChatRepositoryImpl @Inject constructor(
         fileUrl: String?,
         fileName: String?
     ) {
-        val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
-        val messageRef = chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document()
-        val serverTime = FieldValue.serverTimestamp()
+        val messageId = UUID.randomUUID().toString()
+        val currentTime = System.currentTimeMillis()
         
-        val messageMap = mutableMapOf(
-            "senderId" to senderId,
-            "senderName" to senderName,
-            "senderType" to senderType,
-            "text" to text,
-            "timestamp" to serverTime
+        // 1. Create local message entity with SENDING status
+        val localMessage = MessageEntity(
+            id = messageId,
+            chatId = chatId,
+            senderId = senderId,
+            senderName = senderName,
+            senderType = senderType,
+            text = text,
+            audioUrl = audioUrl,
+            imageUrl = imageUrl,
+            videoUrl = videoUrl,
+            fileUrl = fileUrl,
+            fileName = fileName,
+            timestamp = currentTime / 1000,
+            status = MessageStatus.SENDING
         )
-        audioUrl?.let { messageMap["audioUrl"] = it }
-        imageUrl?.let { messageMap["imageUrl"] = it }
-        videoUrl?.let { messageMap["videoUrl"] = it }
-        fileUrl?.let { messageMap["fileUrl"] = it }
-        fileName?.let { messageMap["fileName"] = it }
+        
+        // 2. Save to local DB immediately
+        messageDao.insertMessages(listOf(localMessage))
+        
+        // 3. Update local chat last message
+        val lastMessageText = when {
+            imageUrl != null -> "Image"
+            videoUrl != null -> "Video"
+            fileUrl != null -> fileName ?: "Document"
+            audioUrl != null && text.isEmpty() -> "Audio message"
+            else -> text
+        }
+        
+        chatDao.getChatById(chatId)?.let { currentChat ->
+            chatDao.insertChats(listOf(currentChat.copy(
+                lastMessage = lastMessageText,
+                lastMessageTimestamp = currentTime / 1000,
+                lastSenderId = senderId,
+                lastSenderName = senderName
+            )))
+        }
 
-        firestore.runBatch { batch ->
-            batch.set(messageRef, messageMap)
-            val lastMessageText = when {
-                imageUrl != null -> "Image"
-                videoUrl != null -> "Video"
-                fileUrl != null -> fileName ?: "Document"
-                audioUrl != null && text.isEmpty() -> "Audio message"
-                else -> text
-            }
-            val chatUpdate = mutableMapOf(
-                "lastMessage" to lastMessageText,
-                "lastMessageTimestamp" to serverTime,
-                "lastSenderId" to senderId,
-                "lastSenderName" to senderName,
-                "participants" to FieldValue.arrayUnion(senderId)
-            )
-            batch.set(chatRef, chatUpdate, SetOptions.merge())
-        }.await()
-        
-        syncMessagesFromRemote(chatId)
-        
-        // Trigger Notification using FCM V1
+        // 4. Attempt remote sync in background
         repositoryScope.launch {
             try {
-                val participants = chatId.split("_")
-                val recipientId = participants.find { it != senderId } ?: return@launch
+                val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+                val messageRef = chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document(messageId)
+                val serverTime = FieldValue.serverTimestamp()
                 
-                val recipientToken = authRepository.getFcmToken(recipientId)
-                
-                if (!recipientToken.isNullOrBlank()) {
-                    val authHeader = getAccessToken()
-                    val request = FcmV1Request(
-                        message = FcmMessage(
-                            token = recipientToken,
-                            notification = NotificationData(
-                                title = senderName,
-                                body = text
-                            ),
-                            data = mapOf(
-                                "chatId" to chatId,
-                                "senderId" to senderId
-                            )
-                        )
+                val messageMap = mutableMapOf(
+                    "senderId" to senderId,
+                    "senderName" to senderName,
+                    "senderType" to senderType,
+                    "text" to text,
+                    "timestamp" to serverTime
+                )
+                audioUrl?.let { messageMap["audioUrl"] = it }
+                imageUrl?.let { messageMap["imageUrl"] = it }
+                videoUrl?.let { messageMap["videoUrl"] = it }
+                fileUrl?.let { messageMap["fileUrl"] = it }
+                fileName?.let { messageMap["fileName"] = it }
+
+                firestore.runBatch { batch ->
+                    batch.set(messageRef, messageMap)
+                    val chatUpdate = mutableMapOf(
+                        "lastMessage" to lastMessageText,
+                        "lastMessageTimestamp" to serverTime,
+                        "lastSenderId" to senderId,
+                        "lastSenderName" to senderName,
+                        "participants" to FieldValue.arrayUnion(senderId)
                     )
-                    fcmApi.sendNotification(authHeader, request)
+                    batch.set(chatRef, chatUpdate, SetOptions.merge())
+                }.await()
+                
+                // Update local status to SENT
+                messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.SENT)))
+                
+                // Trigger Notification
+                try {
+                    val participants = chatId.split("_")
+                    val recipientId = participants.find { it != senderId } ?: return@launch
+                    
+                    val recipientToken = authRepository.getFcmToken(recipientId)
+                    
+                    if (!recipientToken.isNullOrBlank()) {
+                        try {
+                            val authHeader = getAccessToken()
+                            val request = FcmV1Request(
+                                message = FcmMessage(
+                                    token = recipientToken,
+                                    notification = NotificationData(
+                                        title = senderName,
+                                        body = lastMessageText
+                                    ),
+                                    data = mapOf(
+                                        "chatId" to chatId,
+                                        "senderId" to senderId
+                                    ),
+                                    android = AndroidConfig(
+                                        priority = "high",
+                                        notification = AndroidNotification(
+                                            channel_id = "chat_notifications",
+                                            notification_priority = "PRIORITY_HIGH"
+                                        )
+                                    )
+                                )
+                            )
+                            fcmApi.sendNotification(authHeader, request)
+                        } catch (e: Exception) {
+                            Log.e("ChatRepository", "Failed to send notification: ${e.message}")
+                            // We don't mark the message as failed here because the message 
+                            // was already successfully sent to Firestore.
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                // Update status to FAILED if offline/error
+                messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.FAILED)))
             }
         }
     }
 
     private suspend fun getAccessToken(): String {
         return withContext(Dispatchers.IO) {
-            val stream = context.assets.open("service-account.json")
-            val credentials = GoogleCredentials.fromStream(stream)
-                .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
-            credentials.refreshIfExpired()
-            "Bearer ${credentials.accessToken.tokenValue}"
+            try {
+                val stream = context.assets.open("service-account.json")
+                val credentials = GoogleCredentials.fromStream(stream)
+                    .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
+                credentials.refreshIfExpired()
+                "Bearer ${credentials.accessToken.tokenValue}"
+            } catch (e: Exception) {
+                Log.e("ChatRepository", "Error getting access token: ${e.message}. " +
+                        "Ensure 'service-account.json' is in assets folder.")
+                throw e
+            }
         }
     }
 
@@ -263,7 +359,8 @@ class ChatRepositoryImpl @Inject constructor(
             videoUrl = this.videoUrl,
             fileUrl = this.fileUrl,
             fileName = this.fileName,
-            timestamp = this.timestamp?.seconds ?: 0L
+            timestamp = this.timestamp?.seconds ?: (System.currentTimeMillis() / 1000),
+            status = this.status
         )
     }
 
@@ -279,7 +376,8 @@ class ChatRepositoryImpl @Inject constructor(
             videoUrl = this.videoUrl,
             fileUrl = this.fileUrl,
             fileName = this.fileName,
-            timestamp = if (this.timestamp != 0L) Timestamp(this.timestamp, 0) else null
+            timestamp = if (this.timestamp != 0L) Timestamp(this.timestamp, 0) else null,
+            status = this.status
         )
     }
 

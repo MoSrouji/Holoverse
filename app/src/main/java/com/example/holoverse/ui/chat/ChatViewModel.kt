@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
@@ -47,23 +49,46 @@ class ChatViewModel @Inject constructor(
 
     private fun loadInitialData() {
         viewModelScope.launch {
-            try {
+            // 1. Get cached user first for immediate offline availability
+            val cachedUser = authRepository.getCachedUser()
+            if (cachedUser != null) {
+                _uiState.update { it.copy(currentUser = cachedUser) }
+                cachedUser.userId?.let { userId ->
+                    // Start observing local chats immediately
+                    launch {
+                        chatRepository.getChats(userId).collectLatest { }
+                    }
+                }
+            } else {
+                // Only show loading if we don't even have a cached user
                 _uiState.update { it.copy(isLoading = true) }
+            }
+
+            try {
+                // 2. Refresh current user from remote (updates cache)
                 val user = authRepository.getCurrentUser()
+                if (user != null) {
+                    _uiState.update { it.copy(currentUser = user) }
+                    // If the user changed or we didn't have a cached user, trigger chat sync
+                    if (cachedUser?.userId != user.userId) {
+                        user.userId?.let { userId ->
+                            launch {
+                                chatRepository.getChats(userId).collectLatest { }
+                            }
+                        }
+                    }
+                }
+
+                // 3. Fetch mentors (Repository handles internal caching)
                 val mentors = fetchDataRepository.fetchMentors()
                 
                 _uiState.update { it.copy(
-                    currentUser = user,
                     contacts = mentors,
                     filteredContacts = mentors,
                     isLoading = false
                 ) }
-
-                user?.userId?.let { userId ->
-                    // This triggers the repository to start syncing and exposing the flow
-                    chatRepository.getChats(userId).collectLatest { /* Handled by observeRepositoryState */ }
-                }
             } catch (e: Exception) {
+                // If network fails, stop loading but keep cached data
                 _uiState.update { it.copy(isLoading = false) }
             }
         }
@@ -73,12 +98,12 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 chatRepository.chatsState,
-                chatRepository.messagesState
-            ) { repoChats, repoMessagesMap ->
-                repoChats to repoMessagesMap
-            }.collect { (repoChats, repoMessagesMap) ->
+                chatRepository.messagesState,
+                _uiState.map { it.currentChatId }.distinctUntilChanged()
+            ) { repoChats, repoMessagesMap, currentChatId ->
+                Triple(repoChats, repoMessagesMap, currentChatId)
+            }.collect { (repoChats, repoMessagesMap, currentChatId) ->
                 _uiState.update { currentState ->
-                    val currentChatId = currentState.currentChatId
                     val messagesForCurrentChat = if (currentChatId != null) {
                         repoMessagesMap[currentChatId] ?: emptyList()
                     } else {
@@ -119,8 +144,6 @@ class ChatViewModel @Inject constructor(
     fun onContactSelected(mentor: User.Mentor) {
         viewModelScope.launch {
             try {
-                _uiState.update { it.copy(isLoading = true) }
-
                 // Ensure we have a current user before proceeding
                 val currentUser = _uiState.value.currentUser ?: authRepository.getCurrentUser()
                 
@@ -156,22 +179,40 @@ class ChatViewModel @Inject constructor(
     }
 
     fun onContactSelectedById(mentorId: String) {
+        // 1. Try finding in current contacts list
         val mentor = _uiState.value.contacts.find { it.userId == mentorId }
         if (mentor != null) {
             onContactSelected(mentor)
-        } else {
-            viewModelScope.launch {
-                try {
-                    _uiState.update { it.copy(isLoading = true) }
-                    val fetchedMentor = fetchDataRepository.fetchMentorById(mentorId)
-                    if (fetchedMentor != null) {
-                        onContactSelected(fetchedMentor)
-                    } else {
-                        _uiState.update { it.copy(isLoading = false) }
-                    }
-                } catch (e: Exception) {
+            return
+        }
+
+        // 2. Try finding in existing chats (for offline support)
+        val existingChat = _uiState.value.chats.find { it.participants.contains(mentorId) }
+        if (existingChat != null) {
+            val partnerName = existingChat.participantNames[mentorId] ?: "Chat"
+            val partnerImageUrl = existingChat.participantProfileImages[mentorId]
+            
+            // Create a temporary mentor object to trigger onContactSelected
+            val tempMentor = User.Mentor(
+                userId = mentorId,
+                fullName = partnerName,
+                profileImageUrl = partnerImageUrl
+            )
+            onContactSelected(tempMentor)
+            return
+        }
+
+        // 3. Last resort: Fetch from remote
+        viewModelScope.launch {
+            try {
+                val fetchedMentor = fetchDataRepository.fetchMentorById(mentorId)
+                if (fetchedMentor != null) {
+                    onContactSelected(fetchedMentor)
+                } else {
                     _uiState.update { it.copy(isLoading = false) }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
@@ -186,10 +227,14 @@ class ChatViewModel @Inject constructor(
             selectedChatPartnerName = partnerName,
             selectedChatPartnerImageUrl = partnerImageUrl,
             currentChatId = chat.id
+            // Removed isLoading = true to allow instant transition to cached messages
         ) }
         
         viewModelScope.launch {
-            chatRepository.getMessages(chat.id).collectLatest { }
+            chatRepository.getMessages(chat.id).collectLatest { 
+                // Messages are now observed via observeRepositoryState, 
+                // but we can use this emission to signal sync completion if needed.
+            }
         }
     }
 

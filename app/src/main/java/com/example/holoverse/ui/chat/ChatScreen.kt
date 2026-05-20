@@ -26,21 +26,15 @@ fun ChatScreen(
         }
     }
 
-    if (uiState.currentChatId == null) {
-        if (mentorId != null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    if (uiState.currentChatId == null && mentorId == null) {
+        ChatListScreen(
+            uiState = uiState,
+            viewModel = viewModel,
+            darkTheme = darkTheme,
+            onContactSelected = { id ->
+                onNavigateToConversation?.invoke(id)
             }
-        } else {
-            ChatListScreen(
-                uiState = uiState,
-                viewModel = viewModel,
-                darkTheme = darkTheme,
-                onContactSelected = { id ->
-                    onNavigateToConversation?.invoke(id)
-                }
-            )
-        }
+        )
     } else {
         ConversationScreen(
             uiState = uiState,

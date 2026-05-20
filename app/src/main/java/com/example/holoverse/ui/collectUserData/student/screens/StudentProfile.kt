@@ -1,6 +1,5 @@
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+package com.example.holoverse.ui.collectUserData.student.screens
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -25,8 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,8 +51,8 @@ import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.ui.collectUserData.teacher.viewModels.SignUpTextField
-import com.example.holoverse.ui.collectUserData.teacher.viewModels.TeacherProfileViewModel
+import com.example.holoverse.ui.collectUserData.student.viewModels.StudentProfileViewModel
+import com.example.holoverse.ui.collectUserData.student.viewModels.StudentSignUpTextField
 import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
@@ -71,18 +68,15 @@ import com.example.holoverse.utils.AnimatedAlertDialog
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
-fun TeacherProfileInput(
+fun StudentProfileInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
-    viewModel: TeacherProfileViewModel = hiltViewModel(),
-    mentorStates: MutableStateFlow<User.Mentor>,
+    viewModel: StudentProfileViewModel = hiltViewModel(),
+    studentStates: MutableStateFlow<User.Student>,
     darkTheme: Boolean
 ) {
     val genderItems = listOf("Male", "Female")
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
-    val dateValidationState = remember {
-        mutableStateOf(ValidationState(id = SignUpTextField.DATE_OF_BIRTH))
-    }
     var showAlert by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -97,15 +91,14 @@ fun TeacherProfileInput(
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    mentorStates.value = mentorStates.value.copy(
-                        bio = viewModel.forms[SignUpTextField.Bio]?.text ?: "",
-                        phoneNumber = viewModel.forms[SignUpTextField.PHONE_NUMBER]?.text ?: "",
-                        address = viewModel.forms[SignUpTextField.ADDRESS]?.text ?: "",
-                        gender = viewModel.forms[SignUpTextField.Gender]?.text ?: "",
-                        dateOfBirth = viewModel.forms[SignUpTextField.DATE_OF_BIRTH]?.text ?: "",
+                    studentStates.value = studentStates.value.copy(
+                        phoneNumber = viewModel.forms[StudentSignUpTextField.PHONE_NUMBER]?.text ?: "",
+                        address = viewModel.forms[StudentSignUpTextField.ADDRESS]?.text ?: "",
+                        gender = viewModel.forms[StudentSignUpTextField.Gender]?.text ?: "",
+                        dateOfBirth = viewModel.forms[StudentSignUpTextField.DATE_OF_BIRTH]?.text ?: "",
                         profileImageUrl = viewModel.selectedImageUri?.toString()
                     )
-                    navController.navigateTo(AppDestination.SignUpTeacherProfessional)
+                    navController.navigateTo(AppDestination.SignUpStudentPreference)
                 }
             }
         }
@@ -121,14 +114,14 @@ fun TeacherProfileInput(
             )
         }
         Column(
-            verticalArrangement = Arrangement.Top,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 30.dp)
         ) {
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -158,23 +151,17 @@ fun TeacherProfileInput(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
             Text(
                 text = stringResource(id = R.string.create_account),
                 style = IbarraNovaBoldPlatinum25,
                 color = colorResource(R.color.white)
             )
 
-            Spacer(modifier = Modifier.height(5.dp))
-
             Text(
                 text = stringResource(id = R.string.please_complete_you_auth_to_continue),
                 style = IbarraNovaBoldPlatinum18,
                 color = colorResource(R.color.white)
             )
-
-            Spacer(modifier = Modifier.height(30.dp))
 
             // Profile Photo Upload Section
             Box(
@@ -211,76 +198,47 @@ fun TeacherProfileInput(
                 }
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
-
             AuthenticationTextField(
                 modifier = Modifier.fillMaxWidth(0.85f),
-                state = viewModel.forms[SignUpTextField.Bio]!!,
-                hint = R.string.bio,
-                onValueChange = {
-                    viewModel.onEvent(
-                        ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextField.Bio]!!.copy(text = it)
-                        )
-                    )
-                },
-                type = TextFieldType.Text
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-
-            AuthenticationTextField(
-                modifier = Modifier.fillMaxWidth(0.85f),
-                state = viewModel.forms[SignUpTextField.PHONE_NUMBER]!!,
+                state = viewModel.forms[StudentSignUpTextField.PHONE_NUMBER]!!,
                 hint = R.string.phoneNumber,
                 onValueChange = {
                     viewModel.onEvent(
                         ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextField.PHONE_NUMBER]!!.copy(text = it)
+                            viewModel.forms[StudentSignUpTextField.PHONE_NUMBER]!!.copy(text = it)
                         )
                     )
                 },
                 type = TextFieldType.PhoneNumber,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
-            Spacer(modifier = Modifier.height(20.dp))
 
             AuthenticationTextField(
                 modifier = Modifier.fillMaxWidth(0.85f),
-                state = viewModel.forms[SignUpTextField.ADDRESS]!!,
+                state = viewModel.forms[StudentSignUpTextField.ADDRESS]!!,
                 hint = R.string.address,
                 onValueChange = {
                     viewModel.onEvent(
                         ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextField.ADDRESS]!!.copy(text = it)
+                            viewModel.forms[StudentSignUpTextField.ADDRESS]!!.copy(text = it)
                         )
                     )
                 },
                 type = TextFieldType.Text
             )
-            Spacer(modifier = Modifier.height(20.dp))
 
             DatePickerInput(
                 selectedDateMillis = selectedDateMillis,
                 onDateSelected = { newDateMillis ->
                     selectedDateMillis = newDateMillis
                     if (newDateMillis != null) {
-                        val formattedDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(newDateMillis))
-                        dateValidationState.value = dateValidationState.value.copy(
-                            hasError = false,
-                            errorMessageId = null
-                        )
-                        viewModel.onEvent(
-                            ValidationEvent.TextFieldValueChange(
-                                viewModel.forms[SignUpTextField.DATE_OF_BIRTH]!!.copy(text = formattedDate)
-                            )
-                        )
+                        viewModel.onDateSelected(newDateMillis)
                     }
                 },
-                state = dateValidationState.value,
+                state = viewModel.forms[StudentSignUpTextField.DATE_OF_BIRTH]!!,
                 label = "Date of Birth (Required)",
                 showIcon = true
             )
-            Spacer(modifier = Modifier.height(20.dp))
 
             RadioButtonMenu(
                 isExpanded = isMenuExpanded,
@@ -291,15 +249,16 @@ fun TeacherProfileInput(
                     isMenuExpanded = false
                     viewModel.onEvent(
                         ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[SignUpTextField.Gender]!!.copy(text = item)
+                            viewModel.forms[StudentSignUpTextField.Gender]!!.copy(text = item)
                         )
                     )
                 },
-                state = viewModel.forms[SignUpTextField.Gender]!!,
-                menuItems = genderItems
+                state = viewModel.forms[StudentSignUpTextField.Gender]!!,
+                menuItems = genderItems,
+                labelText = "Gender :"
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             AuthenticationButton(
                 modifier = Modifier

@@ -27,6 +27,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.chat_system.domain.model.Chat
 import com.example.holoverse.ui.chat.components.ChatListItem
 import com.example.holoverse.ui.chat.components.ContactListItem
 import com.example.holoverse.ui.spatialTheme.Brush
@@ -108,52 +110,55 @@ fun ChatListScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                if (uiState.chats.isNotEmpty()) {
-                    item {
-                        Text(
-                            "Recent Chats",
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    items(uiState.chats) { chat ->
-                        val currentUserId = uiState.currentUser?.userId ?: ""
-                        val partnerId = chat.participants.find { it != currentUserId }
-                        val partnerName = chat.participantNames[partnerId] ?: "Chat"
-                        val partnerImageUrl = chat.participantProfileImages[partnerId]
-                        
-                        ChatListItem(
-                            name = partnerName,
-                            lastMessage = chat.lastMessage,
-                            imageUrl = partnerImageUrl,
-                            onClick = { 
-                                if (partnerId != null) {
-                                    onContactSelected(partnerId)
-                                }
-                            }
-                        )
-                    }
-                }
-
-                item {
-                    Text(
-                        if (uiState.searchQuery.isEmpty()) "Suggested Contacts" else "Search Results",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                items(uiState.filteredContacts) { mentor ->
-                    ContactListItem(
-                        mentor = mentor,
-                        onClick = { 
-                            mentor.userId?.let { onContactSelected(it) }
+                    if (uiState.chats.isNotEmpty()) {
+                        item {
+                            Text(
+                                "Recent Chats",
+                                modifier = Modifier.padding(16.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
-                    )
+                        items(uiState.chats) { chat ->
+                            val currentUserId = uiState.currentUser?.userId ?: ""
+                            val partnerId = chat.participants.find { it != currentUserId }
+                                ?: chat.participants.firstOrNull { it != "user1" }
+                            val partnerName = chat.participantNames[partnerId] ?: "Chat"
+                            val partnerImageUrl = chat.participantProfileImages[partnerId]
+
+                            ChatListItem(
+                                name = partnerName,
+                                lastMessage = chat.lastMessage,
+                                imageUrl = partnerImageUrl,
+                                onClick = {
+                                    if (partnerId != null) {
+                                        onContactSelected(partnerId)
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    if (uiState.filteredContacts.isNotEmpty()) {
+                        item {
+                            Text(
+                                if (uiState.searchQuery.isEmpty()) "Suggested Contacts" else "Search Results",
+                                modifier = Modifier.padding(16.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        items(uiState.filteredContacts) { mentor ->
+                            ContactListItem(
+                                mentor = mentor,
+                                onClick = {
+                                    mentor.userId?.let { onContactSelected(it) }
+                                }
+                            )
+                        }
+                    }
                 }
             }
-        }
     }
 }
 }

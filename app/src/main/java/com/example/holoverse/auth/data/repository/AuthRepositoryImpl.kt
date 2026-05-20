@@ -187,7 +187,14 @@ class AuthRepositoryImpl @Inject constructor(
                     student.fullName?.let { put("fullName", it) }
                     student.phoneNumber?.let { put("phoneNumber", it) }
                     student.profileImageUrl?.let { put("profileImageUrl", it) }
-                    // Add other fields as needed
+                    student.dateOfBirth?.let { put("dateOfBirth", it) }
+                    student.address?.let { put("address", it) }
+                    student.gender?.let { put("gender", it) }
+                    student.currentGradeLevel?.let { put("currentGradeLevel", it) }
+                    student.universityName?.let { put("universityName", it) }
+                    student.faculty?.let { put("faculty", it) }
+                    student.academicInterests?.let { put("academicInterests", it) }
+                    student.preferredLearningTime?.let { put("preferredLearningTime", it) }
                 }
 
                 studentDoc.update(updateData).await()
