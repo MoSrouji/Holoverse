@@ -21,17 +21,44 @@ class BaselineProfileGenerator {
     @Test
     fun generate() = baselineProfileRule.collect(
         packageName = "com.example.holoverse",
-        // Check: Is there any specific condition to wait for or to setup?
         includeInStartupProfile = true
     ) {
-        // This block defines the app's critical user journey. Here we are interested in
-        // optimizing for app startup. But you can also navigate and scroll through your most important UI.
-
         // Start default activity
         pressHome()
         startActivityAndWait()
 
-        // TODO: Add more journeys here to be optimized.
-        // For example, scroll through a list or navigate to a screen.
+        // Journey 1: Home Screen Scrolling
+        device.waitForIdle()
+        val homeList = device.findObject(androidx.test.uiautomator.By.scrollable(true))
+        if (homeList != null) {
+            homeList.setGestureMargin(device.displayWidth / 5)
+            homeList.fling(androidx.test.uiautomator.Direction.DOWN)
+            device.waitForIdle()
+        }
+
+        // Journey 2: Navigate to 3D Gallery
+        val galleryTab = device.findObject(androidx.test.uiautomator.By.desc("Gallery"))
+        
+        galleryTab?.click()
+        device.waitForIdle()
+
+        // Journey 3: Gallery Scrolling
+        val galleryList = device.findObject(androidx.test.uiautomator.By.scrollable(true))
+        if (galleryList != null) {
+            galleryList.setGestureMargin(device.displayWidth / 5)
+            galleryList.fling(androidx.test.uiautomator.Direction.DOWN)
+            device.waitForIdle()
+        }
+
+        // Journey 4: Open 3D Viewer
+        // Assuming the first item in the gallery is clickable
+        val firstModel = device.findObject(androidx.test.uiautomator.By.desc("Model item"))
+        firstModel?.click()
+        device.waitForIdle()
+
+        // Journey 5: AR Transition (if supported)
+        val arButton = device.findObject(androidx.test.uiautomator.By.text("View in AR"))
+        arButton?.click()
+        device.waitForIdle()
     }
 }
