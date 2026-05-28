@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -34,6 +35,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +69,8 @@ fun FullGalleryScreen(
     darkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val pullToRefreshState = rememberPullToRefreshState()
+
     Scaffold(
         containerColor = Color.Transparent,
         modifier = modifier.fillMaxSize()
@@ -73,6 +78,18 @@ fun FullGalleryScreen(
         PullToRefreshBox(
             isRefreshing = isLoading,
             onRefresh = onRefresh,
+            state = pullToRefreshState,
+            indicator = {
+                @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+                PullToRefreshDefaults.LoadingIndicator(
+                    state = pullToRefreshState,
+                    isRefreshing = isLoading,
+                    color = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                )
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -112,7 +129,10 @@ fun FullGalleryScreen(
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = { onSearchQueryChange("") }) {
-                                        Icon(Icons.Default.Close, contentDescription = "Clear search")
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = "Clear search"
+                                        )
                                     }
                                 }
                             },
@@ -120,7 +140,9 @@ fun FullGalleryScreen(
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(
+                                    alpha = 0.7f
+                                ),
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                             )

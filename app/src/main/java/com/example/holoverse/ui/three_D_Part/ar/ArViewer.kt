@@ -8,7 +8,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,6 +57,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Performance-optimized AR viewer designed for stability and "lightness".
  * Optimized for simultaneous use with video calls by capping FPS and simplifying CV tasks.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ArViewer(
     modelPath: String?,
@@ -228,7 +230,7 @@ fun ArViewer(
 
         // Feedback UI
         if (isLoadingModel || isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            LoadingIndicator(modifier = Modifier.align(Alignment.Center))
         }
 
         // Error display

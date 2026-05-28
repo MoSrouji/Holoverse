@@ -21,15 +21,17 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,10 +45,7 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.courses.domain.Courses
@@ -60,7 +59,7 @@ import com.example.holoverse.ui.theme.HoloverseTheme
 
 private const val SCROLL_THRESHOLD = 10
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
@@ -78,7 +77,7 @@ fun HomeScreen(
     darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
+
     HomeScreenContent(
         uiState = uiState,
         onRefresh = { viewModel.onRefresh() },
@@ -151,7 +150,13 @@ fun HomeScreenContent(
     val messagesLabel = stringResource(R.string.messages)
     val announcementsLabel = stringResource(R.string.announcements)
 
-    val fabMenuItems = remember(createCourseLabel, analyticsLabel, studentsLabel, messagesLabel, announcementsLabel) {
+    val fabMenuItems = remember(
+        createCourseLabel,
+        analyticsLabel,
+        studentsLabel,
+        messagesLabel,
+        announcementsLabel
+    ) {
         listOf(
             FabMenuItem(createCourseLabel, Icons.Default.Add) {
                 onNavigateToCreateCourse()
@@ -171,10 +176,16 @@ fun HomeScreenContent(
         )
     }
 
+    val pullToRefreshState = rememberPullToRefreshState()
     Scaffold(
         floatingActionButton = {
             if (uiState.currentUser?.accountType == UserType.Mentor) {
-                Box(modifier = Modifier.padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) {
+                Box(
+                    modifier = Modifier.padding(
+                        bottom = WindowInsets.navigationBars.asPaddingValues()
+                            .calculateBottomPadding()
+                    )
+                ) {
                     FloatingActionButtonMenu(
                         visible = fabVisible,
                         items = fabMenuItems
@@ -187,6 +198,18 @@ fun HomeScreenContent(
         PullToRefreshBox(
             isRefreshing = uiState.isLoading,
             onRefresh = onRefresh,
+            state = pullToRefreshState,
+            indicator = {
+                @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+                PullToRefreshDefaults.LoadingIndicator(
+                    state = pullToRefreshState,
+                    isRefreshing = uiState.isLoading,
+                    color = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                )
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
