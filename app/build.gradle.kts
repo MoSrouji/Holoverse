@@ -19,12 +19,12 @@ plugins {
 
 android {
     namespace = "com.example.holoverse"
-    compileSdk = 36 // Using a stable SDK version
+    compileSdk = 37 // Updated for adaptive and navigation3 libraries
 
     defaultConfig {
         applicationId = "com.example.holoverse"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -94,6 +94,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.compose.animation)
@@ -114,7 +115,12 @@ dependencies {
     implementation(libs.play.services.location)
 
     // Navigation
-    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.compose.adaptive.layout)
+    implementation(libs.androidx.compose.adaptive.navigation)
+    implementation(libs.androidx.compose.adaptive.navigation3)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.hilt.navigation)
     implementation(libs.androidx.navigationevent)
 
@@ -194,4 +200,5 @@ dependencies {
     baselineProfile(project(":baselineprofile"))
 
     implementation(libs.compose.auto.shimmer)
+    debugImplementation(libs.leakcanary.android)
 }

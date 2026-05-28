@@ -1,6 +1,6 @@
 package com.example.holoverse.navigation
 
-import androidx.navigation.NavOptionsBuilder
+import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import javax.inject.Inject
@@ -8,13 +8,12 @@ import javax.inject.Singleton
 
 sealed interface NavigationIntent {
     data class NavigateTo(
-        val route: Any,
-        val builder: NavOptionsBuilder.() -> Unit = {}
+        val route: NavKey
     ) : NavigationIntent
 
     data class NavigateAndPopUpTo(
-        val route: Any,
-        val popUpToRoute: Any,
+        val route: NavKey,
+        val popUpToRoute: NavKey,
         val inclusive: Boolean = false
     ) : NavigationIntent
 
@@ -28,15 +27,14 @@ class AppNavigator @Inject constructor() {
     val navigationIntents = _navigationIntents.receiveAsFlow()
 
     fun navigateTo(
-        destination: Any,
-        builder: NavOptionsBuilder.() -> Unit = {}
+        destination: NavKey
     ) {
-        _navigationIntents.trySend(NavigationIntent.NavigateTo(destination, builder))
+        _navigationIntents.trySend(NavigationIntent.NavigateTo(destination))
     }
 
     fun navigateAndPopUpTo(
-        destination: Any,
-        popUpTo: Any,
+        destination: NavKey,
+        popUpTo: NavKey,
         inclusive: Boolean = false
     ) {
         _navigationIntents.trySend(

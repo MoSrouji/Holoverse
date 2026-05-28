@@ -40,11 +40,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
+import com.example.holoverse.R
 import com.example.holoverse.three_d_model.domain.model.Model
 import com.example.holoverse.ui.theme.IbarraNovaFont
 
@@ -189,7 +191,11 @@ fun FullGalleryScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(displayModels, key = { it.id }) { model ->
+                            items(
+                                items = displayModels,
+                                key = { it.id },
+                                contentType = { "model_grid_item" }
+                            ) { model ->
                                 ModelGridItem(
                                     model = model,
                                     onClick = { if (!isLoading) onModelSelected(model) }
@@ -232,7 +238,9 @@ fun ModelGridItem(
                         model = model.imageUrl,
                         contentDescription = model.name,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                        error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                     )
                 } else {
                     Box(

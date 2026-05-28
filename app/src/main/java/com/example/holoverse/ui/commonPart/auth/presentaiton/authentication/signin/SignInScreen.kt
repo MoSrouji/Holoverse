@@ -72,7 +72,7 @@ fun SignInScreen(
                 }
             }
             is Response.Error -> {
-                Toast.makeText(context, signInState.massage, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, signInState.toString(), Toast.LENGTH_LONG).show()
             }
             is Response.Loading -> {}
         }

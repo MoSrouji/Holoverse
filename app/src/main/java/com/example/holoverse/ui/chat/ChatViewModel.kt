@@ -178,23 +178,41 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun onContactSelectedById(mentorId: String) {
-        // 1. Try finding in current contacts list
-        val mentor = _uiState.value.contacts.find { it.userId == mentorId }
+    fun onContactSelectedById(id: String) {
+        if (_uiState.value.currentChatId == id) return
+        
+        // Clear previous selection state immediately to avoid showing old conversation
+        _uiState.update { it.copy(
+            currentChatId = null,
+            messages = emptyList(),
+            selectedChatPartnerName = "Chat",
+            selectedChatPartnerImageUrl = null,
+            isLoading = true
+        ) }
+
+        // 1. Check if it's an existing chat by ID (covers groups and private chats from list)
+        val existingChatById = _uiState.value.chats.find { it.id == id }
+        if (existingChatById != null) {
+            onChatSelected(existingChatById)
+            return
+        }
+
+        // 2. Try finding in current contacts list by userId
+        val mentor = _uiState.value.contacts.find { it.userId == id }
         if (mentor != null) {
             onContactSelected(mentor)
             return
         }
 
-        // 2. Try finding in existing chats (for offline support)
-        val existingChat = _uiState.value.chats.find { it.participants.contains(mentorId) }
-        if (existingChat != null) {
-            val partnerName = existingChat.participantNames[mentorId] ?: "Chat"
-            val partnerImageUrl = existingChat.participantProfileImages[mentorId]
+        // 3. Try finding in existing chats where the ID is a participant (for offline support)
+        val existingChatByParticipant = _uiState.value.chats.find { it.participants.contains(id) }
+        if (existingChatByParticipant != null) {
+            val partnerName = existingChatByParticipant.participantNames[id] ?: "Chat"
+            val partnerImageUrl = existingChatByParticipant.participantProfileImages[id]
             
             // Create a temporary mentor object to trigger onContactSelected
             val tempMentor = User.Mentor(
-                userId = mentorId,
+                userId = id,
                 fullName = partnerName,
                 profileImageUrl = partnerImageUrl
             )
@@ -205,7 +223,7 @@ class ChatViewModel @Inject constructor(
         // 3. Last resort: Fetch from remote
         viewModelScope.launch {
             try {
-                val fetchedMentor = fetchDataRepository.fetchMentorById(mentorId)
+                val fetchedMentor = fetchDataRepository.fetchMentorById(id)
                 if (fetchedMentor != null) {
                     onContactSelected(fetchedMentor)
                 } else {
@@ -219,10 +237,16 @@ class ChatViewModel @Inject constructor(
     
     fun onChatSelected(chat: Chat) {
         val currentUserId = _uiState.value.currentUser?.userId ?: return
-        val partnerId = chat.participants.find { it != currentUserId }
-        val partnerName = chat.participantNames[partnerId] ?: "Chat"
-        val partnerImageUrl = chat.participantProfileImages[partnerId]
-        
+        val isGroup = chat.id.startsWith("group_")
+
+        val partnerId = if (isGroup) null else chat.participants.find { it != currentUserId }
+        val partnerName = if (isGroup) {
+            chat.participantNames[chat.id] ?: chat.id.removePrefix("group_")
+        } else {
+            chat.participantNames[partnerId] ?: "Chat"
+        }
+        val partnerImageUrl = if (isGroup) null else chat.participantProfileImages[partnerId]
+
         _uiState.update { it.copy(
             selectedChatPartnerName = partnerName,
             selectedChatPartnerImageUrl = partnerImageUrl,

@@ -2,6 +2,8 @@ package com.example.holoverse.three_d_model.data.local
 
 import android.content.Context
 import android.util.Log
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -15,6 +17,9 @@ class ModelCacheManager(
     private val context: Context,
     private val okHttpClient: OkHttpClient
 ) {
+    private val moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
 
     suspend fun getModelPath(
         modelId: String,
@@ -31,8 +36,17 @@ class ModelCacheManager(
         // Check for cached directory first (for ZIP extracted models)
         val modelDir = File(modelsDir, modelId)
         if (modelDir.exists() && modelDir.isDirectory) {
+            // Try manifest first
+            val manifestFile = getModelFileFromManifest(modelDir)
+            if (manifestFile != null) {
+                onProgress?.invoke(1.0f, manifestFile.length(), manifestFile.length())
+                return@withContext "file://${manifestFile.absolutePath}"
+            }
+            
+            // Fallback to searching
             val modelFile = findModelFile(modelDir)
             if (modelFile != null) {
+                saveManifest(modelDir, modelFile)
                 onProgress?.invoke(1.0f, modelFile.length(), modelFile.length())
                 return@withContext "file://${modelFile.absolutePath}"
             }
@@ -63,15 +77,20 @@ class ModelCacheManager(
     }
 
     private fun findModelFile(dir: File): File? {
-        // Prefer scene.glb or scene.gltf
+        // 1. Prefer specific names in the current directory
         val preferredNames = listOf("scene.glb", "scene.gltf")
         for (name in preferredNames) {
             val file = File(dir, name)
             if (file.exists()) return file
         }
 
-        // Search recursively
-        return dir.walkTopDown().find { it.extension == "glb" || it.extension == "gltf" }
+        // 2. Check for any glb/gltf in the root directory first (faster than recursive walk)
+        dir.listFiles()?.find { it.extension == "glb" || it.extension == "gltf" }?.let { return it }
+
+        // 3. Search recursively if not found in root (limit depth for safety)
+        return dir.walkTopDown()
+            .maxDepth(3)
+            .find { it.extension == "glb" || it.extension == "gltf" }
     }
 
     private suspend fun downloadAndProcessModel(
@@ -146,6 +165,7 @@ class ModelCacheManager(
                 val modelFile = findModelFile(targetDir)
                     ?: throw Exception("No glTF/GLB found in ZIP")
                 
+                saveManifest(targetDir, modelFile)
                 "file://${modelFile.absolutePath}"
             } else {
                 // Assume it's a direct GLB/glTF
@@ -194,6 +214,33 @@ class ModelCacheManager(
                 zis.closeEntry()
                 entry = zis.nextEntry
             }
+        }
+    }
+    private fun saveManifest(modelDir: File, modelFile: File) {
+        try {
+            val manifestFile = File(modelDir, "manifest.json")
+            val manifest = mapOf(
+                "modelFile" to modelFile.name,
+                "cachedAt" to System.currentTimeMillis()
+            )
+            val adapter = moshi.adapter(Map::class.java)
+            manifestFile.writeText(adapter.toJson(manifest))
+        } catch (e: Exception) {
+            Log.e("ModelCacheManager", "Error saving manifest", e)
+        }
+    }
+
+    private fun getModelFileFromManifest(modelDir: File): File? {
+        return try {
+            val manifestFile = File(modelDir, "manifest.json")
+            if (!manifestFile.exists()) return null
+            
+            val adapter = moshi.adapter(Map::class.java)
+            val manifest = adapter.fromJson(manifestFile.readText())
+            val fileName = manifest?.get("modelFile") as? String ?: return null
+            File(modelDir, fileName).takeIf { it.exists() }
+        } catch (e: Exception) {
+            null
         }
     }
 }

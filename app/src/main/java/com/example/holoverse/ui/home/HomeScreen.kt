@@ -29,7 +29,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,6 +39,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -75,24 +78,72 @@ fun HomeScreen(
     darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val scrollState = rememberScrollState()
-    var isFabVisible by remember { mutableStateOf(true) }
-    val lifecycleOwner = LocalLifecycleOwner.current
+    
+    HomeScreenContent(
+        uiState = uiState,
+        onRefresh = { viewModel.onRefresh() },
+        onTabSelected = viewModel::onTabSelected,
+        onCategorySelected = {
+            viewModel.onCategorySelected(it)
+            onCategorySelected(it)
+        },
+        onFilterCategorySelected = viewModel::onCategorySelected,
+        onSaveCourseClick = viewModel::toggleSaveCourse,
+        onCategoryClick = onCategoryClick,
+        onPopularCoursesClick = onPopularCoursesClick,
+        onRecommendedCoursesClick = onRecommendedCoursesClick,
+        onTopMentorClick = onTopMentorClick,
+        onTopMentorsListClick = onTopMentorsListClick,
+        onMentorClick = onMentorClick,
+        onNavigateToCreateCourse = onNavigateToCreateCourse,
+        onNavigateToChat = onNavigateToChat,
+        onNavigateToSearch = onNavigateToSearch,
+        onCourseClick = onCourseClick,
+        darkTheme = darkTheme
+    )
+}
 
-    // Logic to hide/show FAB on scroll with lifecycle awareness
-    LaunchedEffect(scrollState, lifecycleOwner) {
-        var lastScrollValue = 0
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            snapshotFlow { scrollState.value }.collect { currentScroll ->
-                if (currentScroll > lastScrollValue + SCROLL_THRESHOLD) {
-                    isFabVisible = false
-                } else if (currentScroll < lastScrollValue - SCROLL_THRESHOLD) {
-                    isFabVisible = true
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreenContent(
+    uiState: HomeUiState,
+    onRefresh: () -> Unit,
+    onTabSelected: (HomeTab) -> Unit,
+    onCategorySelected: (String) -> Unit,
+    onFilterCategorySelected: (String) -> Unit,
+    onSaveCourseClick: (String) -> Unit,
+    onCategoryClick: () -> Unit,
+    onPopularCoursesClick: () -> Unit,
+    onRecommendedCoursesClick: () -> Unit,
+    onTopMentorClick: () -> Unit,
+    onTopMentorsListClick: () -> Unit,
+    onMentorClick: (String) -> Unit,
+    onNavigateToCreateCourse: () -> Unit,
+    onNavigateToChat: () -> Unit,
+    onNavigateToSearch: () -> Unit,
+    onCourseClick: (Courses) -> Unit,
+    darkTheme: Boolean
+) {
+    val scrollState = rememberScrollState()
+
+    // Optimized FAB visibility logic using a simpler scroll-direction detection
+    var lastScrollValue by remember { mutableIntStateOf(0) }
+    var fabVisible by remember { mutableStateOf(true) }
+
+    LaunchedEffect(scrollState) {
+        snapshotFlow { scrollState.value }
+            .collect { currentScroll ->
+                val delta = currentScroll - lastScrollValue
+                if (delta > SCROLL_THRESHOLD) {
+                    fabVisible = false
+                } else if (delta < -SCROLL_THRESHOLD || currentScroll <= 0) {
+                    fabVisible = true
                 }
                 lastScrollValue = currentScroll
             }
-        }
     }
+
+    val headerBrush = remember(darkTheme) { Brush(darkTheme) }
 
     val createCourseLabel = stringResource(R.string.create_course)
     val analyticsLabel = stringResource(R.string.analytics)
@@ -125,7 +176,7 @@ fun HomeScreen(
             if (uiState.currentUser?.accountType == UserType.Mentor) {
                 Box(modifier = Modifier.padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) {
                     FloatingActionButtonMenu(
-                        visible = isFabVisible,
+                        visible = fabVisible,
                         items = fabMenuItems
                     )
                 }
@@ -135,7 +186,7 @@ fun HomeScreen(
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = uiState.isLoading,
-            onRefresh = { viewModel.onRefresh() },
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -152,14 +203,14 @@ fun HomeScreen(
                     darkTheme = darkTheme,
                     onNavigateToSearch = onNavigateToSearch,
                     onNavigateToNotifications = { /* Navigate to Notifications */ },
-                    brush = { Brush(it) }
+                    brush = { headerBrush }
                 )
 
                 // Error and Offline Handling
                 if (uiState.error != null) {
                     ErrorCard(
-                        error = uiState.error ?: "",
-                        onRetry = { viewModel.onRefresh() }
+                        error = uiState.error,
+                        onRetry = onRefresh
                     )
                 }
 
@@ -169,32 +220,28 @@ fun HomeScreen(
 
                 HomeTabRow(
                     selectedTab = uiState.selectedTab,
-                    onTabSelected = viewModel::onTabSelected
+                    onTabSelected = onTabSelected
                 )
 
-                    HomeContentSections(
-                        uiState = uiState,
-                        onTabSelected = viewModel::onTabSelected,
-                        onCategorySelected = {
-                            viewModel.onCategorySelected(it)
-                            onCategorySelected(it)
-                        },
-                        onFilterCategorySelected = viewModel::onCategorySelected,
-                        onCategoryClick = onCategoryClick,
-                        onPopularCoursesClick = onPopularCoursesClick,
-                        onRecommendedCoursesClick = onRecommendedCoursesClick,
-                        onTopMentorClick = onTopMentorClick,
-                        onTopMentorsListClick = onTopMentorsListClick,
-                        onMentorClick = onMentorClick,
-                        onCourseClick = onCourseClick
-                    )
-                }
-                // Extra spacer to ensure content isn't hidden by FAB
-                Spacer(modifier = Modifier.height(80.dp))
-
+                HomeContentSections(
+                    uiState = uiState,
+                    onTabSelected = onTabSelected,
+                    onCategorySelected = onCategorySelected,
+                    onFilterCategorySelected = onFilterCategorySelected,
+                    onCategoryClick = onCategoryClick,
+                    onPopularCoursesClick = onPopularCoursesClick,
+                    onRecommendedCoursesClick = onRecommendedCoursesClick,
+                    onTopMentorClick = onTopMentorClick,
+                    onTopMentorsListClick = onTopMentorsListClick,
+                    onMentorClick = onMentorClick,
+                    onCourseClick = onCourseClick,
+                    onSaveCourseClick = onSaveCourseClick
+                )
             }
+            // Extra spacer to ensure content isn't hidden by FAB
+            Spacer(modifier = Modifier.height(80.dp))
         }
-
+    }
 }
 
 @Composable
@@ -234,11 +281,23 @@ fun OfflineBanner() {
     }
 }
 
+@Preview(name = "Phone", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Foldable", device = Devices.FOLDABLE, showBackground = true)
+@Preview(name = "Tablet", device = Devices.TABLET, showBackground = true)
+@Preview(name = "Desktop", device = Devices.DESKTOP, showBackground = true)
+annotation class FormFactorPreviews
+
+@FormFactorPreviews
 @Composable
-@Preview
 fun HomeScreenPreview() {
     HoloverseTheme(darkTheme = true) {
-        HomeScreen(
+        HomeScreenContent(
+            uiState = HomeUiState(),
+            onRefresh = {},
+            onTabSelected = {},
+            onCategorySelected = {},
+            onFilterCategorySelected = {},
+            onSaveCourseClick = {},
             onCategoryClick = {},
             onPopularCoursesClick = {},
             onRecommendedCoursesClick = {},
@@ -249,11 +308,8 @@ fun HomeScreenPreview() {
             onNavigateToChat = {},
             onNavigateToSearch = {},
             onCourseClick = {},
-            onCategorySelected = {},
             darkTheme = true
         )
     }
-
-
 }
 

@@ -5,6 +5,7 @@ import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.search.domain.model.CourseFilters
 import com.example.holoverse.search.domain.model.MentorFilters
 import com.example.holoverse.search.domain.repository.SearchRepository
+import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.utils.Response
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -62,8 +63,7 @@ class SearchRepositoryImpl @Inject constructor(
     override fun searchMentors(filters: MentorFilters): Flow<Response<List<User.Mentor>>> = callbackFlow {
         trySend(Response.Loading)
 
-        var query: Query = firestore.collection("users")
-            .whereEqualTo("accountType", "Mentor")
+        var query: Query = firestore.collection(COLLECTION_NAME_MENTORS)
 
         filters.specialization?.let {
             query = query.whereEqualTo("specialization", it)

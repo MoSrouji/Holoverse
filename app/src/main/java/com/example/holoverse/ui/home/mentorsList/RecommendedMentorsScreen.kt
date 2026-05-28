@@ -182,7 +182,11 @@ fun RecommendedMentorsScreen(
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(displayMentors, key = { it.userId ?: "shimmer_${it.hashCode()}" }) { mentor ->
+                        items(
+                            items = displayMentors,
+                            key = { it.userId ?: "shimmer_${it.hashCode()}" },
+                            contentType = { "recommended_mentor_item" }
+                        ) { mentor ->
                             RecommendedMentorItem(
                                 mentor = mentor,
                                 onClick = { if (!uiState.isLoading) mentor.userId?.let { onMentorClick(it) } }

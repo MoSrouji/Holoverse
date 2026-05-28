@@ -2,7 +2,6 @@ package com.example.holoverse.ui.chat
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +22,8 @@ fun ChatScreen(
     androidx.compose.runtime.LaunchedEffect(mentorId) {
         if (mentorId != null) {
             viewModel.onContactSelectedById(mentorId)
+        } else {
+            viewModel.backToChatList()
         }
     }
 

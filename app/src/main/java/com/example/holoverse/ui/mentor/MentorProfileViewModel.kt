@@ -9,6 +9,7 @@ import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -29,26 +30,41 @@ class MentorProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            val currentUser = authRepository.getCachedUser()
-            val mentor = fetchDataRepository.fetchMentorById(mentorId)
+            // Start fetching courses in parallel with the profile
+            loadMentorCourses(mentorId)
 
-            if (mentor != null) {
-                val isFollowing = if (currentUser?.userId != null) {
+            val currentUser = authRepository.getCachedUser()
+
+            // Fetch mentor and following status in parallel
+            val mentorDeferred = async { fetchDataRepository.fetchMentorById(mentorId) }
+            val isFollowingDeferred = async {
+                if (currentUser?.userId != null) {
                     authRepository.isFollowing(currentUser.userId!!, mentorId)
                 } else {
                     false
                 }
+            }
 
+            val mentor = mentorDeferred.await()
+            val isFollowing = isFollowingDeferred.await()
+
+            val savedCourseIds = when (currentUser) {
+                is User.Student -> currentUser.savedCourses ?: emptyList()
+                is User.Mentor -> currentUser.savedCourses ?: emptyList()
+                else -> emptyList()
+            }
+
+            if (mentor != null) {
                 _uiState.update {
                     it.copy(
                         mentor = mentor,
+                        savedCourseIds = savedCourseIds,
                         isFollowing = isFollowing,
                         isLoading = false,
                         isUserLoggedIn = currentUser != null,
                         isOwnProfile = currentUser?.userId == mentorId
                     )
                 }
-                loadMentorCourses(mentorId)
             } else {
                 _uiState.update { it.copy(isLoading = false, error = "Mentor not found") }
             }
@@ -62,6 +78,7 @@ class MentorProfileViewModel @Inject constructor(
         val isFollowing = _uiState.value.isFollowing
 
         viewModelScope.launch {
+            _uiState.update { it.copy(isFollowLoading = true) }
             val result = if (isFollowing) {
                 authRepository.unfollowMentor(followerId, mentorId)
             } else {
@@ -83,8 +100,14 @@ class MentorProfileViewModel @Inject constructor(
                             )
                         }
                     }
-                    state.copy(isFollowing = !isFollowing, mentor = updatedMentor)
+                    state.copy(
+                        isFollowing = !isFollowing,
+                        mentor = updatedMentor,
+                        isFollowLoading = false
+                    )
                 }
+            } else {
+                _uiState.update { it.copy(isFollowLoading = false) }
             }
         }
     }
@@ -94,7 +117,7 @@ class MentorProfileViewModel @Inject constructor(
             courseRepo.getCoursesByInstructorId(mentorId).collect { response ->
                 when (response) {
                     is Response.Success -> {
-                        _uiState.update { it.copy(courses = response.data ?: emptyList()) }
+                        _uiState.update { it.copy(courses = response.data) }
                     }
                     is Response.Error -> {
                         // Handle error if needed
@@ -106,12 +129,42 @@ class MentorProfileViewModel @Inject constructor(
             }
         }
     }
+
+    fun toggleSaveCourse(courseId: String) {
+        val userId = authRepository.getCachedUser()?.userId ?: return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(savingCourseIds = it.savingCourseIds + courseId) }
+
+            val response = authRepository.toggleSaveCourse(userId, courseId)
+
+            if (response is Response.Success) {
+                _uiState.update { state ->
+                    val isSaved = state.savedCourseIds.contains(courseId)
+                    val newSavedIds = if (isSaved) {
+                        state.savedCourseIds - courseId
+                    } else {
+                        state.savedCourseIds + courseId
+                    }
+                    state.copy(
+                        savedCourseIds = newSavedIds,
+                        savingCourseIds = state.savingCourseIds - courseId
+                    )
+                }
+            } else {
+                _uiState.update { it.copy(savingCourseIds = it.savingCourseIds - courseId) }
+            }
+        }
+    }
 }
 
 data class MentorProfileUiState(
     val mentor: User.Mentor? = null,
     val courses: List<Courses> = emptyList(),
+    val savedCourseIds: List<String> = emptyList(),
+    val savingCourseIds: Set<String> = emptySet(),
     val isFollowing: Boolean = false,
+    val isFollowLoading: Boolean = false,
     val isUserLoggedIn: Boolean = false,
     val isOwnProfile: Boolean = false,
     val isLoading: Boolean = false,

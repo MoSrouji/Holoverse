@@ -36,11 +36,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.example.holoverse.R
 import com.example.holoverse.three_d_model.domain.model.Model
 import com.example.holoverse.ui.three_D_Part.DownloadProgress
 import java.util.Locale
@@ -245,7 +247,9 @@ fun ModelCard(
                     contentDescription = model.name,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
-                    alpha = if (isSelected) 1f else 0.6f
+                    alpha = if (isSelected) 1f else 0.6f,
+                    placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                    error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                 )
                 Box(
                     modifier = Modifier

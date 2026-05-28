@@ -12,12 +12,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,9 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.composeautoshimmer.components.ShimmerBox
+import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.coursesList.CourseItem
 import com.example.holoverse.ui.spatialTheme.Brush
 import com.example.holoverse.ui.theme.IbarraNovaFont
@@ -39,13 +42,17 @@ import com.example.holoverse.utils.Response
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryCoursesScreen(
+    categoryName: String,
     onBackClick: () -> Unit,
     onCourseClick: (String) -> Unit,
     darkTheme: Boolean,
     viewModel: CategoryViewModel = hiltViewModel()
 ) {
+    androidx.compose.runtime.LaunchedEffect(categoryName) {
+        viewModel.initialize(categoryName)
+    }
+
     val coursesState = viewModel.coursesState.value
-    val categoryName = viewModel.categoryName.value
 
     Scaffold { paddingValues ->
         Column(
@@ -104,42 +111,73 @@ fun CategoryCoursesScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                when (coursesState) {
-                is Response.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                    )
-                }
-                is Response.Success -> {
-                    val courses = coursesState.data
-                    if (courses.isEmpty()) {
-                        Text(
-                            text = "No courses found in this category",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            items(courses) { course ->
-                                CourseItem(
-                                    course = course,
-                                    onClick = { onCourseClick(course.id) }
-                                )
+                ShimmerBox(
+                    isLoading = coursesState is Response.Loading,
+                    baseColor = Color.DarkGray,
+                    durationMillis = 800
+                ) {
+                    when (coursesState) {
+                        is Response.Loading -> {
+                            LazyVerticalGrid(
+                                columns = GridCells.Adaptive(300.dp),
+                                contentPadding = PaddingValues(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                items(6) {
+                                    CourseItem(
+                                        course = Courses(
+                                            id = "shimmer_$it",
+                                            name = "Loading Course Name...",
+                                            category = "Category",
+                                            price = 0.0,
+                                            rating = 0.0,
+                                            numReviews = 0,
+                                            numEnrolled = 0
+                                        ),
+                                        onClick = {}
+                                    )
+                                }
                             }
+                        }
+
+                        is Response.Success -> {
+                            val courses = coursesState.data
+                            if (courses.isEmpty()) {
+                                Text(
+                                    text = "No courses found in this category",
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            } else {
+                                LazyVerticalGrid(
+                                    columns = GridCells.Adaptive(300.dp),
+                                    contentPadding = PaddingValues(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    items(
+                                        items = courses,
+                                        key = { it.id },
+                                        contentType = { "category_course_item" }
+                                    ) { course ->
+                                        CourseItem(
+                                            course = course,
+                                            onClick = { onCourseClick(course.id) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        is Response.Error -> {
+//                            Text(
+//                                text = coursesState.massage,
+//                                color = MaterialTheme.colorScheme.error,
+//                                modifier = Modifier.align(Alignment.Center)
+//                            )
                         }
                     }
                 }
-                is Response.Error -> {
-                    Text(
-                        text = coursesState.massage,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
             }
-        }
     }
 }}

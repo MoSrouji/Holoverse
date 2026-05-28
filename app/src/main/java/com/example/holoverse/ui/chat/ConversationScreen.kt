@@ -224,7 +224,10 @@ fun ConversationScreen(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 if (uiState.isSendingAudio || uiState.isUploadingFile) {
-                    item {
+                    item(
+                        key = "uploading_indicator",
+                        contentType = "system_status"
+                    ) {
                         Box(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
@@ -235,12 +238,19 @@ fun ConversationScreen(
                 }
 
                 if (uiState.isSendingAudio) {
-                    item {
+                    item(
+                        key = "sending_voice_indicator",
+                        contentType = "system_status"
+                    ) {
                         SendingVoiceBubble()
                     }
                 }
 
-                items(uiState.messages.asReversed()) { message ->
+                items(
+                    items = uiState.messages.asReversed(),
+                    key = { it.id },
+                    contentType = { "chat_message" }
+                ) { message ->
                     MessageBubble(
                         message = message,
                         isCurrentUser = (uiState.currentUser?.userId ?: "") == message.senderId,

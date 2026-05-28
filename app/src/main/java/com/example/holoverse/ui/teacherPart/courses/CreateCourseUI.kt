@@ -103,7 +103,7 @@ fun CreateCourseScreen(
                 Toast.makeText(context, "Image uploaded successfully!", Toast.LENGTH_SHORT).show()
             }
             is Response.Error -> {
-                Toast.makeText(context, (uploadImageState as Response.Error).massage, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, (uploadImageState as Response.Error).message, Toast.LENGTH_SHORT).show()
             }
             else -> {}
         }
@@ -116,7 +116,7 @@ fun CreateCourseScreen(
                 onCourseCreated()
             }
             is Response.Error -> {
-                Toast.makeText(context, (createCourseState as Response.Error).massage, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, (createCourseState as Response.Error).message, Toast.LENGTH_SHORT).show()
             }
             else -> {}
         }

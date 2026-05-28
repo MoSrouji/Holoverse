@@ -2,7 +2,6 @@ package com.example.holoverse.ui.category
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.courses.data.CourseRepo
@@ -15,8 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CategoryViewModel @Inject constructor(
-    private val repository: CourseRepo,
-    savedStateHandle: SavedStateHandle
+    private val repository: CourseRepo
 ) : ViewModel() {
 
     private val _coursesState = mutableStateOf<Response<List<Courses>>>(Response.Loading)
@@ -26,10 +24,12 @@ class CategoryViewModel @Inject constructor(
     val categoryName: State<String> = _categoryName
 
     init {
-        savedStateHandle.get<String>("categoryName")?.let { category ->
-            _categoryName.value = category
-            getCoursesByCategory(category)
-        }
+    }
+
+    fun initialize(category: String) {
+        if (_categoryName.value == category) return
+        _categoryName.value = category
+        getCoursesByCategory(category)
     }
 
     private fun getCoursesByCategory(category: String) {

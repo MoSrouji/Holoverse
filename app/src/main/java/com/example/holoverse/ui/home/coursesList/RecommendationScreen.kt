@@ -188,7 +188,11 @@ fun RecommendationScreen(
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(displayCourses, key = { it.id }) { course ->
+                        items(
+                            items = displayCourses,
+                            key = { it.id },
+                            contentType = { "recommendation_course_item" }
+                        ) { course ->
                             RecommendationCourseItem(
                                 course = course,
                                 onClick = { if (!uiState.isLoading) onCourseClick(course.id) }

@@ -101,7 +101,7 @@ fun SignUpScreen(
                 }
             }
             is Response.Error -> {
-                Toast.makeText(context, signUpState.massage, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, signUpState.message, Toast.LENGTH_LONG).show()
             }
             is Response.Loading -> {}
         }

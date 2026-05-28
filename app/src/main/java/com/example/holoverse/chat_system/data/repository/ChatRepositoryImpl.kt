@@ -193,6 +193,54 @@ class ChatRepositoryImpl @Inject constructor(
         return chatId
     }
 
+    override suspend fun createOrJoinGroupChat(
+        courseId: String,
+        courseName: String,
+        courseImageUrl: String?,
+        participantId: String,
+        participantName: String,
+        participantImageUrl: String?
+    ): String {
+        val chatId = "group_$courseId"
+
+        try {
+            val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            val snapshot = chatRef.get().await()
+
+            if (!snapshot.exists()) {
+                val chatData = Chat(
+                    id = chatId,
+                    participants = listOf(participantId),
+                    participantNames = mapOf(participantId to participantName, chatId to "$courseName Group"),
+                    participantProfileImages = participantImageUrl?.let { mapOf(participantId to it) } ?: emptyMap(),
+                    lastMessage = "Group created for $courseName",
+                    lastMessageTimestamp = Timestamp.now()
+                )
+                chatRef.set(chatData).await()
+                chatDao.insertChats(listOf(chatData.toEntity()))
+            } else {
+                // Add participant to existing group
+                val updateData = mutableMapOf<String, Any>(
+                    "participants" to FieldValue.arrayUnion(participantId),
+                    "participantNames.$participantId" to participantName
+                )
+                participantImageUrl?.let {
+                    updateData["participantProfileImages.$participantId"] = it
+                }
+
+                chatRef.update(updateData).await()
+                
+                // Refresh local chat
+                val updatedSnapshot = chatRef.get().await()
+                val remoteChat = updatedSnapshot.toObject(Chat::class.java)?.copy(id = updatedSnapshot.id)
+                remoteChat?.let { chatDao.insertChats(listOf(it.toEntity())) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return chatId
+    }
+
     override suspend fun sendMessage(
         chatId: String,
         text: String,
@@ -272,9 +320,11 @@ class ChatRepositoryImpl @Inject constructor(
                         "lastMessage" to lastMessageText,
                         "lastMessageTimestamp" to serverTime,
                         "lastSenderId" to senderId,
-                        "lastSenderName" to senderName,
-                        "participants" to FieldValue.arrayUnion(senderId)
+                        "lastSenderName" to senderName
                     )
+                    if (!chatId.startsWith("group_")) {
+                        chatUpdate["participants"] = FieldValue.arrayUnion(senderId)
+                    }
                     batch.set(chatRef, chatUpdate, SetOptions.merge())
                 }.await()
                 

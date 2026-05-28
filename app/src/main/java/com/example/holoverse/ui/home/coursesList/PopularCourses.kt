@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,6 +39,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -91,7 +96,10 @@ fun PopularCoursesScreen(
                 ))
     }
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             Box(
                 modifier = Modifier
@@ -116,8 +124,8 @@ fun PopularCoursesScreen(
                             )
                         }
                     },
-
-                    )
+                    scrollBehavior = scrollBehavior
+                )
             }
         }
     ) { paddingValues ->
@@ -171,7 +179,10 @@ fun PopularCoursesScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(categories) { category ->
+                items(
+                    items = categories,
+                    contentType = { "category_chip" }
+                ) { category ->
                     FilterChip(
                         selected = category == selectedCategory,
                         onClick = { selectedCategory = category },
@@ -233,15 +244,21 @@ fun PopularCoursesScreen(
                         }
                     } else filteredCourses
 
-                    LazyColumn(
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(300.dp),
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
                             bottom = 16.dp
                         ),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(displayCourses, key = { it.id }) { course ->
+                        items(
+                            items = displayCourses,
+                            key = { it.id },
+                            contentType = { "course_item" }
+                        ) { course ->
                             CourseItem(
                                 course = course,
                                 onClick = { if (!uiState.isLoading) onCourseClick(course.id) }

@@ -18,6 +18,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
@@ -47,10 +48,11 @@ object ChatModule {
 
     @Provides
     @Singleton
-    fun provideFcmApi(): FcmApi {
+    fun provideFcmApi(okHttpClient: OkHttpClient): FcmApi {
         val json = Json { ignoreUnknownKeys = true }
         return Retrofit.Builder()
             .baseUrl("https://fcm.googleapis.com/")
+            .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(FcmApi::class.java)

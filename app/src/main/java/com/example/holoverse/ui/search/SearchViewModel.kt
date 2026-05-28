@@ -53,86 +53,90 @@ class SearchViewModel @Inject constructor(
 
     fun onQueryChange(newQuery: String) {
         _uiState.update { it.copy(query = newQuery) }
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            delay(500) // Debounce search
-            performSearch()
-        }
+        triggerSearch(withDebounce = true)
     }
 
     fun onSearchTypeChange(type: SearchType) {
         _uiState.update { it.copy(searchType = type) }
-        performSearch()
+        triggerSearch(withDebounce = false)
     }
 
     fun updateCourseFilters(filters: CourseFilters) {
         _uiState.update { it.copy(courseFilters = filters) }
-        performSearch()
+        triggerSearch(withDebounce = false)
     }
 
     fun updateMentorFilters(filters: MentorFilters) {
         _uiState.update { it.copy(mentorFilters = filters) }
-        performSearch()
+        triggerSearch(withDebounce = false)
     }
 
-    private fun performSearch() {
-        val currentState = _uiState.value
-        if (currentState.searchType == SearchType.COURSES) {
-            searchCourses(currentState.courseFilters.copy(query = currentState.query))
-        } else {
-            searchMentors(currentState.mentorFilters.copy(query = currentState.query))
+    private fun triggerSearch(withDebounce: Boolean) {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            if (withDebounce) {
+                delay(500)
+            }
+            performSearch()
         }
     }
 
-    private fun searchCourses(filters: CourseFilters) {
-        viewModelScope.launch {
-            searchRepository.searchCourses(filters).collect { response ->
-                when (response) {
-                    is Response.Loading -> _uiState.update { it.copy(isLoading = true) }
-                    is Response.Success -> {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                searchResults = it.searchResults.copy(courses = response.data),
-                                error = null
-                            )
-                        }
-                    }
-                    is Response.Error -> {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error = response.massage
-                            )
-                        }
-                    }
+    private suspend fun performSearch() {
+        val currentState = _uiState.value
+        if (currentState.searchType == SearchType.COURSES) {
+            searchRepository.searchCourses(currentState.courseFilters.copy(query = currentState.query))
+                .collect { response ->
+                    handleCourseResponse(response)
+                }
+        } else {
+            searchRepository.searchMentors(currentState.mentorFilters.copy(query = currentState.query))
+                .collect { response ->
+                    handleMentorResponse(response)
+                }
+        }
+    }
+
+    private fun handleCourseResponse(response: Response<List<Courses>>) {
+        when (response) {
+            is Response.Loading -> _uiState.update { it.copy(isLoading = true) }
+            is Response.Success -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        searchResults = it.searchResults.copy(courses = response.data),
+                        error = null
+                    )
+                }
+            }
+            is Response.Error -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = response.message
+                    )
                 }
             }
         }
     }
 
-    private fun searchMentors(filters: MentorFilters) {
-        viewModelScope.launch {
-            searchRepository.searchMentors(filters).collect { response ->
-                when (response) {
-                    is Response.Loading -> _uiState.update { it.copy(isLoading = true) }
-                    is Response.Success -> {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                searchResults = it.searchResults.copy(mentors = response.data),
-                                error = null
-                            )
-                        }
-                    }
-                    is Response.Error -> {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error = response.massage
-                            )
-                        }
-                    }
+    private fun handleMentorResponse(response: Response<List<User.Mentor>>) {
+        when (response) {
+            is Response.Loading -> _uiState.update { it.copy(isLoading = true) }
+            is Response.Success -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        searchResults = it.searchResults.copy(mentors = response.data),
+                        error = null
+                    )
+                }
+            }
+            is Response.Error -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = response.message
+                    )
                 }
             }
         }

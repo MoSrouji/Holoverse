@@ -5,16 +5,15 @@ import com.example.holoverse.three_d_model.data.local.ModelCacheManager
 import com.example.holoverse.three_d_model.data.remote.ApiService
 import com.example.holoverse.three_d_model.data.repository.ModelRepositoryImpl
 import com.example.holoverse.three_d_model.domain.repository.ModelRepository
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -23,25 +22,14 @@ object Three_d_Module {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.HEADERS
-            })
-            .connectTimeout(5, TimeUnit.MINUTES)
-            .readTimeout(5, TimeUnit.MINUTES)
-            .writeTimeout(5, TimeUnit.MINUTES)
-            .retryOnConnectionFailure(true)
-            .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideApiService(okHttpClient: OkHttpClient): ApiService {
+    fun provideApiService(
+        @LongTimeoutClient okHttpClient: OkHttpClient,
+        moshi: Moshi
+    ): ApiService {
         return Retrofit.Builder()
             .baseUrl(ApiService.BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
             .create(ApiService::class.java)
     }
@@ -58,7 +46,7 @@ object Three_d_Module {
     @Singleton
     fun provideModelCacheManager(
         @ApplicationContext context: Context,
-        okHttpClient: OkHttpClient
+        @LongTimeoutClient okHttpClient: OkHttpClient
     ): ModelCacheManager {
         return ModelCacheManager(context, okHttpClient)
     }

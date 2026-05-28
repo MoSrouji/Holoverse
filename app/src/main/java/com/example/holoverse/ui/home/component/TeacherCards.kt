@@ -50,7 +50,8 @@ fun TeacherCard(
                 contentDescription = "Mentor Profile Picture",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612)
+                placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                error = painterResource(R.drawable.istockphoto_1934800957_612x612)
             )
         }
 

@@ -43,7 +43,8 @@ fun HomeContentSections(
     onTopMentorClick: () -> Unit,
     onTopMentorsListClick: () -> Unit,
     onMentorClick: (String) -> Unit,
-    onCourseClick: (Courses) -> Unit
+    onCourseClick: (Courses) -> Unit,
+    onSaveCourseClick: (String) -> Unit
 ) {
     AnimatedVisibility(
         visible = uiState.selectedTab == HomeTab.Explore,
@@ -70,7 +71,13 @@ fun HomeContentSections(
             HorizontalCourseList(
                 courses = uiState.recommendedCourses,
                 isLoading = uiState.isLoading,
-                onCourseClick = onCourseClick
+                onCourseClick = onCourseClick,
+                onSaveClick = onSaveCourseClick,
+                savedCourseIds = when (val user = uiState.currentUser) {
+                    is User.Student -> user.savedCourses ?: emptyList()
+                    is User.Mentor -> user.savedCourses ?: emptyList()
+                    else -> emptyList()
+                }
             )
 
             // 2. Recommended Mentors (Personalized)
@@ -99,7 +106,13 @@ fun HomeContentSections(
             HorizontalCourseList(
                 courses = uiState.courses,
                 isLoading = uiState.isLoading,
-                onCourseClick = onCourseClick
+                onCourseClick = onCourseClick,
+                onSaveClick = onSaveCourseClick,
+                savedCourseIds = when (val user = uiState.currentUser) {
+                    is User.Student -> user.savedCourses ?: emptyList()
+                    is User.Mentor -> user.savedCourses ?: emptyList()
+                    else -> emptyList()
+                }
             )
 
             // 4. Top Mentors (Global)
@@ -132,14 +145,54 @@ fun HomeContentSections(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.Start)
             )
-            Spacer(modifier = Modifier.height(32.dp))
-            EmptyStateText(stringResource(R.string.no_enrolled_courses))
-            Button(
-                onClick = { onTabSelected(HomeTab.Explore) },
-                modifier = Modifier.padding(top = 16.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(stringResource(R.string.start_exploring))
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (uiState.enrolledCourses.isEmpty() && uiState.savedCourses.isEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                EmptyStateText(stringResource(R.string.no_enrolled_courses))
+                Button(
+                    onClick = { onTabSelected(HomeTab.Explore) },
+                    modifier = Modifier.padding(top = 16.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(stringResource(R.string.start_exploring))
+                }
+            } else {
+                if (uiState.enrolledCourses.isNotEmpty()) {
+                    HorizontalCourseList(
+                        courses = uiState.enrolledCourses,
+                        isLoading = uiState.isLoading,
+                        onCourseClick = onCourseClick,
+                        onSaveClick = onSaveCourseClick,
+                        savedCourseIds = when (val user = uiState.currentUser) {
+                            is User.Student -> user.savedCourses ?: emptyList()
+                            is User.Mentor -> user.savedCourses ?: emptyList()
+                            else -> emptyList()
+                        }
+                    )
+                }
+                
+                if (uiState.savedCourses.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Saved for Later",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalCourseList(
+                        courses = uiState.savedCourses,
+                        isLoading = uiState.isLoading,
+                        onCourseClick = onCourseClick,
+                        onSaveClick = onSaveCourseClick,
+                        savedCourseIds = when (val user = uiState.currentUser) {
+                            is User.Student -> user.savedCourses ?: emptyList()
+                            is User.Mentor -> user.savedCourses ?: emptyList()
+                            else -> emptyList()
+                        }
+                    )
+                }
             }
         }
     }
@@ -157,7 +210,9 @@ private fun SectionHeader(titleId: Int, onClick: () -> Unit) {
 private fun HorizontalCourseList(
     courses: List<Courses>,
     isLoading: Boolean,
-    onCourseClick: (Courses) -> Unit
+    onCourseClick: (Courses) -> Unit,
+    onSaveClick: (String) -> Unit = {},
+    savedCourseIds: List<String> = emptyList()
 ) {
     ShimmerBox(
         isLoading = isLoading,
@@ -181,10 +236,13 @@ private fun HorizontalCourseList(
             ) {
                 items(
                     items = displayCourses,
-                    key = { it.id }
+                    key = { it.id },
+                    contentType = { "course_card" }
                 ) { course ->
                     CourseCard(
                         course = course,
+                        isSaved = savedCourseIds.contains(course.id),
+                        onSaveClick = { onSaveClick(course.id) },
                         onClick = { if (!isLoading) onCourseClick(course) }
                     )
                 }
@@ -221,7 +279,8 @@ private fun HorizontalMentorList(
             ) {
                 items(
                     items = displayMentors,
-                    key = { it.userId ?: it.fullName ?: it.hashCode() }
+                    key = { it.userId ?: it.fullName ?: it.hashCode() },
+                    contentType = { "mentor_card" }
                 ) { mentor ->
                     TeacherCard(
                         mentor = mentor,

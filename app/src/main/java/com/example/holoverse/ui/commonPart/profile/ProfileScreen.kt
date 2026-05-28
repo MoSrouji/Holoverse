@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -114,6 +115,8 @@ fun ProfileScreen(
     var showLanguageSheet by remember { mutableStateOf(false) }
     var showThemeSheet by remember { mutableStateOf(false) }
     var showFullScreenImage by remember { mutableStateOf(false) }
+
+    val headerBrush = remember(darkTheme) { Brush(darkTheme) }
 
     val profileItems = listOf(
         ProfileItemData(
@@ -226,7 +229,9 @@ fun ProfileScreen(
                     model = uiState.profileImageUrl,
                     contentDescription = "Full Screen Profile Image",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit
+                    contentScale = ContentScale.Fit,
+                    placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                    error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                 )
                 IconButton(
                     onClick = { showFullScreenImage = false },
@@ -261,7 +266,7 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                        .background(Brush(darkTheme))
+                        .background(headerBrush)
 
                 ) {
                     Column(
@@ -297,7 +302,9 @@ fun ProfileScreen(
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
+                                        contentScale = ContentScale.Crop,
+                                        placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                                        error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                                     )
                                 } else {
                                     Icon(
@@ -374,7 +381,11 @@ fun ProfileScreen(
                     )
                 ) {
                     LazyColumn {
-                        items(profileItems.size) { index ->
+                        items(
+                            count = profileItems.size,
+                            key = { index -> profileItems[index].title },
+                            contentType = { "profile_item" }
+                        ) { index ->
                             val item = profileItems[index]
                             ProfileItem(item = item)
                             if (index < profileItems.lastIndex) {

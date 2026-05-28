@@ -109,7 +109,7 @@ fun TeacherProfessionalInfoInput(
                 }
             }
             is Response.Error -> {
-                Toast.makeText(context, signUpState.massage, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, signUpState.toString(), Toast.LENGTH_LONG).show()
             }
             is Response.Loading -> {}
         }

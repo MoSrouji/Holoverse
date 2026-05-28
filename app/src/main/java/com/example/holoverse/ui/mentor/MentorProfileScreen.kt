@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.courses.domain.Courses
@@ -119,30 +122,38 @@ fun MentorProfileScreen(
 
         }
     ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.error != null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = uiState.error ?: stringResource(R.string.unknown_error))
-            }
-        } else {
-            uiState.mentor?.let { mentor ->
-                MentorProfileContent(
-                    mentor = mentor,
-                    courses = uiState.courses,
-                    reviews = reviewState.reviews,
-                    existingReview = existingReview,
-                    isFollowing = uiState.isFollowing,
-                    isUserLoggedIn = uiState.isUserLoggedIn,
-                    isOwnProfile = uiState.isOwnProfile,
-                    onFollowClick = { viewModel.toggleFollow() },
-                    onCourseClick = onCourseClick,
-                    onMessageClick = onMessageClick,
-                    onWriteReviewClick = { showReviewDialog = true },
-                    modifier = Modifier.padding(paddingValues)
-                )
+        ShimmerBox(
+            isLoading = uiState.isLoading,
+            baseColor = Color.DarkGray,
+            durationMillis = 800
+        ) {
+            if (uiState.isLoading) {
+                MentorProfileShimmer(modifier = Modifier.padding(paddingValues))
+            } else if (uiState.error != null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = uiState.error ?: stringResource(R.string.unknown_error))
+                }
+            } else {
+                uiState.mentor?.let { mentor ->
+                    MentorProfileContent(
+                        mentor = mentor,
+                        courses = uiState.courses,
+                        savedCourseIds = uiState.savedCourseIds,
+                        savingCourseIds = uiState.savingCourseIds,
+                        reviews = reviewState.reviews,
+                        existingReview = existingReview,
+                        isFollowing = uiState.isFollowing,
+                        isUserLoggedIn = uiState.isUserLoggedIn,
+                        isOwnProfile = uiState.isOwnProfile,
+                        onFollowClick = { viewModel.toggleFollow() },
+                        isFollowLoading = uiState.isFollowLoading,
+                        onSaveCourseClick = { viewModel.toggleSaveCourse(it) },
+                        onCourseClick = onCourseClick,
+                        onMessageClick = onMessageClick,
+                        onWriteReviewClick = { showReviewDialog = true },
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
             }
         }
 
@@ -178,12 +189,16 @@ fun MentorProfileScreen(
 fun MentorProfileContent(
     mentor: User.Mentor,
     courses: List<Courses>,
+    savedCourseIds: List<String>,
+    savingCourseIds: Set<String>,
     reviews: List<Review>,
     existingReview: Review?,
     isFollowing: Boolean,
+    isFollowLoading: Boolean,
     isUserLoggedIn: Boolean,
     isOwnProfile: Boolean,
     onFollowClick: () -> Unit,
+    onSaveCourseClick: (String) -> Unit,
     onCourseClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
     onWriteReviewClick: () -> Unit,
@@ -264,6 +279,7 @@ fun MentorProfileContent(
                         modifier = Modifier
                             .weight(1f)
                             .height(56.dp),
+                        enabled = !isFollowLoading,
                         shape = RoundedCornerShape(28.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isFollowing) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.secondaryContainer,
@@ -271,12 +287,20 @@ fun MentorProfileContent(
                         ),
                         elevation = null
                     ) {
-                        Text(
-                            text = if (isFollowing) stringResource(R.string.following) else stringResource(
-                                R.string.follow
-                            ),
-                            fontWeight = FontWeight.Bold
-                        )
+                        if (isFollowLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = if (isFollowing) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        } else {
+                            Text(
+                                text = if (isFollowing) stringResource(R.string.following) else stringResource(
+                                    R.string.follow
+                                ),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     Button(
@@ -369,8 +393,18 @@ fun MentorProfileContent(
         }
 
         if (selectedTab == 0) {
-            items(courses) { course ->
-                MentorCourseItem(course = course, onClick = { onCourseClick(course.id) })
+            items(
+                items = courses,
+                key = { it.id },
+                contentType = { "mentor_course" }
+            ) { course ->
+                MentorCourseItem(
+                    course = course,
+                    isSaved = savedCourseIds.contains(course.id),
+                    isSaving = savingCourseIds.contains(course.id),
+                    onSaveClick = { onSaveCourseClick(course.id) },
+                    onClick = { onCourseClick(course.id) }
+                )
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 24.dp),
                     thickness = 0.5.dp,
@@ -378,7 +412,11 @@ fun MentorProfileContent(
                 )
             }
         } else {
-            items(reviews) { review ->
+            items(
+                items = reviews,
+                key = { it.id },
+                contentType = { "mentor_review" }
+            ) { review ->
                 ReviewItem(
                     review = review,
                     modifier = Modifier.padding(horizontal = 24.dp)
@@ -411,6 +449,102 @@ fun MentorProfileContent(
 }
 
 @Composable
+fun MentorProfileShimmer(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(top = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Avatar
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(Color.Gray.copy(alpha = 0.2f))
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Name
+        Box(
+            modifier = Modifier
+                .width(180.dp)
+                .height(28.dp)
+                .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Specialization
+        Box(
+            modifier = Modifier
+                .width(120.dp)
+                .height(20.dp)
+                .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Stats
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            repeat(4) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp, 20.dp)
+                            .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp, 16.dp)
+                            .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Buttons
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp)
+                    .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(28.dp))
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp)
+                    .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(28.dp))
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Bio Card content placeholder
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 16.dp)
+                .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+        )
+    }
+}
+
+@Composable
 fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
@@ -428,7 +562,13 @@ fun StatItem(label: String, value: String) {
 }
 
 @Composable
-fun MentorCourseItem(course: Courses, onClick: () -> Unit) {
+fun MentorCourseItem(
+    course: Courses,
+    isSaved: Boolean,
+    isSaving: Boolean,
+    onSaveClick: () -> Unit,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -449,7 +589,32 @@ fun MentorCourseItem(course: Courses, onClick: () -> Unit) {
         Spacer(modifier = Modifier.width(16.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            CourseTypeWithButton(category = course.category)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = course.category,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    fontWeight = FontWeight.Bold
+                )
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Icon(
+                        imageVector = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkAdd,
+                        contentDescription = "Save For Later",
+                        modifier = Modifier.clickable { onSaveClick() },
+                        tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             Text(
                 text = course.name,

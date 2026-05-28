@@ -8,8 +8,10 @@ import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
+import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +30,8 @@ data class HomeUiState(
     val currentUser: User? = null,
     val courses: List<Courses> = emptyList(),
     val allCourses: List<Courses> = emptyList(),
+    val enrolledCourses: List<Courses> = emptyList(),
+    val savedCourses: List<Courses> = emptyList(),
     val categories: List<String> = listOf("All"),
     val recommendedCourses: List<Courses> = emptyList(),
     val mentors: List<User.Mentor> = emptyList(),
@@ -57,12 +61,16 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
+                // Start fetching courses and mentors in parallel
+                val coursesDeferred = async { fetchDataRepository.fetchCourses(forceRefresh) }
+                val mentorsDeferred = async { fetchDataRepository.fetchMentors(forceRefresh) }
+                
                 // Fetch user info from cache
                 val user = authRepository.getCachedUser()
                 
-                // Fetch courses and mentors
-                val courses = fetchDataRepository.fetchCourses(forceRefresh)
-                val rawMentors = fetchDataRepository.fetchMentors(forceRefresh)
+                // Await results
+                val courses = coursesDeferred.await()
+                val rawMentors = mentorsDeferred.await()
 
                 // Move heavy processing to Background thread to avoid UI jank
                 val processedData = withContext(Dispatchers.Default) {
@@ -117,6 +125,20 @@ class HomeViewModel @Inject constructor(
 
                 val (mentors, recommendedCourses, recommendedMentors) = processedData
 
+                val enrolledCoursesIds = when (user) {
+                    is User.Student -> user.enrolledCourses ?: emptyList()
+                    is User.Mentor -> user.enrolledCourses ?: emptyList()
+                    else -> emptyList()
+                }
+                val enrolledCourses = courses.filter { it.id in enrolledCoursesIds }
+
+                val savedCoursesIds = when (user) {
+                    is User.Student -> user.savedCourses ?: emptyList()
+                    is User.Mentor -> user.savedCourses ?: emptyList()
+                    else -> emptyList()
+                }
+                val savedCourses = courses.filter { it.id in savedCoursesIds }
+
                 val categories = listOf("All") + courses
                     .mapNotNull { it.category.takeIf { cat -> cat.isNotBlank() } }
                     .distinct()
@@ -127,6 +149,8 @@ class HomeViewModel @Inject constructor(
                         isLoading = false,
                         currentUser = user,
                         allCourses = courses,
+                        enrolledCourses = enrolledCourses,
+                        savedCourses = savedCourses,
                         categories = categories,
                         recommendedCourses = recommendedCourses,
                         allMentors = mentors,
@@ -169,7 +193,7 @@ class HomeViewModel @Inject constructor(
         applyFilter(category)
     }
 
-    private fun applyFilter(category: String) {
+    fun applyFilter(category: String) {
         _uiState.update { state ->
             val filteredCourses = if (category == "All") {
                 state.allCourses
@@ -191,6 +215,19 @@ class HomeViewModel @Inject constructor(
                 courses = filteredCourses,
                 mentors = filteredMentors
             )
+        }
+    }
+
+    fun toggleSaveCourse(courseId: String) {
+        val user = authRepository.getCachedUser()
+        val userId = user?.userId ?: return
+
+        viewModelScope.launch {
+            val response = authRepository.toggleSaveCourse(userId, courseId)
+            if (response is Response.Success) {
+                // Refresh data to update UI
+                fetchHomeData(forceRefresh = true)
+            }
         }
     }
 }

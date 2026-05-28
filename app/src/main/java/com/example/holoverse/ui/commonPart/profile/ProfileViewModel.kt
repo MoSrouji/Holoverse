@@ -156,8 +156,8 @@ class ProfileViewModel @Inject constructor(
                                 loadUserProfile()
                             }
                             is Response.Error -> {
-                                Log.e("ProfileViewModel", "Profile update error: ${response.massage}")
-                                _uiState.update { it.copy(isLoading = false, error = response.massage) }
+                                Log.e("ProfileViewModel", "Profile update error: ${response.toString()}")
+                                _uiState.update { it.copy(isLoading = false, error = response.toString()) }
                             }
                         }
                     }

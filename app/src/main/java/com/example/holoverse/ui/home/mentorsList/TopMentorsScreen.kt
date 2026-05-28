@@ -157,7 +157,10 @@ fun TopMentorsScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(categories) { category ->
+                items(
+                    items = categories,
+                    contentType = { "category_chip" }
+                ) { category ->
                     FilterChip(
                         selected = category == selectedCategory,
                         onClick = { selectedCategory = category },
@@ -220,7 +223,11 @@ fun TopMentorsScreen(
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(displayMentors, key = { it.userId ?: "shimmer_${it.hashCode()}" }) { mentor ->
+                        items(
+                            items = displayMentors,
+                            key = { it.userId ?: "shimmer_${it.hashCode()}" },
+                            contentType = { "mentor_item" }
+                        ) { mentor ->
                             MentorListItem(
                                 mentor = mentor,
                                 onClick = { if (!uiState.isLoading) mentor.userId?.let { onMentorClick(it) } }

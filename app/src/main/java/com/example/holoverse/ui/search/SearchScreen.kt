@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -48,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.home.component.CourseCard
 import com.example.holoverse.ui.theme.ColorBlue
@@ -251,45 +251,63 @@ fun SearchResultsSection(
     onCourseClick: (String) -> Unit,
     onMentorClick: (String) -> Unit
 ) {
-    if (uiState.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    } else if (uiState.error != null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = uiState.error, color = Color.Red)
-        }
-    } else {
-        val isEmpty = if (uiState.searchType == SearchType.COURSES) {
-            uiState.searchResults.courses.isEmpty()
-        } else {
-            uiState.searchResults.mentors.isEmpty()
-        }
-
-        if (isEmpty) {
+    ShimmerBox(
+        isLoading = uiState.isLoading,
+        baseColor = Color.DarkGray,
+        durationMillis = 800
+    ) {
+        if (uiState.error != null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "No results found for \"${uiState.query}\"")
+                Text(text = uiState.error, color = Color.Red)
             }
         } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                if (uiState.searchType == SearchType.COURSES) {
-                    items(uiState.searchResults.courses) { course ->
-                        CourseCard(
-                            course = course,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onCourseClick(course.id) }
-                        )
-                    }
-                } else {
-                    items(uiState.searchResults.mentors) { mentor ->
-                        MentorSearchResultItem(
-                            mentor = mentor,
-                            onClick = { onMentorClick(mentor.userId ?: "") }
-                        )
+            val isEmpty = if (uiState.searchType == SearchType.COURSES) {
+                uiState.searchResults.courses.isEmpty()
+            } else {
+                uiState.searchResults.mentors.isEmpty()
+            }
+
+            if (isEmpty && !uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "No results found for \"${uiState.query}\"")
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (uiState.searchType == SearchType.COURSES) {
+                        val displayCourses = if (uiState.isLoading && uiState.searchResults.courses.isEmpty()) {
+                            List(5) { com.example.holoverse.courses.domain.Courses(id = "shimmer_$it", name = "Loading Course...") }
+                        } else uiState.searchResults.courses
+
+                        items(
+                            items = displayCourses,
+                            key = { it.id },
+                            contentType = { "course_search_result" }
+                        ) { course ->
+                            CourseCard(
+                                course = course,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { if (!uiState.isLoading) onCourseClick(course.id) }
+                            )
+                        }
+                    } else {
+                        val displayMentors = if (uiState.isLoading && uiState.searchResults.mentors.isEmpty()) {
+                            List(5) { User.Mentor(userId = "shimmer_$it", fullName = "Loading Mentor...") }
+                        } else uiState.searchResults.mentors
+
+                        items(
+                            items = displayMentors,
+                            key = { it.userId ?: it.hashCode() },
+                            contentType = { "mentor_search_result" }
+                        ) { mentor ->
+                            MentorSearchResultItem(
+                                mentor = mentor,
+                                onClick = { if (!uiState.isLoading) onMentorClick(mentor.userId ?: "") }
+                            )
+                        }
                     }
                 }
             }
@@ -308,7 +326,7 @@ fun MentorSearchResultItem(mentor: User.Mentor, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = "https://via.placeholder.com/150", // Placeholder if no image in mentor object
+            model = mentor.profileImageUrl ?: "https://via.placeholder.com/150",
             contentDescription = null,
             modifier = Modifier
                 .size(60.dp)

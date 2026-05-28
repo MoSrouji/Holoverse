@@ -49,6 +49,7 @@ sealed interface User {
         val enrolledCourses: List<String>? = null,
         val completedCourses: List<String>? = null,
         val currentCourses: List<String>? = null,
+        val savedCourses: List<String>? = null,
 
         // Social & Interaction
         val following: List<String>? = null,
@@ -107,7 +108,13 @@ sealed interface User {
 
         // Teaching Materials
         val resourcesUploaded: Int? = null,
-        val coursesCreated: List<String>? = null
+        val coursesCreated: List<String>? = null,
+
+        // Enrollment Information (for mentors taking courses)
+        val enrolledCourses: List<String>? = null,
+        val completedCourses: List<String>? = null,
+        val currentCourses: List<String>? = null,
+        val savedCourses: List<String>? = null
     ) : User
 }
 

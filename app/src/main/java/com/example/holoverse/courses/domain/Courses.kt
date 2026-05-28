@@ -14,5 +14,13 @@ data class Courses(
     val instructorName: String = "",
     val instructor: String = "",
     val description: String = "",
-    val imageUrl: String = ""
+    val imageUrl: String = "",
+    val sessions: List<CourseSession> = emptyList()
+)
+
+data class CourseSession(
+    val title: String = "",
+    val date: String = "",
+    val time: String = "",
+    val description: String = ""
 )

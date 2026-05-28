@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -25,16 +26,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.example.holoverse.R
 import com.example.holoverse.courses.domain.Courses
 
 @Composable
 fun CourseCard(
     course: Courses,
     modifier: Modifier = Modifier,
+    isSaved: Boolean = false,
+    onSaveClick: () -> Unit = {},
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -55,7 +60,9 @@ fun CourseCard(
                     model = course.imageUrl,
                     contentDescription = course.name,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                    error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                 )
             }
             Column(
@@ -63,7 +70,11 @@ fun CourseCard(
                     .fillMaxSize()
                     .padding(10.dp)
             ) {
-                CourseTypeWithButton(course.category)
+                CourseTypeWithButton(
+                    category = course.category,
+                    isSaved = isSaved,
+                    onSaveClick = onSaveClick
+                )
                 Spacer(modifier = Modifier.padding(4.dp))
                 Text(
                     text = course.name,
@@ -83,7 +94,11 @@ fun CourseCard(
 }
 
 @Composable
-fun CourseTypeWithButton(category: String) {
+fun CourseTypeWithButton(
+    category: String,
+    isSaved: Boolean,
+    onSaveClick: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,8 +111,10 @@ fun CourseTypeWithButton(category: String) {
             fontWeight = FontWeight.Bold
         )
         Icon(
-            imageVector = Icons.Default.BookmarkAdd,
-            contentDescription = "Save For Later"
+            imageVector = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkAdd,
+            contentDescription = "Save For Later",
+            modifier = Modifier.clickable { onSaveClick() },
+            tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

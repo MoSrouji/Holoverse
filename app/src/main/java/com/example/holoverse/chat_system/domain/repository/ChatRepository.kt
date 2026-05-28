@@ -19,6 +19,16 @@ interface ChatRepository {
         currentUserImageUrl: String? = null,
         otherUserImageUrl: String? = null
     ): String
+
+    suspend fun createOrJoinGroupChat(
+        courseId: String,
+        courseName: String,
+        courseImageUrl: String?,
+        participantId: String,
+        participantName: String,
+        participantImageUrl: String?
+    ): String
+
     suspend fun sendMessage(
         chatId: String,
         text: String,

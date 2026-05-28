@@ -349,4 +349,53 @@ class AuthRepositoryImpl @Inject constructor(
             false
         }
     }
+
+    override suspend fun enrollInCourse(userId: String, courseId: String): Response<Boolean> {
+        return try {
+            val user = getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
+            val collection = if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val userRef = firestore.collection(collection).document(userId)
+
+            firestore.runBatch { batch ->
+                batch.update(userRef, "enrolledCourses", FieldValue.arrayUnion(courseId))
+                batch.update(userRef, "currentCourses", FieldValue.arrayUnion(courseId))
+            }.await()
+
+            // Refresh local cache
+            val updatedUser = getCurrentUser()
+            updatedUser?.let { preferenceManager.saveUser(it) }
+
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Enrollment failed")
+        }
+    }
+
+    override suspend fun toggleSaveCourse(userId: String, courseId: String): Response<Boolean> {
+        return try {
+            val user = getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
+            val collection = if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val userRef = firestore.collection(collection).document(userId)
+
+            val isSaved = when (user) {
+                is User.Student -> user.savedCourses?.contains(courseId) == true
+                is User.Mentor -> user.savedCourses?.contains(courseId) == true
+                else -> false
+            }
+
+            if (isSaved) {
+                userRef.update("savedCourses", FieldValue.arrayRemove(courseId)).await()
+            } else {
+                userRef.update("savedCourses", FieldValue.arrayUnion(courseId)).await()
+            }
+
+            // Refresh local cache
+            val updatedUser = getCurrentUser()
+            updatedUser?.let { preferenceManager.saveUser(it) }
+
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Failed to update saved courses")
+        }
+    }
 }

@@ -48,7 +48,7 @@ class ReviewViewModel @Inject constructor(
                     )
                     is Response.Error -> _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = response.massage
+                        error = response.message
                     )
                 }
             }
@@ -75,7 +75,7 @@ class ReviewViewModel @Inject constructor(
                     }
                     is Response.Error -> _uiState.value = _uiState.value.copy(
                         isSubmitting = false,
-                        error = response.massage
+                        error = response.message
                     )
                 }
             }

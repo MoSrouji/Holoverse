@@ -13,9 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 
 @Composable
@@ -36,7 +38,9 @@ fun ChatListItem(name: String, lastMessage: String, imageUrl: String? = null, on
                             model = imageUrl,
                             contentDescription = name,
                             modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                            error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                         )
                     } else {
                         Text(name.take(1).uppercase(), style = MaterialTheme.typography.titleLarge)
@@ -65,7 +69,9 @@ fun ContactListItem(mentor: User.Mentor, onClick: () -> Unit) {
                             model = mentor.profileImageUrl,
                             contentDescription = mentor.fullName,
                             modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                            error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                         )
                     } else {
                         Text((mentor.fullName ?: "U").take(1).uppercase())

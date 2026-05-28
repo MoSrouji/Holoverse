@@ -1,28 +1,28 @@
 package com.example.holoverse.navigation
 
 import TeacherProfileInput
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.navigation
-import androidx.navigation.toRoute
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.category.CategoryCoursesScreen
 import com.example.holoverse.ui.category.CategoryScreen
@@ -54,431 +54,158 @@ import com.example.holoverse.utils.HoloBottomDock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun AppNavHost(
-    navController: NavHostController,
     navigator: AppNavigator,
     isLoggedIn: Boolean = false,
-    darkTheme: Boolean
+    darkTheme: Boolean,
 ) {
-    // Level 3: Centralized Navigation Handler
+    val startRoute = if (isLoggedIn) AppDestination.HomeScreen else AppDestination.HoloIntro
+    val topLevelRoutes = setOf(
+        AppDestination.HoloIntro,
+        AppDestination.HomeScreen,
+        AppDestination.ChatList,
+        AppDestination.GalleryScreen,
+        AppDestination.Profile,
+        AppDestination.Category
+    )
+
+    val navigationState = rememberNavigationState(
+        startRoute = startRoute,
+        topLevelRoutes = topLevelRoutes
+    )
+    val nav3Navigator = remember { Navigator(navigationState) }
+
+    val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
+    val directive = remember(windowAdaptiveInfo) {
+        calculatePaneScaffoldDirective(windowAdaptiveInfo)
+            .copy(horizontalPartitionSpacerSize = 0.dp)
+    }
+    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
+
     LaunchedEffect(Unit) {
         navigator.navigationIntents.collectLatest { intent ->
             when (intent) {
-                is NavigationIntent.NavigateBack -> navController.popBackStack()
-                is NavigationIntent.NavigateTo -> {
-                    navController.navigate(intent.route) {
-                        launchSingleTop = true
-                        intent.builder(this)
-                    }
-                }
-
+                is NavigationIntent.NavigateBack -> nav3Navigator.goBack()
+                is NavigationIntent.NavigateTo -> nav3Navigator.navigate(intent.route)
                 is NavigationIntent.NavigateAndPopUpTo -> {
-                    navController.navigate(intent.route) {
-                        launchSingleTop = true
-                        popUpTo(intent.popUpToRoute) {
-                            inclusive = intent.inclusive
-                        }
-                    }
+                    // Simple implementation for now, might need more logic for popUpTo
+                    nav3Navigator.navigate(intent.route)
                 }
             }
         }
     }
 
-    val sharedState = remember { MutableStateFlow(User.Mentor()) }
-    val studentSharedState = remember { MutableStateFlow(User.Student()) }
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
+    val mentorState = remember { MutableStateFlow(User.Mentor()) }
+    val studentState = remember { MutableStateFlow(User.Student()) }
 
-    val isInHomeGraph =
-        currentDestination?.hierarchy?.any { it.hasRoute<AppDestination.HomeGraph>() } == true
-    val isGalleryScreen = currentDestination?.hasRoute<AppDestination.GalleryScreen>() == true
-    val isChatScreen = currentDestination?.hasRoute<AppDestination.ChatScreen>() == true
-    val showBottomBar = (isInHomeGraph || isGalleryScreen) && !isChatScreen
+    val currentRoute = navigationState.backStacks[navigationState.topLevelRoute]?.last() ?: navigationState.topLevelRoute
+    
+    val isCompact = windowAdaptiveInfo.windowSizeClass.windowWidthSizeClass.toString().contains("COMPACT", ignoreCase = true)
+
+    val showBottomBar = when (currentRoute) {
+        is AppDestination.HomeScreen,
+        is AppDestination.Category,
+        is AppDestination.ChatList,
+        is AppDestination.GalleryScreen,
+        is AppDestination.Profile ->
+            true
+        is AppDestination.ChatScreen ->
+            !isCompact
+        else ->
+            false
+    }
+
+    val entryProvider = entryProvider<NavKey> {
+        // Auth
+        entry<AppDestination.HoloIntro> { HoloIntroScreen(onNavigationComplete = { navigator.navigateTo(AppDestination.Login) }, darkTheme = darkTheme) }
+        entry<AppDestination.Login> { SignInScreen(onSignUpClick = { navigator.navigateTo(AppDestination.SignUp) }, navToHomeScreen = { navigator.navigateTo(AppDestination.HomeScreen) }, darkTheme = darkTheme) }
+        entry<AppDestination.SignUp> { SignUpScreen(onBackClick = { navigator.popBackStack() }, onNavigateToTeacherProfile = { navigator.navigateTo(AppDestination.SignUpTeacherProfile) }, onNavigateToStudentProfile = { navigator.navigateTo(AppDestination.SignUpStudentProfile) }, navToHomeScreen = { navigator.navigateTo(AppDestination.HomeScreen) }, darkTheme = darkTheme) }
+        entry<AppDestination.SignUpTeacherProfile> { TeacherProfileInput(navController = navigator, navToHomeScreen = { navigator.navigateTo(AppDestination.HomeScreen) }, mentorStates = mentorState, darkTheme = darkTheme) }
+        entry<AppDestination.SignUpTeacherProfessional> { TeacherProfessionalInfoInput(navController = navigator, navToHomeScreen = { navigator.navigateTo(AppDestination.HomeScreen) }, mentorStates = mentorState, darkTheme = darkTheme) }
+        entry<AppDestination.SignUpStudentProfile> { StudentProfileInput(navController = navigator, navToHomeScreen = { navigator.navigateTo(AppDestination.HomeScreen) }, studentStates = studentState, darkTheme = darkTheme) }
+        entry<AppDestination.SignUpStudentPreference> { StudentPreferenceInfoInput(navController = navigator, navToHomeScreen = { navigator.navigateTo(AppDestination.HomeScreen) }, studentStates = studentState, darkTheme = darkTheme) }
+
+        // Home & Main
+        entry<AppDestination.HomeScreen> { HomeScreen(darkTheme = darkTheme, onNavigateToCreateCourse = { navigator.navigateTo(AppDestination.CreateCourse) }, onNavigateToChat = { navigator.navigateTo(AppDestination.ChatList) }, onNavigateToSearch = { navigator.navigateTo(AppDestination.Search) }, onCategoryClick = { navigator.navigateTo(AppDestination.Category) }, onPopularCoursesClick = { navigator.navigateTo(AppDestination.PopularCourses) }, onRecommendedCoursesClick = { navigator.navigateTo(AppDestination.Recommended) }, onTopMentorClick = { navigator.navigateTo(AppDestination.RecommendedMentors) }, onTopMentorsListClick = { navigator.navigateTo(AppDestination.TopMentors) }, onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, onCourseClick = { course -> navigator.navigateTo(AppDestination.CourseDetail(course.id)) }, onCategorySelected = { cat -> if (cat != "All") navigator.navigateTo(AppDestination.CategoryCourses(cat)) }) }
+        entry<AppDestination.Profile> { ProfileScreen(onEditProfileClick = { navigator.navigateTo(AppDestination.EditProfile) }, onTermsAndConditionsClick = { navigator.navigateTo(AppDestination.TermsAndConditions) }, onSignOutSuccess = { navigator.navigateTo(AppDestination.HoloIntro) }, darkTheme = darkTheme) }
+        entry<AppDestination.Category> { CategoryScreen(onCategorySelected = { category -> navigator.navigateTo(AppDestination.CategoryCourses(category)) }, darkTheme = darkTheme, onBackClick = { navigator.popBackStack() }) }
+        entry<AppDestination.CategoryCourses> { key: AppDestination.CategoryCourses ->
+            CategoryCoursesScreen(categoryName = key.categoryName, onBackClick = { navigator.popBackStack() }, onCourseClick = { courseId -> navigator.navigateTo(AppDestination.CourseDetail(courseId)) }, darkTheme = darkTheme)
+        }
+        entry<AppDestination.ChatList>(
+            metadata = ListDetailSceneStrategy.listPane(
+                detailPlaceholder = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Select a chat to start messaging")
+                    }
+                }
+            )
+        ) { ChatScreen(darkTheme = darkTheme, onNavigateToConversation = { mentorId -> navigator.navigateTo(AppDestination.ChatScreen(mentorId = mentorId)) }) }
+        entry<AppDestination.ChatScreen>(
+            metadata = ListDetailSceneStrategy.detailPane()
+        ) { key: AppDestination.ChatScreen ->
+            ChatScreen(
+                darkTheme = darkTheme,
+                mentorId = key.mentorId,
+                onBackClick = { navigator.popBackStack() }
+            )
+        }
+        entry<AppDestination.EditProfile> { EditProfileScreen(onBackClick = { navigator.popBackStack() }, onUpdateSuccess = { navigator.popBackStack() }, darkTheme = darkTheme) }
+        entry<AppDestination.TermsAndConditions> { TermsAndConditionsScreen(onBackClick = { navigator.popBackStack() }, darkTheme = darkTheme) }
+
+        // SubGraph
+        entry<AppDestination.CreateCourse> { CreateCourseScreen(onCourseCreated = { navigator.popBackStack() }, darkTheme = darkTheme) }
+        entry<AppDestination.Search> { SearchScreen(onBackClick = { navigator.popBackStack() }, onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) }, onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, darkTheme = darkTheme) }
+        entry<AppDestination.PopularCourses> { PopularCoursesScreen(onBackClick = { navigator.popBackStack() }, onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) }, darkTheme = darkTheme) }
+        entry<AppDestination.Recommended> { RecommendationScreen(onBackClick = { navigator.popBackStack() }, onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) }, darkTheme = darkTheme) }
+        entry<AppDestination.TopMentors> { TopMentorsScreen(onBackClick = { navigator.popBackStack() }, onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, darkTheme = darkTheme) }
+        entry<AppDestination.RecommendedMentors> { RecommendedMentorsScreen(onBackClick = { navigator.popBackStack() }, onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, darkTheme = darkTheme) }
+        entry<AppDestination.Transactions> { TransactionScreen(appNavigator = navigator, darkTheme = darkTheme) }
+        entry<AppDestination.CourseDetail> { key: AppDestination.CourseDetail ->
+            CourseDetailScreen(courseId = key.courseId, onBackClick = { navigator.popBackStack() }, onInstructorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, onEnrollSuccess = { navigator.popBackStack() }, darkTheme = darkTheme)
+        }
+        entry<AppDestination.MentorProfile> { key: AppDestination.MentorProfile ->
+            MentorProfileScreen(mentorId = key.mentorId, onBackClick = { navigator.popBackStack() }, onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) }, onMessageClick = { id -> navigator.navigateTo(AppDestination.ChatScreen(id)) }, darkTheme = darkTheme)
+        }
+
+        // ModelGraph
+        entry<AppDestination.GalleryScreen> { 
+            val viewModel: ModelViewModel = hiltViewModel()
+            GalleryScreen(appNavigator = navigator, darkTheme = darkTheme, viewModel = viewModel) 
+        }
+        entry<AppDestination.ViewerScreen> { 
+            val viewModel: ModelViewModel = hiltViewModel()
+            ViewerScreen(appNavigator = navigator, viewModel = viewModel) 
+        }
+        entry<AppDestination.ArScreen> { 
+            val viewModel: ModelViewModel = hiltViewModel()
+            ArScreen(appNavigator = navigator, viewModel = viewModel) 
+        }
+    }
 
     Scaffold(
         bottomBar = {
-            AnimatedVisibility(
-                visible = showBottomBar,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
-            ) {
-
-                HoloBottomDock(navController = navController, darkTheme = darkTheme)
+            if (showBottomBar) {
+                HoloBottomDock(
+                    navigationState = navigationState,
+                    navigator = navigator,
+                    darkTheme = darkTheme
+                )
             }
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = if (isLoggedIn) AppDestination.HomeGraph else AppDestination.AuthGraph,
-            modifier = Modifier.padding(innerPadding),
-            enterTransition = { NavAnimations.slideInFromRight() },
-            exitTransition = { NavAnimations.slideOutToLeft() },
-            popEnterTransition = { NavAnimations.slideInFromLeft() },
-            popExitTransition = { NavAnimations.slideOutToRight() }
-        ) {
-            authGraph(
-                navigator,
-                mentorState = sharedState,
-                studentState = studentSharedState,
-                darkTheme = darkTheme
-            )
-            homeGraph(navigator, navController, darkTheme)
-            subGraph(navigator, navController, darkTheme)
-            modelGraph(navigator, navController, darkTheme)
-        }
-    }
-}
-
-private fun NavGraphBuilder.authGraph(
-    navigator: AppNavigator,
-    mentorState: MutableStateFlow<User.Mentor>,
-    studentState: MutableStateFlow<User.Student>,
-    darkTheme: Boolean
-) {
-    navigation<AppDestination.AuthGraph>(startDestination = AppDestination.HoloIntro) {
-        composable<AppDestination.HoloIntro> {
-            HoloIntroScreen(
-                onNavigationComplete = { navigator.navigateTo(AppDestination.Login) },
-                darkTheme = darkTheme
-            )
-        }
-
-        composable<AppDestination.Login> {
-            SignInScreen(
-                onSignUpClick = { navigator.navigateTo(AppDestination.SignUp) },
-                navToHomeScreen = {
-                    navigator.navigateAndPopUpTo(
-                        destination = AppDestination.HomeGraph,
-                        popUpTo = AppDestination.AuthGraph,
-                        inclusive = true
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-
-        composable<AppDestination.SignUp> {
-            SignUpScreen(
-                onBackClick = { navigator.popBackStack() },
-                onNavigateToTeacherProfile = { navigator.navigateTo(AppDestination.SignUpTeacherProfile) },
-                onNavigateToStudentProfile = { navigator.navigateTo(AppDestination.SignUpStudentProfile) },
-                navToHomeScreen = {
-                    navigator.navigateAndPopUpTo(
-                        AppDestination.HomeGraph,
-                        AppDestination.AuthGraph,
-                        true
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-
-        composable<AppDestination.SignUpTeacherProfile> {
-            TeacherProfileInput(
-                navController = navigator,
-                navToHomeScreen = {
-                    navigator.navigateAndPopUpTo(
-                        AppDestination.HomeGraph,
-                        AppDestination.AuthGraph,
-                        true
-                    )
-                },
-                mentorStates = mentorState,
-                darkTheme = darkTheme
-            )
-        }
-
-        composable<AppDestination.SignUpTeacherProfessional> {
-            TeacherProfessionalInfoInput(
-                navController = navigator,
-                navToHomeScreen = {
-                    navigator.navigateAndPopUpTo(
-                        AppDestination.HomeGraph,
-                        AppDestination.AuthGraph,
-                        true
-                    )
-                },
-                mentorStates = mentorState,
-                darkTheme = darkTheme
-            )
-        }
-
-        composable<AppDestination.SignUpStudentProfile> {
-            StudentProfileInput(
-                navController = navigator,
-                navToHomeScreen = {
-                    navigator.navigateAndPopUpTo(
-                        AppDestination.HomeGraph,
-                        AppDestination.AuthGraph,
-                        true
-                    )
-                },
-                studentStates = studentState,
-                darkTheme = darkTheme
-            )
-        }
-
-        composable<AppDestination.SignUpStudentPreference> {
-            StudentPreferenceInfoInput(
-                navController = navigator,
-                navToHomeScreen = {
-                    navigator.navigateAndPopUpTo(
-                        AppDestination.HomeGraph,
-                        AppDestination.AuthGraph,
-                        true
-                    )
-                },
-                studentStates = studentState,
-                darkTheme = darkTheme
-            )
-        }
-    }
-}
-
-private fun NavGraphBuilder.homeGraph(
-    navigator: AppNavigator,
-    navController: NavHostController,
-    darkTheme: Boolean
-) {
-    navigation<AppDestination.HomeGraph>(startDestination = AppDestination.HomeScreen) {
-        composable<AppDestination.HomeScreen> {
-            HomeScreen(
-                darkTheme = darkTheme,
-                onNavigateToCreateCourse = { navigator.navigateTo(AppDestination.CreateCourse) },
-                onNavigateToChat = { navigator.navigateTo(AppDestination.ChatScreen()) },
-                onNavigateToSearch = { navigator.navigateTo(AppDestination.Search) },
-                onCategoryClick = { navigator.navigateTo(AppDestination.Category) },
-                onPopularCoursesClick = { navigator.navigateTo(AppDestination.PopularCourses) },
-                onRecommendedCoursesClick = { navigator.navigateTo(AppDestination.Recommended) },
-                onTopMentorClick = { navigator.navigateTo(AppDestination.RecommendedMentors) },
-                onTopMentorsListClick = { navigator.navigateTo(AppDestination.TopMentors) },
-                onMentorClick = { id: String -> navigator.navigateTo(AppDestination.MentorProfile(id)) },
-                onCourseClick = { course ->
-                    navigator.navigateTo(AppDestination.CourseDetail(course.id))
-                },
-                onCategorySelected = { cat: String ->
-                    if (cat != "All") navigator.navigateTo(AppDestination.CategoryCourses(cat))
-                }
-            )
-        }
-        composable<AppDestination.Profile> {
-            ProfileScreen(
-                onEditProfileClick = { navigator.navigateTo(AppDestination.EditProfile) },
-                onTermsAndConditionsClick = { navigator.navigateTo(AppDestination.TermsAndConditions) },
-                onSignOutSuccess = {
-                    navigator.navigateAndPopUpTo(
-                        destination = AppDestination.AuthGraph,
-                        popUpTo = AppDestination.HomeGraph,
-                        inclusive = true
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.Category> {
-            CategoryScreen(
-                onCategorySelected = { category ->
-                    navigator.navigateTo(AppDestination.CategoryCourses(category))
-                },
-                darkTheme = darkTheme,
-                onBackClick = { navigator.popBackStack() }
-            )
-        }
-        composable<AppDestination.CategoryCourses> { backStackEntry ->
-            CategoryCoursesScreen(
-                onBackClick = { navigator.popBackStack() },
-                onCourseClick = { courseId ->
-                    navigator.navigateTo(AppDestination.CourseDetail(courseId))
-                },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.ChatList> {
-            ChatScreen(
-                darkTheme = darkTheme,
-                onNavigateToConversation = { mentorId ->
-                    navigator.navigateTo(AppDestination.ChatScreen(mentorId = mentorId))
-                }
-            )
-        }
-        composable<AppDestination.ChatScreen> { backStackEntry ->
-            val chat: AppDestination.ChatScreen = backStackEntry.toRoute()
-            ChatScreen(
-                darkTheme = darkTheme,
-                mentorId = chat.mentorId,
-                onBackClick = { navigator.popBackStack() }
-            )
-        }
-        composable<AppDestination.EditProfile> {
-            EditProfileScreen(
-                onBackClick = { navigator.popBackStack() },
-                onUpdateSuccess = { navigator.popBackStack() },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.TermsAndConditions> {
-            TermsAndConditionsScreen(
-                onBackClick = { navigator.popBackStack() },
-                darkTheme = darkTheme
-            )
-        }
-    }
-}
-
-private fun NavGraphBuilder.subGraph(
-    navigator: AppNavigator,
-    navController: NavHostController,
-    darkTheme: Boolean
-) {
-    navigation<AppDestination.SubGraph>(startDestination = AppDestination.CreateCourse) {
-        composable<AppDestination.CreateCourse> {
-            CreateCourseScreen(
-                onCourseCreated = {
-                    navigator.navigateAndPopUpTo(
-                        destination = AppDestination.HomeScreen,
-                        popUpTo = AppDestination.CreateCourse,
-                        inclusive = true
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.Search> {
-            SearchScreen(
-                onBackClick = { navigator.popBackStack() },
-                onCourseClick = { courseId ->
-                    navigator.navigateTo(
-                        AppDestination.CourseDetail(
-                            courseId
-                        )
-                    )
-                },
-                onMentorClick = { mentorId ->
-                    navigator.navigateTo(
-                        AppDestination.MentorProfile(
-                            mentorId
-                        )
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.PopularCourses> {
-            PopularCoursesScreen(
-                onBackClick = { navigator.popBackStack() },
-                onCourseClick = { courseId ->
-                    navigator.navigateTo(
-                        AppDestination.CourseDetail(
-                            courseId
-                        )
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.Recommended> {
-            RecommendationScreen(
-                onBackClick = { navigator.popBackStack() },
-                onCourseClick = { courseId ->
-                    navigator.navigateTo(
-                        AppDestination.CourseDetail(
-                            courseId
-                        )
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.TopMentors> {
-            TopMentorsScreen(
-                onBackClick = { navigator.popBackStack() },
-                onMentorClick = { mentorId ->
-                    navigator.navigateTo(
-                        AppDestination.MentorProfile(
-                            mentorId
-                        )
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.RecommendedMentors> {
-            RecommendedMentorsScreen(
-                onBackClick = { navigator.popBackStack() },
-                onMentorClick = { mentorId ->
-                    navigator.navigateTo(
-                        AppDestination.MentorProfile(
-                            mentorId
-                        )
-                    )
-                },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.Transactions> {
-            TransactionScreen(
-                appNavigator = navigator,
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.CourseDetail> { backStackEntry ->
-            val course: AppDestination.CourseDetail = backStackEntry.toRoute()
-            CourseDetailScreen(
-                onBackClick = { navigator.popBackStack() },
-                onApplyClick = { /* TODO: Navigate to enrollment/transaction */ },
-                darkTheme = darkTheme
-            )
-        }
-        composable<AppDestination.MentorProfile> { backStackEntry ->
-            val mentor: AppDestination.MentorProfile = backStackEntry.toRoute()
-            MentorProfileScreen(
-                mentorId = mentor.mentorId,
-                onBackClick = { navigator.popBackStack() },
-                onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) },
-                onMessageClick = { id -> navigator.navigateTo(AppDestination.ChatScreen(id)) },
-                darkTheme = darkTheme
-            )
-        }
-    }
-}
-
-private fun NavGraphBuilder.modelGraph(
-    navigator: AppNavigator,
-    navController: NavHostController,
-    darkTheme: Boolean
-) {
-    navigation<AppDestination.ModelGraph>(startDestination = AppDestination.GalleryScreen) {
-        composable<AppDestination.GalleryScreen> { backStackEntry ->
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(AppDestination.ModelGraph)
-            }
-            val viewModel: ModelViewModel = hiltViewModel(parentEntry)
-            GalleryScreen(
-                appNavigator = navigator,
-                darkTheme = darkTheme,
-                viewModel = viewModel
-            )
-        }
-        composable<AppDestination.ViewerScreen> { backStackEntry ->
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(AppDestination.ModelGraph)
-            }
-            val viewModel: ModelViewModel = hiltViewModel(parentEntry)
-            ViewerScreen(
-                appNavigator = navigator,
-                viewModel = viewModel
-            )
-        }
-        composable<AppDestination.ArScreen> { backStackEntry ->
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(AppDestination.ModelGraph)
-            }
-            val viewModel: ModelViewModel = hiltViewModel(parentEntry)
-            ArScreen(
-                appNavigator = navigator,
-                viewModel = viewModel
-            )
-        }
+    ) { padding ->
+        NavDisplay(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            entries = navigationState.toEntries(entryProvider),
+            onBack = { nav3Navigator.goBack() },
+            sceneStrategies = listOf(listDetailStrategy)
+        )
     }
 }

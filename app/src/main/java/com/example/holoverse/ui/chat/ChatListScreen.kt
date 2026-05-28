@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -42,6 +43,8 @@ fun ChatListScreen(
     darkTheme: Boolean,
     onContactSelected: (String) -> Unit
 ) {
+    val headerBrush = remember(darkTheme) { Brush(darkTheme) }
+
     Scaffold(
         containerColor = Color.Transparent
     ) { padding ->
@@ -55,7 +58,7 @@ fun ChatListScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                    .background(Brush(darkTheme))
+                    .background(headerBrush)
 
             ) {
                 Column(
@@ -81,8 +84,9 @@ fun ChatListScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    val searchQuery = uiState.searchQuery
                     OutlinedTextField(
-                        value = uiState.searchQuery,
+                        value = searchQuery,
                         onValueChange = { viewModel.onSearchQueryChange(it) },
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -93,7 +97,7 @@ fun ChatListScreen(
                             ) 
                         },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        trailingIcon = if (uiState.searchQuery.isNotEmpty()) {
+                        trailingIcon = if (searchQuery.isNotEmpty()) {
                             {
                                 IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
                                     Icon(Icons.Default.Clear, contentDescription = "Clear")
@@ -119,21 +123,31 @@ fun ChatListScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        items(uiState.chats) { chat ->
+                        items(
+                            items = uiState.chats,
+                            key = { it.id },
+                            contentType = { "chat_item" }
+                        ) { chat ->
                             val currentUserId = uiState.currentUser?.userId ?: ""
-                            val partnerId = chat.participants.find { it != currentUserId }
+                            val isGroup = chat.id.startsWith("group_")
+                            
+                            val partnerId = if (isGroup) null else chat.participants.find { it != currentUserId }
                                 ?: chat.participants.firstOrNull { it != "user1" }
-                            val partnerName = chat.participantNames[partnerId] ?: "Chat"
-                            val partnerImageUrl = chat.participantProfileImages[partnerId]
+                            
+                            val chatName = if (isGroup) {
+                                chat.participantNames[chat.id] ?: chat.id.removePrefix("group_")
+                            } else {
+                                chat.participantNames[partnerId] ?: "Chat"
+                            }
+                            
+                            val chatImageUrl = if (isGroup) null else chat.participantProfileImages[partnerId]
 
                             ChatListItem(
-                                name = partnerName,
+                                name = chatName,
                                 lastMessage = chat.lastMessage,
-                                imageUrl = partnerImageUrl,
+                                imageUrl = chatImageUrl,
                                 onClick = {
-                                    if (partnerId != null) {
-                                        onContactSelected(partnerId)
-                                    }
+                                    onContactSelected(chat.id)
                                 }
                             )
                         }
@@ -148,7 +162,11 @@ fun ChatListScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        items(uiState.filteredContacts) { mentor ->
+                        items(
+                            items = uiState.filteredContacts,
+                            key = { it.userId ?: it.hashCode() },
+                            contentType = { "contact_item" }
+                        ) { mentor ->
                             ContactListItem(
                                 mentor = mentor,
                                 onClick = {

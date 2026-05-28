@@ -69,8 +69,7 @@ fun TransactionScreen(
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-        SpatialBackground(isDark = darkTheme)
-        
+
         Scaffold(
             topBar = {
                 Box(
@@ -78,7 +77,6 @@ fun TransactionScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                 ) {
-                    SpatialBackground(isDark = darkTheme)
                     TopAppBar(
                         title = {
                             Text(

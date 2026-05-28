@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -72,14 +73,24 @@ fun ArViewer(
     var modelNodeInstance by remember { mutableStateOf<ModelNode?>(null) }
     var baseScale by remember { mutableStateOf<Scale?>(null) }
     var surfaceDetectionQuality by remember { mutableStateOf(SurfaceDetectionQuality.SCANNING) }
-    
+
     // Stability smoothing to prevent flickering labels
     var surfaceStabilityCount by remember { mutableIntStateOf(0) }
-    val requiredStabilityFrames = 10 
+    val requiredStabilityFrames = 10
 
     // Frame processing throttle: 33ms (30fps) is ideal for logic vs performance balance
     var lastFrameProcessTime by remember { mutableLongStateOf(0L) }
-    val frameProcessInterval = 33L 
+    val frameProcessInterval = 33L
+
+    // Memory Leak Safeguard: Detach anchors and clear frame references on dispose
+    DisposableEffect(Unit) {
+        onDispose {
+            anchor?.detach()
+            anchor = null
+            currentFrame.set(null)
+            modelNodeInstance = null
+        }
+    }
 
     LaunchedEffect(modelNodeInstance, baseScale, scale, rotation) {
         val node = modelNodeInstance ?: return@LaunchedEffect
@@ -151,9 +162,9 @@ fun ArViewer(
                     lastFrameProcessTime = currentTime
                     currentFrame.set(frame)
                     trackingState = frame.camera.trackingState
-                    
+
                     val hasSurface = hasGoodSurfaceForPlacement(session)
-                    
+
                     // Temporal smoothing logic: require multiple stable frames before green-lighting
                     if (hasSurface) {
                         if (surfaceStabilityCount < requiredStabilityFrames) surfaceStabilityCount++
@@ -219,7 +230,7 @@ fun ArViewer(
         if (isLoadingModel || isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
-        
+
         // Error display
         loadError?.let { error ->
             Surface(
@@ -272,8 +283,8 @@ private fun findBestSurfaceHit(frame: Frame, x: Float, y: Float): HitResult? {
     // Strategy: Prefer Persistent Planes for 100% stability
     val planeHit = frame.hitTest(x, y).firstOrNull { hit ->
         val trackable = hit.trackable
-        trackable is Plane && 
-        trackable.isPoseInPolygon(hit.hitPose) && 
+        trackable is Plane &&
+        trackable.isPoseInPolygon(hit.hitPose) &&
         trackable.trackingState == TrackingState.TRACKING
     }
     if (planeHit != null) return planeHit
@@ -287,7 +298,7 @@ private fun findBestSurfaceHit(frame: Frame, x: Float, y: Float): HitResult? {
 private fun hasGoodSurfaceForPlacement(session: Session): Boolean {
     // Check all trackables instead of just "updated" ones to prevent flickering when stationary
     return session.getAllTrackables(Plane::class.java).any { plane ->
-        plane.trackingState == TrackingState.TRACKING && 
+        plane.trackingState == TrackingState.TRACKING &&
         plane.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
         plane.subsumedBy == null
     }

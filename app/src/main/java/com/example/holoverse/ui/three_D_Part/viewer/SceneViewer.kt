@@ -8,6 +8,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,13 @@ fun SceneViewer(
     var modelInstance by remember { mutableStateOf<ModelInstance?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var loadError by remember { mutableStateOf<String?>(null) }
+
+    // Memory Leak Safeguard: Clear model instance and references on dispose
+    DisposableEffect(Unit) {
+        onDispose {
+            modelInstance = null
+        }
+    }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         Log.d("SceneViewer", "Engine resumed: $engine")
