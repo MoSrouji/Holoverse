@@ -61,6 +61,46 @@ class SearchViewModel @Inject constructor(
         triggerSearch(withDebounce = false)
     }
 
+    fun updateCourseCategory(category: String?) {
+        _uiState.update { it.copy(courseFilters = it.courseFilters.copy(category = category)) }
+        triggerSearch(withDebounce = false)
+    }
+
+    fun updateCourseLevel(level: String?) {
+        _uiState.update { it.copy(courseFilters = it.courseFilters.copy(level = level)) }
+        triggerSearch(withDebounce = false)
+    }
+
+    fun updateCoursePriceRange(min: Double?, max: Double?) {
+        _uiState.update { it.copy(courseFilters = it.courseFilters.copy(minPrice = min, maxPrice = max)) }
+        triggerSearch(withDebounce = false)
+    }
+
+    fun updateMentorSpecialization(specialization: String?) {
+        _uiState.update { it.copy(mentorFilters = it.mentorFilters.copy(specialization = specialization)) }
+        triggerSearch(withDebounce = false)
+    }
+
+    fun updateMentorHourlyRate(min: Double?, max: Double?) {
+        _uiState.update { it.copy(mentorFilters = it.mentorFilters.copy(minHourlyRate = min, maxHourlyRate = max)) }
+        triggerSearch(withDebounce = false)
+    }
+
+    fun updateMentorRating(minRating: Double?) {
+        _uiState.update { it.copy(mentorFilters = it.mentorFilters.copy(minRating = minRating)) }
+        triggerSearch(withDebounce = false)
+    }
+
+    fun clearFilters() {
+        _uiState.update {
+            it.copy(
+                courseFilters = CourseFilters(),
+                mentorFilters = MentorFilters()
+            )
+        }
+        triggerSearch(withDebounce = false)
+    }
+
     fun updateCourseFilters(filters: CourseFilters) {
         _uiState.update { it.copy(courseFilters = filters) }
         triggerSearch(withDebounce = false)

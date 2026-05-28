@@ -33,6 +33,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RangeSlider
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.holoverse.auth.domain.entities.MentorCategory
+import com.example.holoverse.search.domain.model.CourseFilters
+import com.example.holoverse.search.domain.model.MentorFilters
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,6 +78,28 @@ fun SearchScreen(
     darkTheme: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val sheetState = rememberModalBottomSheetState()
+    var showFilters by remember { mutableStateOf(false) }
+
+    if (showFilters) {
+        ModalBottomSheet(
+            onDismissRequest = { showFilters = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            FilterBottomSheetContent(
+                uiState = uiState,
+                onClose = { showFilters = false },
+                onClear = viewModel::clearFilters,
+                onUpdateCourseCategory = viewModel::updateCourseCategory,
+                onUpdateCourseLevel = viewModel::updateCourseLevel,
+                onUpdateCoursePrice = viewModel::updateCoursePriceRange,
+                onUpdateMentorSpecialization = viewModel::updateMentorSpecialization,
+                onUpdateMentorRate = viewModel::updateMentorHourlyRate,
+                onUpdateMentorRating = viewModel::updateMentorRating
+            )
+        }
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -104,7 +141,8 @@ fun SearchScreen(
             SearchInputSection(
                 query = uiState.query,
                 onQueryChange = viewModel::onQueryChange,
-                onSearchClick = { /* Already handled by debounce */ }
+                onSearchClick = { /* Already handled by debounce */ },
+                onFilterClick = { showFilters = true }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -137,7 +175,8 @@ fun SearchScreen(
 fun SearchInputSection(
     query: String,
     onQueryChange: (String) -> Unit,
-    onSearchClick: () -> Unit
+    onSearchClick: () -> Unit,
+    onFilterClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -149,7 +188,7 @@ fun SearchInputSection(
             placeholder = { Text("Search") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
-                IconButton(onClick = { /* Open Filters Dialog */ }) {
+                IconButton(onClick = onFilterClick) {
                     Icon(Icons.Default.FilterList, contentDescription = "Filter")
                 }
             },
@@ -363,6 +402,197 @@ fun MentorSearchResultItem(mentor: User.Mentor, onClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
             color = ColorBlue
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FilterBottomSheetContent(
+    uiState: SearchUiState,
+    onClose: () -> Unit,
+    onClear: () -> Unit,
+    onUpdateCourseCategory: (String?) -> Unit,
+    onUpdateCourseLevel: (String?) -> Unit,
+    onUpdateCoursePrice: (Double?, Double?) -> Unit,
+    onUpdateMentorSpecialization: (String?) -> Unit,
+    onUpdateMentorRate: (Double?, Double?) -> Unit,
+    onUpdateMentorRating: (Double?) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.8f)
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Filter",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            )
+            Text(
+                "Clear All",
+                color = ColorBlue,
+                modifier = Modifier.clickable { onClear() },
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (uiState.searchType == SearchType.COURSES) {
+            CourseFilterSection(
+                filters = uiState.courseFilters,
+                onUpdateCategory = onUpdateCourseCategory,
+                onUpdateLevel = onUpdateCourseLevel,
+                onUpdatePrice = onUpdateCoursePrice
+            )
+        } else {
+            MentorFilterSection(
+                filters = uiState.mentorFilters,
+                onUpdateSpecialization = onUpdateMentorSpecialization,
+                onUpdateRate = onUpdateMentorRate,
+                onUpdateRating = onUpdateMentorRating
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = onClose,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = ColorBlue)
+        ) {
+            Text("Apply Filters", color = Color.White, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CourseFilterSection(
+    filters: CourseFilters,
+    onUpdateCategory: (String?) -> Unit,
+    onUpdateLevel: (String?) -> Unit,
+    onUpdatePrice: (Double?, Double?) -> Unit
+) {
+    val categories = listOf("3D Design", "Graphic Design", "Programming", "Marketing", "Business")
+    val levels = listOf("Beginner", "Intermediate", "Advanced")
+
+    Text("Category", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(12.dp))
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(categories) { category ->
+            FilterChip(
+                selected = filters.category == category,
+                onClick = { onUpdateCategory(if (filters.category == category) null else category) },
+                label = { Text(category) }
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    Text("Level", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(12.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        levels.forEach { level ->
+            FilterChip(
+                selected = filters.level == level,
+                onClick = { onUpdateLevel(if (filters.level == level) null else level) },
+                label = { Text(level) }
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    Text("Price Range", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(12.dp))
+    var sliderPosition by remember { 
+        mutableStateOf((filters.minPrice?.toFloat() ?: 0f)..(filters.maxPrice?.toFloat() ?: 500f)) 
+    }
+    RangeSlider(
+        value = sliderPosition,
+        onValueChange = { sliderPosition = it },
+        valueRange = 0f..500f,
+        onValueChangeFinished = {
+            onUpdatePrice(sliderPosition.start.toDouble(), sliderPosition.endInclusive.toDouble())
+        }
+    )
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text("$${sliderPosition.start.toInt()}")
+        Text("$${sliderPosition.endInclusive.toInt()}")
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MentorFilterSection(
+    filters: MentorFilters,
+    onUpdateSpecialization: (String?) -> Unit,
+    onUpdateRate: (Double?, Double?) -> Unit,
+    onUpdateRating: (Double?) -> Unit
+) {
+    val specializations = MentorCategory.entries.map { it.name }
+
+    Text("Specialization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(12.dp))
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(specializations) { spec ->
+            FilterChip(
+                selected = filters.specialization == spec,
+                onClick = { onUpdateSpecialization(if (filters.specialization == spec) null else spec) },
+                label = { Text(spec) }
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    Text("Hourly Rate", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(12.dp))
+    var sliderPosition by remember { 
+        mutableStateOf((filters.minHourlyRate?.toFloat() ?: 0f)..(filters.maxHourlyRate?.toFloat() ?: 200f)) 
+    }
+    RangeSlider(
+        value = sliderPosition,
+        onValueChange = { sliderPosition = it },
+        valueRange = 0f..200f,
+        onValueChangeFinished = {
+            onUpdateRate(sliderPosition.start.toDouble(), sliderPosition.endInclusive.toDouble())
+        }
+    )
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text("$${sliderPosition.start.toInt()}/hr")
+        Text("$${sliderPosition.endInclusive.toInt()}/hr")
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    Text("Minimum Rating", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(12.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(3.0, 4.0, 4.5).forEach { rating ->
+            FilterChip(
+                selected = filters.minRating == rating,
+                onClick = { onUpdateRating(if (filters.minRating == rating) null else rating) },
+                label = { 
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Star, null, tint = Color(0xFFFFB400), modifier = Modifier.size(16.dp))
+                        Text("$rating+")
+                    }
+                }
+            )
+        }
     }
 }
 

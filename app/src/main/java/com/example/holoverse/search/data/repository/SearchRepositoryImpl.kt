@@ -29,12 +29,6 @@ class SearchRepositoryImpl @Inject constructor(
         filters.level?.let {
             query = query.whereEqualTo("level", it)
         }
-        filters.minPrice?.let {
-            query = query.whereGreaterThanOrEqualTo("price", it)
-        }
-        filters.maxPrice?.let {
-            query = query.whereLessThanOrEqualTo("price", it)
-        }
         filters.minRating?.let {
             query = query.whereGreaterThanOrEqualTo("rating", it)
         }
@@ -47,11 +41,19 @@ class SearchRepositoryImpl @Inject constructor(
 
             val courses = snapshot?.toObjects(Courses::class.java) ?: emptyList()
             
-            // In-memory filtering for query (prefix search on name)
-            val filteredCourses = if (!filters.query.isNullOrBlank()) {
-                courses.filter { it.name.contains(filters.query, ignoreCase = true) }
-            } else {
-                courses
+            // In-memory filtering for query (prefix search on name) and price range
+            var filteredCourses = courses
+            
+            if (!filters.query.isNullOrBlank()) {
+                filteredCourses = filteredCourses.filter { it.name.contains(filters.query, ignoreCase = true) }
+            }
+            
+            filters.minPrice?.let { min ->
+                filteredCourses = filteredCourses.filter { it.price >= min }
+            }
+            
+            filters.maxPrice?.let { max ->
+                filteredCourses = filteredCourses.filter { it.price <= max }
             }
 
             trySend(Response.Success(filteredCourses))
@@ -68,12 +70,6 @@ class SearchRepositoryImpl @Inject constructor(
         filters.specialization?.let {
             query = query.whereEqualTo("specialization", it)
         }
-        filters.minHourlyRate?.let {
-            query = query.whereGreaterThanOrEqualTo("hourlyRate", it)
-        }
-        filters.maxHourlyRate?.let {
-            query = query.whereLessThanOrEqualTo("hourlyRate", it)
-        }
         filters.minRating?.let {
             query = query.whereGreaterThanOrEqualTo("averageRating", it)
         }
@@ -86,7 +82,7 @@ class SearchRepositoryImpl @Inject constructor(
 
             val mentors = snapshot?.toObjects(User.Mentor::class.java) ?: emptyList()
 
-            // In-memory filtering for query and subjects
+            // In-memory filtering for query, subjects, and hourly rate
             var filteredMentors = mentors
             
             if (!filters.query.isNullOrBlank()) {
@@ -99,6 +95,14 @@ class SearchRepositoryImpl @Inject constructor(
                 filteredMentors = filteredMentors.filter { mentor ->
                     filters.subjects.any { subject -> mentor.subjects?.contains(subject) == true }
                 }
+            }
+
+            filters.minHourlyRate?.let { min ->
+                filteredMentors = filteredMentors.filter { (it.hourlyRate ?: 0.0) >= min }
+            }
+
+            filters.maxHourlyRate?.let { max ->
+                filteredMentors = filteredMentors.filter { (it.hourlyRate ?: 0.0) <= max }
             }
 
             trySend(Response.Success(filteredMentors))
