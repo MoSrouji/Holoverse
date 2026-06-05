@@ -33,9 +33,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
-import com.example.holoverse.auth.domain.entities.MentorCategory
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.ui.collectUserData.teacher.viewModels.TeacherProfessionalViewModel
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
@@ -60,7 +60,8 @@ fun TeacherProfessionalInfoInput(
     val yearsItems = listOf("0", "+1", "+4", "+8", "+10")
     val languageItems = listOf("Arabic", "English", "France", "Italy", "Spain")
     val certificateItems = listOf("Bachelors", "Masters", "PhD")
-    val specializations = MentorCategory.getAllCategoryNames()
+    val categoryMap = AppCategory.entries.associateWith { stringResource(it.titleRes) }
+    val specializationNames = categoryMap.values.toList()
 
     val context = LocalContext.current
     var isYearsExpanded by remember { mutableStateOf(false) }
@@ -90,7 +91,7 @@ fun TeacherProfessionalInfoInput(
                         profileImageUrl = mentorStates.value.profileImageUrl,
                         yearsOfExperience = viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!.text,
                         specialization = viewModel.specializations,
-                        subjects = viewModel.selectSubjects.toList(),
+                        subjects = listOf(viewModel.selectSubjects),
                         certifications = viewModel.forms[SignUpTextFields.CERTIFICATION]!!.text,
                         languagesSpoken = viewModel.selectLanguage.toList(),
                     )
@@ -108,9 +109,11 @@ fun TeacherProfessionalInfoInput(
                     navToHomeScreen()
                 }
             }
+
             is Response.Error -> {
                 Toast.makeText(context, signUpState.toString(), Toast.LENGTH_LONG).show()
             }
+
             is Response.Loading -> {}
         }
     }
@@ -238,41 +241,46 @@ fun TeacherProfessionalInfoInput(
                     onToggle = { isSpecializationsExpanded = !isSpecializationsExpanded },
                     selectedItem = viewModel.selectSpecializations,
                     onItemSelected = { item ->
+                        val selectedCategory = categoryMap.entries.find { it.value == item }?.key ?: AppCategory.OTHER
                         viewModel.selectSpecializations = item
-                        viewModel.selectSubjects = emptySet()
+                        viewModel.selectSubjects = "Select your Subjects"
                         isSpecializationsExpanded = false
                         viewModel.onEvent(
                             ValidationEvent.TextFieldValueChange(
                                 viewModel.forms[SignUpTextFields.SPECIALIZATION]!!.copy(text = item)
                             )
                         )
-                        viewModel.specializations = MentorCategory.fromString(item)
-                        viewModel.subject = viewModel.specializations.specializations
+                        viewModel.specializations = selectedCategory
+                        viewModel.subject = if (selectedCategory.specializations.isEmpty()) {
+                            listOf(item)
+                        } else {
+                            selectedCategory.specializations
+                        }
                     },
                     state = viewModel.forms[SignUpTextFields.SPECIALIZATION]!!,
-                    menuItems = specializations,
+                    menuItems = specializationNames,
                     showIcon = false,
                     labelText = "Main Specialization"
                 )
 
-                CheckBoxMenu(
+                RadioButtonMenu(
                     isExpanded = isSubjectExpanded,
                     onToggle = { isSubjectExpanded = !isSubjectExpanded },
-                    selectedItems = viewModel.selectSubjects,
+                    selectedItem = viewModel.selectSubjects,
                     onItemSelected = { item ->
                         viewModel.updateSubject(item)
-                        val currentText = viewModel.selectSubjects.joinToString(", ")
+                        isSubjectExpanded = false
                         viewModel.onEvent(
                             ValidationEvent.TextFieldValueChange(
                                 viewModel.forms[SignUpTextFields.SUBJECTS]!!.copy(
-                                    text = currentText
+                                    text = item
                                 )
                             )
                         )
                     },
                     state = viewModel.forms[SignUpTextFields.SUBJECTS]!!,
                     menuItems = viewModel.subject,
-                    ifItEmptyText = "Select Your Subjects",
+                    showIcon = false,
                     labelText = "Specific Subjects"
                 )
             }

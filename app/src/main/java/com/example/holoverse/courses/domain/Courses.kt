@@ -1,9 +1,11 @@
 package com.example.holoverse.courses.domain
 
+import com.example.holoverse.core.domain.model.AppCategory
+
 data class Courses(
     val id: String = "",
     val name: String = "",
-    val category: String = "",
+    val category: AppCategory = AppCategory.OTHER,
     val price: Double = 0.0,
     val duration: String = "",
     val level: String = "",
@@ -15,6 +17,8 @@ data class Courses(
     val instructor: String = "",
     val description: String = "",
     val imageUrl: String = "",
+    val completionRate: Double = 0.0,
+    val averageProgress: Double = 0.0,
     val sessions: List<CourseSession> = emptyList()
 )
 

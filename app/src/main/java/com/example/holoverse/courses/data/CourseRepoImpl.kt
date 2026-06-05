@@ -1,6 +1,8 @@
 package com.example.holoverse.courses.data
 
 import android.util.Log
+import com.example.holoverse.core.domain.model.AppCategory
+import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.utils.Response
 import com.google.firebase.firestore.FirebaseFirestore
@@ -58,33 +60,72 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
         }
     }
 
-    override suspend fun getCoursesByCategory(category: String): Flow<Response<List<Courses>>> = flow {
+    override suspend fun getCoursesByCategory(category: AppCategory): Flow<Response<List<Courses>>> =
+        flow {
+            emit(Response.Loading)
+            try {
+                val snapshot = firestore.collection("courses")
+                    .whereEqualTo("category", category)
+                    .get()
+                    .await()
+                val courses = snapshot.toObjects(Courses::class.java)
+                emit(Response.Success(courses))
+            } catch (e: Exception) {
+                Log.e("CourseRepoImpl", "Error getting courses by category", e)
+                emit(Response.Error(e.message ?: "Error fetching courses"))
+            }
+        }
+
+    override suspend fun getCoursesByInstructorId(instructorId: String): Flow<Response<List<Courses>>> =
+        flow {
+            emit(Response.Loading)
+            try {
+                val snapshot = firestore.collection("courses")
+                    .whereEqualTo("instructorId", instructorId)
+                    .get()
+                    .await()
+                val courses = snapshot.toObjects(Courses::class.java)
+                emit(Response.Success(courses))
+            } catch (e: Exception) {
+                Log.e("CourseRepoImpl", "Error getting courses by instructor id", e)
+                emit(Response.Error(e.message ?: "Error fetching courses"))
+            }
+        }
+
+    override suspend fun boostCourse(boostedCourse: BoostedCourse): Flow<Response<Boolean>> = flow {
         emit(Response.Loading)
         try {
-            val snapshot = firestore.collection("courses")
-                .whereEqualTo("category", category)
-                .get()
+            firestore.collection("boostedCourses")
+                .document(boostedCourse.courseId)
+                .set(boostedCourse)
                 .await()
-            val courses = snapshot.toObjects(Courses::class.java)
-            emit(Response.Success(courses))
+            emit(Response.Success(true))
         } catch (e: Exception) {
-            Log.e("CourseRepoImpl", "Error getting courses by category", e)
-            emit(Response.Error(e.message ?: "Error fetching courses"))
+            Log.e("CourseRepoImpl", "Error boosting course", e)
+            emit(Response.Error(e.message ?: "Error boosting course"))
         }
     }
 
-    override suspend fun getCoursesByInstructorId(instructorId: String): Flow<Response<List<Courses>>> = flow {
+    override suspend fun getBoostedCourses(): Flow<Response<List<BoostedCourse>>> = flow {
         emit(Response.Loading)
         try {
-            val snapshot = firestore.collection("courses")
-                .whereEqualTo("instructorId", instructorId)
-                .get()
-                .await()
-            val courses = snapshot.toObjects(Courses::class.java)
-            emit(Response.Success(courses))
+            val snapshot = firestore.collection("boostedCourses").get().await()
+            val boostedCourses = snapshot.toObjects(BoostedCourse::class.java)
+            emit(Response.Success(boostedCourses))
         } catch (e: Exception) {
-            Log.e("CourseRepoImpl", "Error getting courses by instructor id", e)
-            emit(Response.Error(e.message ?: "Error fetching courses"))
+            Log.e("CourseRepoImpl", "Error getting boosted courses", e)
+            emit(Response.Error(e.message ?: "Error fetching boosted courses"))
+        }
+    }
+
+    override suspend fun deleteBoostedCourse(courseId: String): Flow<Response<Boolean>> = flow {
+        emit(Response.Loading)
+        try {
+            firestore.collection("boostedCourses").document(courseId).delete().await()
+            emit(Response.Success(true))
+        } catch (e: Exception) {
+            Log.e("CourseRepoImpl", "Error deleting boosted course", e)
+            emit(Response.Error(e.message ?: "Error deleting boosted course"))
         }
     }
 }

@@ -4,6 +4,7 @@ import TeacherCard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,11 +14,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,16 +32,20 @@ import androidx.compose.ui.unit.dp
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.core.domain.model.AppCategory
+import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeTab
 import com.example.holoverse.ui.home.HomeUiState
+import com.example.holoverse.ui.teacherPart.courses.BoostedCourseCard
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeContentSections(
     uiState: HomeUiState,
     onTabSelected: (HomeTab) -> Unit,
-    onCategorySelected: (String) -> Unit,
-    onFilterCategorySelected: (String) -> Unit,
+    onCategorySelected: (AppCategory) -> Unit,
+    onFilterCategorySelected: (AppCategory) -> Unit,
     onCategoryClick: () -> Unit,
     onPopularCoursesClick: () -> Unit,
     onRecommendedCoursesClick: () -> Unit,
@@ -53,7 +62,7 @@ fun HomeContentSections(
     ) {
         Column {
             SectionHeader(
-                titleId = R.string.Categories,
+                titleId = R.string.categories_title,
                 onClick = onCategoryClick
             )
             TextListButton(
@@ -93,7 +102,7 @@ fun HomeContentSections(
 
             // 3. Popular Courses (Global)
             SectionHeader(
-                titleId = R.string.popular_Courses,
+                titleId = R.string.popular_courses,
                 onClick = onPopularCoursesClick
             )
             TextListTextButton(
@@ -117,7 +126,7 @@ fun HomeContentSections(
 
             // 4. Top Mentors (Global)
             SectionHeader(
-                titleId = R.string.top_Mentor,
+                titleId = R.string.top_mentor,
                 onClick = onTopMentorsListClick
             )
             HorizontalMentorList(
@@ -146,7 +155,7 @@ fun HomeContentSections(
                 modifier = Modifier.align(Alignment.Start)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             if (uiState.enrolledCourses.isEmpty() && uiState.savedCourses.isEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 EmptyStateText(stringResource(R.string.no_enrolled_courses))
@@ -171,7 +180,7 @@ fun HomeContentSections(
                         }
                     )
                 }
-                
+
                 if (uiState.savedCourses.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
@@ -304,4 +313,53 @@ private fun EmptyStateText(text: String, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(vertical = 24.dp)
     )
+}
+
+@Composable
+fun BoostedCarouselSection(
+    boostedCourses: List<BoostedCourse>,
+    allCourses: List<Courses>,
+    onCourseClick: (Courses) -> Unit
+) {
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { boostedCourses.size }
+    )
+    val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
+
+    LaunchedEffect(isDragged) {
+        if (!isDragged) {
+            while (true) {
+                delay(5000)
+                if (pagerState.pageCount > 0) {
+                    val target = (pagerState.currentPage + 1) % pagerState.pageCount
+                    pagerState.animateScrollToPage(target)
+                }
+            }
+        }
+    }
+
+    Column {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            pageSpacing = 16.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            val boosted = boostedCourses[page]
+            val course = allCourses.find { it.id == boosted.courseId } ?: Courses(
+                id = boosted.courseId,
+                name = boosted.courseName,
+                imageUrl = boosted.courseImageUrl,
+                description = boosted.courseDescription,
+                instructorName = boosted.instructorName
+            )
+
+            BoostedCourseCard(
+                course = course,
+                style = boosted.adCardStyle,
+                onClick = { onCourseClick(course) }
+            )
+        }
+    }
 }

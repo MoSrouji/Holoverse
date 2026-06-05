@@ -29,10 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.composeautoshimmer.components.ShimmerBox
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.coursesList.CourseItem
 import com.example.holoverse.ui.spatialTheme.Brush
@@ -42,17 +44,18 @@ import com.example.holoverse.utils.Response
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryCoursesScreen(
-    categoryName: String,
+    category: AppCategory,
     onBackClick: () -> Unit,
     onCourseClick: (String) -> Unit,
     darkTheme: Boolean,
     viewModel: CategoryViewModel = hiltViewModel()
 ) {
-    androidx.compose.runtime.LaunchedEffect(categoryName) {
-        viewModel.initialize(categoryName)
+    androidx.compose.runtime.LaunchedEffect(category) {
+        viewModel.initialize(category)
     }
 
     val coursesState = viewModel.coursesState.value
+    val categoryName = stringResource(category.titleRes)
 
     Scaffold { paddingValues ->
         Column(
@@ -86,7 +89,7 @@ fun CategoryCoursesScreen(
                                 contentDescription = "Back",
                             )
                         }
-                        
+
                         Text(
                             text = categoryName,
                             style = MaterialTheme.typography.headlineSmall.copy(
@@ -96,7 +99,7 @@ fun CategoryCoursesScreen(
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Explore top rated courses in $categoryName",
@@ -129,7 +132,7 @@ fun CategoryCoursesScreen(
                                         course = Courses(
                                             id = "shimmer_$it",
                                             name = "Loading Course Name...",
-                                            category = "Category",
+                                            category = AppCategory.ARTS,
                                             price = 0.0,
                                             rating = 0.0,
                                             numReviews = 0,
@@ -170,14 +173,15 @@ fun CategoryCoursesScreen(
                         }
 
                         is Response.Error -> {
-//                            Text(
-//                                text = coursesState.massage,
-//                                color = MaterialTheme.colorScheme.error,
-//                                modifier = Modifier.align(Alignment.Center)
-//                            )
+                            Text(
+                                text = coursesState.message,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
                         }
                     }
                 }
             }
+        }
     }
-}}
+}

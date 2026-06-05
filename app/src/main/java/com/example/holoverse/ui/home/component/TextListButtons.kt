@@ -17,14 +17,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.holoverse.core.domain.model.AppCategory
+import androidx.compose.ui.res.stringResource
 import com.example.composeautoshimmer.components.ShimmerBox
 
 @Composable
 fun TextListButton(
-    categories: List<String>,
+    categories: List<AppCategory>,
     isLoading: Boolean = false,
-    selectedCategory: String? = null,
-    onCategoryClick: (String) -> Unit = {}
+    selectedCategory: AppCategory = AppCategory.OTHER,
+    onCategoryClick: (AppCategory) -> Unit = {}
 ) {
     ShimmerBox(
         isLoading = isLoading && categories.size <= 1,
@@ -32,7 +34,7 @@ fun TextListButton(
         durationMillis = 800
     ) {
         val displayCategories = if (isLoading && categories.size <= 1) {
-            listOf("Loading...", "Loading...", "Loading...", "Loading...")
+            listOf(AppCategory.OTHER)
         } else categories
 
         LazyRow(
@@ -41,9 +43,9 @@ fun TextListButton(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(displayCategories) { item ->
-                val isSelected = (selectedCategory ?: "All") == item
+                val isSelected = selectedCategory == item
                 Text(
-                    text = item,
+                    text = stringResource(item.titleRes),
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryFixedVariant,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.W600,
@@ -56,10 +58,10 @@ fun TextListButton(
 
 @Composable
 fun TextListTextButton(
-    categories: List<String>,
+    categories: List<AppCategory>,
     isLoading: Boolean = false,
-    selectedCategory: String? = null,
-    onCategoryClick: (String) -> Unit = {}
+    selectedCategory: AppCategory = AppCategory.OTHER,
+    onCategoryClick: (AppCategory) -> Unit = {}
 ) {
     ShimmerBox(
         isLoading = isLoading && categories.size <= 1,
@@ -67,7 +69,7 @@ fun TextListTextButton(
         durationMillis = 800
     ) {
         val displayCategories = if (isLoading && categories.size <= 1) {
-            listOf("Loading...", "Loading...", "Loading...", "Loading...")
+            listOf(AppCategory.OTHER)
         } else categories
 
         LazyRow(
@@ -76,7 +78,7 @@ fun TextListTextButton(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(displayCategories) { item ->
-                val isSelected = (selectedCategory ?: "All") == item
+                val isSelected = selectedCategory == item
                 TextButton(
                     onClick = { onCategoryClick(item) },
                     enabled = !isLoading,
@@ -86,7 +88,7 @@ fun TextListTextButton(
                     )
                 ) {
                     Text(
-                        text = item,
+                        text = stringResource(item.titleRes),
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.surfaceDim,
                         fontWeight = FontWeight.W600
@@ -100,11 +102,9 @@ fun TextListTextButton(
 @Preview(showBackground = true)
 @Composable
 fun TextListButtonPreview() {
-    TextListButton(categories = listOf("All", "Programming", "Design"))
 }
 
 @Preview(showBackground = true)
 @Composable
 fun TextListTextButtonPreview() {
-    TextListTextButton(categories = listOf("All", "Programming", "Design"))
 }

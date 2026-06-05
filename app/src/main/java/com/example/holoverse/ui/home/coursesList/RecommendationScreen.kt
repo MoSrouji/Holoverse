@@ -58,6 +58,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeViewModel
 import com.example.holoverse.ui.theme.HoloverseTheme
@@ -78,7 +80,7 @@ fun RecommendationScreen(
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredCourses = courses.filter {
-        it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(searchQuery, ignoreCase = true)
+        it.name.contains(searchQuery, ignoreCase = true)
     }
 
     Scaffold(
@@ -107,7 +109,7 @@ fun RecommendationScreen(
                         }
                     },
 
-                )
+                    )
             }
         }
     ) { paddingValues ->
@@ -123,8 +125,19 @@ fun RecommendationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text(stringResource(R.string.search_recommendation_placeholder), style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                placeholder = {
+                    Text(
+                        stringResource(R.string.search_recommendation_placeholder),
+                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
@@ -154,7 +167,10 @@ fun RecommendationScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (searchQuery.isEmpty()) stringResource(R.string.showing_courses, filteredCourses.size) else stringResource(R.string.search_results, filteredCourses.size),
+                    text = if (searchQuery.isEmpty()) stringResource(
+                        R.string.showing_courses,
+                        filteredCourses.size
+                    ) else stringResource(R.string.search_results, filteredCourses.size),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
@@ -175,7 +191,7 @@ fun RecommendationScreen(
                             Courses(
                                 id = "shimmer_$it",
                                 name = "Loading Recommendation...",
-                                category = "Category",
+                                category = AppCategory.OTHER,
                                 price = 0.0,
                                 rating = 0.0,
                                 numReviews = 0,
@@ -303,7 +319,7 @@ private fun RecommendationCourseItem(course: Courses, onClick: () -> Unit) {
                     Spacer(modifier = Modifier.padding(2.dp))
 
                     Text(
-                        text = course.category,
+                        text = stringResource(course.category.titleRes),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
@@ -331,7 +347,10 @@ private fun RecommendationCourseItem(course: Courses, onClick: () -> Unit) {
                     )
                     Text("|", color = Color.LightGray)
                     Text(
-                        text = stringResource(R.string.enrolled_count, formatEnrolled(course.numEnrolled)),
+                        text = stringResource(
+                            R.string.enrolled_count,
+                            formatEnrolled(course.numEnrolled)
+                        ),
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
                     )
                 }

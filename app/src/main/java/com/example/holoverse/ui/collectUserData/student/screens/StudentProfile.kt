@@ -56,7 +56,6 @@ import com.example.holoverse.ui.collectUserData.student.viewModels.StudentSignUp
 import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
 import com.example.holoverse.ui.commonPart.auth.widget.DatePickerInput
 import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
 import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
@@ -92,10 +91,12 @@ fun StudentProfileInput(
             when (event) {
                 ValidationResultEvent.Success -> {
                     studentStates.value = studentStates.value.copy(
-                        phoneNumber = viewModel.forms[StudentSignUpTextField.PHONE_NUMBER]?.text ?: "",
+                        phoneNumber = viewModel.forms[StudentSignUpTextField.PHONE_NUMBER]?.text
+                            ?: "",
                         address = viewModel.forms[StudentSignUpTextField.ADDRESS]?.text ?: "",
                         gender = viewModel.forms[StudentSignUpTextField.Gender]?.text ?: "",
-                        dateOfBirth = viewModel.forms[StudentSignUpTextField.DATE_OF_BIRTH]?.text ?: "",
+                        dateOfBirth = viewModel.forms[StudentSignUpTextField.DATE_OF_BIRTH]?.text
+                            ?: "",
                         profileImageUrl = viewModel.selectedImageUri?.toString()
                     )
                     navController.navigateTo(AppDestination.SignUpStudentPreference)
@@ -108,7 +109,7 @@ fun StudentProfileInput(
         if (showAlert) {
             AnimatedAlertDialog(
                 title = stringResource(R.string.Warning),
-                text = stringResource(R.string.skipPresed),
+                text = stringResource(R.string.skip_pressed_message),
                 onConfirmClick = {},
                 onDismissClick = { showAlert = false }
             )

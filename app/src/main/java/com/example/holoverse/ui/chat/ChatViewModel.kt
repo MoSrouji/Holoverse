@@ -81,12 +81,14 @@ class ChatViewModel @Inject constructor(
 
                 // 3. Fetch mentors (Repository handles internal caching)
                 val mentors = fetchDataRepository.fetchMentors()
-                
-                _uiState.update { it.copy(
-                    contacts = mentors,
-                    filteredContacts = mentors,
-                    isLoading = false
-                ) }
+
+                _uiState.update {
+                    it.copy(
+                        contacts = mentors,
+                        filteredContacts = mentors,
+                        isLoading = false
+                    )
+                }
             } catch (e: Exception) {
                 // If network fails, stop loading but keep cached data
                 _uiState.update { it.copy(isLoading = false) }
@@ -131,7 +133,12 @@ class ChatViewModel @Inject constructor(
                 state.contacts.filter {
                     it.fullName?.contains(query, ignoreCase = true) == true ||
                             it.specialization.name.contains(query, ignoreCase = true) == true ||
-                            it.subjects?.any { subject -> subject.contains(query, ignoreCase = true) } == true
+                            it.subjects?.any { subject ->
+                                subject.contains(
+                                    query,
+                                    ignoreCase = true
+                                )
+                            } == true
                 }
             }
             state.copy(
@@ -146,7 +153,7 @@ class ChatViewModel @Inject constructor(
             try {
                 // Ensure we have a current user before proceeding
                 val currentUser = _uiState.value.currentUser ?: authRepository.getCurrentUser()
-                
+
                 if (currentUser == null) {
                     _uiState.update { it.copy(isLoading = false) }
                     return@launch
@@ -154,19 +161,22 @@ class ChatViewModel @Inject constructor(
 
                 val otherUserId = mentor.userId ?: return@launch
                 val currentUserId = currentUser.userId ?: return@launch
-                
-                _uiState.update { it.copy(
-                    selectedChatPartnerName = mentor.fullName ?: "Chat",
-                    selectedChatPartnerImageUrl = mentor.profileImageUrl,
-                    currentUser = currentUser
-                ) }
+
+                _uiState.update {
+                    it.copy(
+                        selectedChatPartnerName = mentor.fullName ?: "Chat",
+                        selectedChatPartnerImageUrl = mentor.profileImageUrl,
+                        currentUser = currentUser
+                    )
+                }
 
                 val chatId = chatRepository.createOrGetChat(
                     currentUserId = currentUserId,
                     otherUserId = otherUserId,
                     currentUserName = currentUser.fullName ?: "User",
                     otherUserName = mentor.fullName ?: "Mentor",
-                    currentUserImageUrl = (currentUser as? User.Student)?.profileImageUrl ?: (currentUser as? User.Mentor)?.profileImageUrl,
+                    currentUserImageUrl = (currentUser as? User.Student)?.profileImageUrl
+                        ?: (currentUser as? User.Mentor)?.profileImageUrl,
                     otherUserImageUrl = mentor.profileImageUrl
                 )
                 _uiState.update { it.copy(currentChatId = chatId, isLoading = false) }
@@ -180,15 +190,17 @@ class ChatViewModel @Inject constructor(
 
     fun onContactSelectedById(id: String) {
         if (_uiState.value.currentChatId == id) return
-        
+
         // Clear previous selection state immediately to avoid showing old conversation
-        _uiState.update { it.copy(
-            currentChatId = null,
-            messages = emptyList(),
-            selectedChatPartnerName = "Chat",
-            selectedChatPartnerImageUrl = null,
-            isLoading = true
-        ) }
+        _uiState.update {
+            it.copy(
+                currentChatId = null,
+                messages = emptyList(),
+                selectedChatPartnerName = "Chat",
+                selectedChatPartnerImageUrl = null,
+                isLoading = true
+            )
+        }
 
         // 1. Check if it's an existing chat by ID (covers groups and private chats from list)
         val existingChatById = _uiState.value.chats.find { it.id == id }
@@ -209,7 +221,7 @@ class ChatViewModel @Inject constructor(
         if (existingChatByParticipant != null) {
             val partnerName = existingChatByParticipant.participantNames[id] ?: "Chat"
             val partnerImageUrl = existingChatByParticipant.participantProfileImages[id]
-            
+
             // Create a temporary mentor object to trigger onContactSelected
             val tempMentor = User.Mentor(
                 userId = id,
@@ -234,7 +246,7 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun onChatSelected(chat: Chat) {
         val currentUserId = _uiState.value.currentUser?.userId ?: return
         val isGroup = chat.id.startsWith("group_")
@@ -247,15 +259,17 @@ class ChatViewModel @Inject constructor(
         }
         val partnerImageUrl = if (isGroup) null else chat.participantProfileImages[partnerId]
 
-        _uiState.update { it.copy(
-            selectedChatPartnerName = partnerName,
-            selectedChatPartnerImageUrl = partnerImageUrl,
-            currentChatId = chat.id
-            // Removed isLoading = true to allow instant transition to cached messages
-        ) }
-        
+        _uiState.update {
+            it.copy(
+                selectedChatPartnerName = partnerName,
+                selectedChatPartnerImageUrl = partnerImageUrl,
+                currentChatId = chat.id
+                // Removed isLoading = true to allow instant transition to cached messages
+            )
+        }
+
         viewModelScope.launch {
-            chatRepository.getMessages(chat.id).collectLatest { 
+            chatRepository.getMessages(chat.id).collectLatest {
                 // Messages are now observed via observeRepositoryState, 
                 // but we can use this emission to signal sync completion if needed.
             }
@@ -267,13 +281,13 @@ class ChatViewModel @Inject constructor(
         val text = state.inputText
         val user = state.currentUser
         val chatId = state.currentChatId
-        
+
         if (text.isNotBlank() && user != null && chatId != null) {
             viewModelScope.launch {
                 val senderId = user.userId ?: ""
                 val senderName = user.fullName ?: "Unknown"
                 val senderType = user.accountType.name
-                
+
                 _uiState.update { it.copy(inputText = "") }
                 try {
                     chatRepository.sendMessage(
@@ -289,7 +303,7 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun backToChatList() {
         _uiState.update { it.copy(currentChatId = null) }
     }
@@ -297,19 +311,20 @@ class ChatViewModel @Inject constructor(
     fun startRecording() {
         try {
             audioFile = File(context.cacheDir, "temp_audio_${System.currentTimeMillis()}.m4a")
-            mediaRecorder = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                MediaRecorder(context)
-            } else {
-                @Suppress("DEPRECATION")
-                MediaRecorder()
-            }.apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setOutputFile(audioFile?.absolutePath)
-                prepare()
-                start()
-            }
+            mediaRecorder =
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    MediaRecorder(context)
+                } else {
+                    @Suppress("DEPRECATION")
+                    MediaRecorder()
+                }.apply {
+                    setAudioSource(MediaRecorder.AudioSource.MIC)
+                    setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                    setOutputFile(audioFile?.absolutePath)
+                    prepare()
+                    start()
+                }
             _uiState.update { it.copy(isRecording = true) }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -328,9 +343,9 @@ class ChatViewModel @Inject constructor(
 
                 val file = audioFile ?: return@launch
                 val uri = Uri.fromFile(file)
-                
+
                 _uiState.update { it.copy(isSendingAudio = true) }
-                
+
                 val uploadResult = cloudinaryRepository.uploadFile(uri)
                 uploadResult.onSuccess { audioUrl ->
                     sendVoiceMessage(audioUrl)
@@ -349,7 +364,7 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isUploadingFile = true) }
-                
+
                 val uploadResult = cloudinaryRepository.uploadFile(uri)
                 uploadResult.onSuccess { url ->
                     when (type) {
@@ -449,7 +464,7 @@ class ChatViewModel @Inject constructor(
                 mediaPlayer = MediaPlayer().apply {
                     setDataSource(url)
                     prepareAsync()
-                    setOnPreparedListener { 
+                    setOnPreparedListener {
                         start()
                         _uiState.update { it.copy(playingAudioUrl = url) }
                     }

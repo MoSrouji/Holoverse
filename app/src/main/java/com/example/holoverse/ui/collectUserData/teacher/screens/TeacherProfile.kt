@@ -1,6 +1,3 @@
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -25,8 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,6 +64,9 @@ import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
 import com.example.holoverse.ui.theme.IbarraNovaSemiBoldPlatinum17
 import com.example.holoverse.utils.AnimatedAlertDialog
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun TeacherProfileInput(
@@ -115,7 +113,7 @@ fun TeacherProfileInput(
         if (showAlert) {
             AnimatedAlertDialog(
                 title = stringResource(R.string.Warning),
-                text = stringResource(R.string.skipPresed),
+                text = stringResource(R.string.skip_pressed_message),
                 onConfirmClick = {},
                 onDismissClick = { showAlert = false }
             )
@@ -264,7 +262,10 @@ fun TeacherProfileInput(
                 onDateSelected = { newDateMillis ->
                     selectedDateMillis = newDateMillis
                     if (newDateMillis != null) {
-                        val formattedDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(newDateMillis))
+                        val formattedDate =
+                            SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(
+                                Date(newDateMillis)
+                            )
                         dateValidationState.value = dateValidationState.value.copy(
                             hasError = false,
                             errorMessageId = null

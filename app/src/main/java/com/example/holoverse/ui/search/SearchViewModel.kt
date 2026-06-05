@@ -3,6 +3,8 @@ package com.example.holoverse.ui.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.search.domain.model.CourseFilters
 import com.example.holoverse.search.domain.model.MentorFilters
@@ -14,6 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,10 +29,7 @@ data class SearchUiState(
     val searchResults: SearchResults = SearchResults(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val recentSearches: List<String> = listOf(
-        "3D Design", "Graphic Design", "Programming", "SEO & Marketing",
-        "Web Development", "Office Productivity", "Personal Development"
-    )
+    val recentSearches: List<String> = emptyList()
 )
 
 enum class SearchType {
@@ -43,13 +43,33 @@ data class SearchResults(
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val searchRepository: SearchRepository
+    private val searchRepository: SearchRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     private var searchJob: Job? = null
+    private var recentSearchesJob: Job? = null
+
+    init {
+        observeRecentSearches()
+    }
+
+    private fun observeRecentSearches() {
+        recentSearchesJob?.cancel()
+        recentSearchesJob = viewModelScope.launch {
+            val user = authRepository.getCachedUser() ?: authRepository.getCurrentUser()
+            user?.userId?.let { userId ->
+                _uiState.collectLatest { state ->
+                    searchRepository.getRecentSearches(userId, state.searchType).collect { searches ->
+                        _uiState.update { it.copy(recentSearches = searches) }
+                    }
+                }
+            }
+        }
+    }
 
     fun onQueryChange(newQuery: String) {
         _uiState.update { it.copy(query = newQuery) }
@@ -61,7 +81,7 @@ class SearchViewModel @Inject constructor(
         triggerSearch(withDebounce = false)
     }
 
-    fun updateCourseCategory(category: String?) {
+    fun updateCourseCategory(category: AppCategory?) {
         _uiState.update { it.copy(courseFilters = it.courseFilters.copy(category = category)) }
         triggerSearch(withDebounce = false)
     }
@@ -72,17 +92,31 @@ class SearchViewModel @Inject constructor(
     }
 
     fun updateCoursePriceRange(min: Double?, max: Double?) {
-        _uiState.update { it.copy(courseFilters = it.courseFilters.copy(minPrice = min, maxPrice = max)) }
+        _uiState.update {
+            it.copy(
+                courseFilters = it.courseFilters.copy(
+                    minPrice = min,
+                    maxPrice = max
+                )
+            )
+        }
         triggerSearch(withDebounce = false)
     }
 
-    fun updateMentorSpecialization(specialization: String?) {
+    fun updateMentorSpecialization(specialization: AppCategory?) {
         _uiState.update { it.copy(mentorFilters = it.mentorFilters.copy(specialization = specialization)) }
         triggerSearch(withDebounce = false)
     }
 
     fun updateMentorHourlyRate(min: Double?, max: Double?) {
-        _uiState.update { it.copy(mentorFilters = it.mentorFilters.copy(minHourlyRate = min, maxHourlyRate = max)) }
+        _uiState.update {
+            it.copy(
+                mentorFilters = it.mentorFilters.copy(
+                    minHourlyRate = min,
+                    maxHourlyRate = max
+                )
+            )
+        }
         triggerSearch(withDebounce = false)
     }
 
@@ -123,6 +157,12 @@ class SearchViewModel @Inject constructor(
 
     private suspend fun performSearch() {
         val currentState = _uiState.value
+        
+        // Save to recent searches if query is not empty and search was triggered
+        if (currentState.query.isNotBlank()) {
+            saveSearch(currentState.query, currentState.searchType)
+        }
+
         if (currentState.searchType == SearchType.COURSES) {
             searchRepository.searchCourses(currentState.courseFilters.copy(query = currentState.query))
                 .collect { response ->
@@ -133,6 +173,15 @@ class SearchViewModel @Inject constructor(
                 .collect { response ->
                     handleMentorResponse(response)
                 }
+        }
+    }
+
+    private fun saveSearch(query: String, type: SearchType) {
+        viewModelScope.launch {
+            val user = authRepository.getCachedUser() ?: authRepository.getCurrentUser()
+            user?.let {
+                searchRepository.saveRecentSearch(it, query, type)
+            }
         }
     }
 
@@ -148,6 +197,7 @@ class SearchViewModel @Inject constructor(
                     )
                 }
             }
+
             is Response.Error -> {
                 _uiState.update {
                     it.copy(
@@ -171,6 +221,7 @@ class SearchViewModel @Inject constructor(
                     )
                 }
             }
+
             is Response.Error -> {
                 _uiState.update {
                     it.copy(
@@ -183,8 +234,11 @@ class SearchViewModel @Inject constructor(
     }
 
     fun removeRecentSearch(item: String) {
-        _uiState.update { state ->
-            state.copy(recentSearches = state.recentSearches.filter { it != item })
+        viewModelScope.launch {
+            val user = authRepository.getCachedUser() ?: authRepository.getCurrentUser()
+            user?.let {
+                searchRepository.removeRecentSearch(it, item, _uiState.value.searchType)
+            }
         }
     }
 }

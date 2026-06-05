@@ -53,10 +53,10 @@
     <string name="faculty">Faculty / College</string>
     <string name="skip">Skip</string>
     <string name="Warning">warning\n</string>
-    <string name="skipPresed">this form it\'s help us to make recomedatin for you to get better exiprence</string>
-    <string name="Categories">Categories</string>
-    <string name="popular_Courses">Popular Courses</string>
-    <string name="top_Mentor">Top Mentor</string>
+    <string name="skip_pressed_message">This form helps us make recommendations for you to get a better experience</string>
+    <string name="categories_title">Categories</string>
+    <string name="popular_courses">Popular Courses</string>
+    <string name="top_mentor">Top Mentor</string>
     <string name="for_you_courses">Recommended Courses</string>
     <string name="for_you_mentor">Recommended Mentors</string>
 
@@ -128,6 +128,7 @@
     <!-- Home Screen -->
     <string name="create_course">Create Course</string>
     <string name="analytics">Analytics</string>
+    <string name="teacher_tools">Teacher Tools</string>
     <string name="students">Students</string>
     <string name="messages">Messages</string>
     <string name="announcements">Announcements</string>
@@ -163,5 +164,6 @@
     <string name="message">Message</string>
     <string name="unknown_error">Unknown error</string>
     <string name="at_google">\u0020At Google</string>
+    <string name="Categories">Categories</string>
 
 </resources>

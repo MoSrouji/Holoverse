@@ -48,6 +48,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.UserType
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.component.FabMenuItem
 import com.example.holoverse.ui.home.component.FloatingActionButtonMenu
@@ -70,10 +71,11 @@ fun HomeScreen(
     onTopMentorsListClick: () -> Unit,
     onMentorClick: (String) -> Unit,
     onNavigateToCreateCourse: () -> Unit,
+    onNavigateToAnalytics: () -> Unit,
     onNavigateToChat: () -> Unit,
-    onNavigateToSearch: () -> Unit,
+    onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
-    onCategorySelected: (String) -> Unit,
+    onCategorySelected: (AppCategory) -> Unit,
     darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -95,6 +97,7 @@ fun HomeScreen(
         onTopMentorsListClick = onTopMentorsListClick,
         onMentorClick = onMentorClick,
         onNavigateToCreateCourse = onNavigateToCreateCourse,
+        onNavigateToAnalytics = onNavigateToAnalytics,
         onNavigateToChat = onNavigateToChat,
         onNavigateToSearch = onNavigateToSearch,
         onCourseClick = onCourseClick,
@@ -108,8 +111,8 @@ fun HomeScreenContent(
     uiState: HomeUiState,
     onRefresh: () -> Unit,
     onTabSelected: (HomeTab) -> Unit,
-    onCategorySelected: (String) -> Unit,
-    onFilterCategorySelected: (String) -> Unit,
+    onCategorySelected: (AppCategory) -> Unit,
+    onFilterCategorySelected: (AppCategory) -> Unit,
     onSaveCourseClick: (String) -> Unit,
     onCategoryClick: () -> Unit,
     onPopularCoursesClick: () -> Unit,
@@ -118,8 +121,9 @@ fun HomeScreenContent(
     onTopMentorsListClick: () -> Unit,
     onMentorClick: (String) -> Unit,
     onNavigateToCreateCourse: () -> Unit,
+    onNavigateToAnalytics: () -> Unit,
     onNavigateToChat: () -> Unit,
-    onNavigateToSearch: () -> Unit,
+    onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
     darkTheme: Boolean
 ) {
@@ -162,7 +166,7 @@ fun HomeScreenContent(
                 onNavigateToCreateCourse()
             },
             FabMenuItem(analyticsLabel, Icons.Default.Analytics) {
-                /* Navigate to Analytics */
+                onNavigateToAnalytics()
             },
             FabMenuItem(studentsLabel, Icons.Default.Groups) {
                 /* Navigate to Students List */
@@ -224,6 +228,9 @@ fun HomeScreenContent(
                     fullName = uiState.currentUser?.fullName,
                     isLoading = uiState.isLoading,
                     darkTheme = darkTheme,
+                    boostedCourses = uiState.boostedCourses,
+                    allCourses = uiState.allCourses,
+                    onCourseClick = onCourseClick,
                     onNavigateToSearch = onNavigateToSearch,
                     onNavigateToNotifications = { /* Navigate to Notifications */ },
                     brush = { headerBrush }
@@ -328,6 +335,7 @@ fun HomeScreenPreview() {
             onTopMentorsListClick = {},
             onMentorClick = {},
             onNavigateToCreateCourse = {},
+            onNavigateToAnalytics = {},
             onNavigateToChat = {},
             onNavigateToSearch = {},
             onCourseClick = {},

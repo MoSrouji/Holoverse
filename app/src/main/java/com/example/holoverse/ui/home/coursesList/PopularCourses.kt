@@ -65,6 +65,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeViewModel
 import com.example.holoverse.ui.theme.HoloverseTheme
@@ -83,20 +85,18 @@ fun PopularCoursesScreen(
     val courses = uiState.courses
 
     val categories = remember(courses) {
-        listOf("All") + courses.map { it.category }.distinct().sorted()
+        listOf(AppCategory.OTHER) + courses.map { it.category }.distinct().sortedBy { it.name }
     }
-    var selectedCategory by remember { mutableStateOf("All") }
+    var selectedCategory by remember { mutableStateOf(AppCategory.OTHER) }
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredCourses = courses.filter {
-        (selectedCategory == "All" || it.category == selectedCategory) &&
-                (it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(
-                    searchQuery,
-                    ignoreCase = true
-                ))
+        (selectedCategory == AppCategory.OTHER || it.category == selectedCategory) &&
+                (it.name.contains(searchQuery, ignoreCase = true))
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val scrollBehavior =
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -188,7 +188,7 @@ fun PopularCoursesScreen(
                         onClick = { selectedCategory = category },
                         label = {
                             Text(
-                                category,
+                                stringResource(category.titleRes),
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = if (category == selectedCategory) FontWeight.Bold else FontWeight.Medium
                                 )
@@ -235,7 +235,7 @@ fun PopularCoursesScreen(
                             Courses(
                                 id = "shimmer_$it",
                                 name = "Loading Course Name...",
-                                category = "Category",
+                                category = AppCategory.ARTS,
                                 price = 0.0,
                                 rating = 0.0,
                                 numReviews = 0,
@@ -267,10 +267,9 @@ fun PopularCoursesScreen(
                     }
                 }
             }
-            }
         }
     }
-
+}
 
 
 @Composable
@@ -371,7 +370,7 @@ fun CourseItem(course: Courses, onClick: () -> Unit) {
                     Spacer(modifier = Modifier.padding(2.dp))
 
                     Text(
-                        text = course.category,
+                        text = course.category.toString(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold

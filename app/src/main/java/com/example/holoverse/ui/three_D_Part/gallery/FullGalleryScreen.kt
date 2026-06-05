@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.three_d_model.domain.model.Model
 import com.example.holoverse.ui.theme.IbarraNovaFont
 
@@ -59,9 +61,9 @@ fun FullGalleryScreen(
     models: List<Model>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    categories: List<String>,
-    selectedCategory: String,
-    onCategorySelected: (String) -> Unit,
+    categories: List<AppCategory>,
+    selectedCategory: AppCategory,
+    onCategorySelected: (AppCategory) -> Unit,
     onModelSelected: (Model) -> Unit,
     onBackClick: () -> Unit,
     onRefresh: () -> Unit,
@@ -158,7 +160,7 @@ fun FullGalleryScreen(
                                 FilterChip(
                                     selected = selectedCategory == category,
                                     onClick = { onCategorySelected(category) },
-                                    label = { Text(category) },
+                                    label = { Text(stringResource(category.titleRes)) },
                                     shape = RoundedCornerShape(12.dp),
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = MaterialTheme.colorScheme.primary,
@@ -188,7 +190,7 @@ fun FullGalleryScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (searchQuery.isEmpty() && selectedCategory == "All") "No models available" else "No models found",
+                                text = if (searchQuery.isEmpty() && selectedCategory == AppCategory.OTHER) "No models available" else "No models found",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -201,7 +203,7 @@ fun FullGalleryScreen(
                                     name = "Loading...",
                                     path = "",
                                     description = "",
-                                    category = ""
+                                    category = AppCategory.OTHER
                                 )
                             }
                         } else models
@@ -292,7 +294,7 @@ fun ModelGridItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = model.category,
+                    text = stringResource(model.category.titleRes),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary,
                     maxLines = 1

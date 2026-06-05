@@ -4,6 +4,7 @@ import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.data.CourseRepoImpl
 import com.example.holoverse.reviews.data.ReviewRepositoryImpl
 import com.example.holoverse.reviews.domain.ReviewRepository
+import com.example.holoverse.search.data.local.dao.RecentSearchDao
 import com.example.holoverse.search.data.repository.SearchRepositoryImpl
 import com.example.holoverse.search.domain.repository.SearchRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -25,8 +26,11 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideSearchRepository(firestore: FirebaseFirestore): SearchRepository {
-        return SearchRepositoryImpl(firestore)
+    fun provideSearchRepository(
+        firestore: FirebaseFirestore,
+        recentSearchDao: RecentSearchDao
+    ): SearchRepository {
+        return SearchRepositoryImpl(firestore, recentSearchDao)
     }
 
     @Provides

@@ -1,5 +1,6 @@
 package com.example.holoverse.navigation
 
+import com.example.holoverse.core.domain.model.AppCategory
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
@@ -48,7 +49,7 @@ sealed interface AppDestination : NavKey {
     data object Category : AppDestination
 
     @Serializable
-    data class CategoryCourses(val categoryName: String) : AppDestination
+    data class CategoryCourses(val category: AppCategory) : AppDestination
 
     @Serializable
     data class Mentor(val mentorId: String = "") : AppDestination
@@ -69,10 +70,13 @@ sealed interface AppDestination : NavKey {
     data object TopMentors : AppDestination
 
     @Serializable
-    data object Search : AppDestination
+    data class Search(val triggerVoice: Boolean = false) : AppDestination
 
     @Serializable
     data object CreateCourse : AppDestination
+
+    @Serializable
+    data object MentorAnalysis : AppDestination
 
     @Serializable
     data object Transactions : AppDestination

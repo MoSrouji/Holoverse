@@ -39,10 +39,10 @@
     <string name="hourlyRate">Tariffa oraria</string>
     <string name="skip">Salta</string>
     <string name="Warning">Avvertimento\n</string>
-    <string name="skipPresed">Questo modulo ci aiuta a darti consigli migliori per un\'esperienza ottimale</string>
-    <string name="Categories">Categorie</string>
-    <string name="popular_Courses">Corsi popolari</string>
-    <string name="top_Mentor">Miglior Mentore</string>
+    <string name="skip_pressed_message">Questo modulo ci aiuta a darti consigli migliori per un\'esperienza ottimale</string>
+    <string name="categories_title">Categorie</string>
+    <string name="popular_courses">Corsi popolari</string>
+    <string name="top_mentor">Miglior Mentore</string>
     <string name="profile">Profilo</string>
     <string name="edit_profile">Modifica profilo</string>
     <string name="payment_option">Opzione di pagamento</string>

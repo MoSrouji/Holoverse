@@ -55,6 +55,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.home.HomeViewModel
 import com.example.holoverse.ui.theme.HoloverseTheme
@@ -99,12 +101,14 @@ fun RecommendedMentorsScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.back))
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back)
+                            )
                         }
                     },
 
-                )
+                    )
             }
         }
     ) { paddingValues ->
@@ -120,8 +124,19 @@ fun RecommendedMentorsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text(stringResource(R.string.search_for), style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                placeholder = {
+                    Text(
+                        stringResource(R.string.search_for),
+                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
@@ -151,7 +166,10 @@ fun RecommendedMentorsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (searchQuery.isEmpty()) "Showing ${filteredMentors.size} mentors" else stringResource(R.string.search_results, filteredMentors.size),
+                    text = if (searchQuery.isEmpty()) "Showing ${filteredMentors.size} mentors" else stringResource(
+                        R.string.search_results,
+                        filteredMentors.size
+                    ),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
@@ -189,7 +207,13 @@ fun RecommendedMentorsScreen(
                         ) { mentor ->
                             RecommendedMentorItem(
                                 mentor = mentor,
-                                onClick = { if (!uiState.isLoading) mentor.userId?.let { onMentorClick(it) } }
+                                onClick = {
+                                    if (!uiState.isLoading) mentor.userId?.let {
+                                        onMentorClick(
+                                            it
+                                        )
+                                    }
+                                }
                             )
                         }
                     }
@@ -287,7 +311,7 @@ private fun RecommendedMentorItem(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = mentor.specialization.name.lowercase().replaceFirstChar { it.uppercase() },
+                        text = stringResource(mentor.specialization.titleRes),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold

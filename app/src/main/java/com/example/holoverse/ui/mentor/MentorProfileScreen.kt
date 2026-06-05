@@ -61,9 +61,10 @@ import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.reviews.domain.Review
-import com.example.holoverse.ui.home.component.CourseTypeWithButton
 import com.example.holoverse.ui.reviews.ui.ReviewViewModel
 import com.example.holoverse.ui.reviews.ui.components.ReviewItem
 import com.example.holoverse.ui.reviews.ui.components.WriteReviewDialog
@@ -95,30 +96,30 @@ fun MentorProfileScreen(
         containerColor = Color.Transparent,
         topBar = {
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 4.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                            tint = Color.White
-                        )
-                    }
-                    Text(
-                        text = "Mentor Profile",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontFamily = IbarraNovaFont,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = Color.White,
-                        modifier = Modifier.padding(start = 8.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back),
+                        tint = Color.White
                     )
                 }
+                Text(
+                    text = "Mentor Profile",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontFamily = IbarraNovaFont,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
 
         }
     ) { paddingValues ->
@@ -539,7 +540,10 @@ fun MentorProfileShimmer(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = 16.dp)
-                .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(
+                    Color.Gray.copy(alpha = 0.2f),
+                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                )
         )
     }
 }
@@ -595,7 +599,7 @@ fun MentorCourseItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = course.category,
+                    text = stringResource(course.category.titleRes),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.tertiary,
                     fontWeight = FontWeight.Bold

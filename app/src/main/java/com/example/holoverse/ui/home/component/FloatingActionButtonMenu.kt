@@ -31,7 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.holoverse.R
 
 data class FabMenuItem(
     val label: String,
@@ -78,7 +80,7 @@ fun FloatingActionButtonMenu(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(16.dp),
-                text = { Text(text = if (expanded) "Close" else "Teacher Tools") },
+                text = { Text(text = if (expanded) "Close" else stringResource(R.string.teacher_tools)) },
                 icon = {
                     Icon(
                         imageVector = Icons.Default.Add,

@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
+import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.utils.Response
@@ -32,13 +34,14 @@ data class HomeUiState(
     val allCourses: List<Courses> = emptyList(),
     val enrolledCourses: List<Courses> = emptyList(),
     val savedCourses: List<Courses> = emptyList(),
-    val categories: List<String> = listOf("All"),
+    val categories: List<AppCategory> = listOf(AppCategory.OTHER),
     val recommendedCourses: List<Courses> = emptyList(),
     val mentors: List<User.Mentor> = emptyList(),
     val allMentors: List<User.Mentor> = emptyList(),
     val recommendedMentors: List<User.Mentor> = emptyList(),
+    val boostedCourses: List<BoostedCourse> = emptyList(),
     val selectedTab: HomeTab = HomeTab.Explore,
-    val selectedCategory: String = "All",
+    val selectedCategory: AppCategory = AppCategory.OTHER,
     val error: String? = null,
     val isOffline: Boolean = false
 )
@@ -50,7 +53,8 @@ class HomeViewModel @Inject constructor(
     private val cloudinaryRepository: CloudinaryRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState(currentUser = authRepository.getCachedUser()))
+    private val _uiState =
+        MutableStateFlow(HomeUiState(currentUser = authRepository.getCachedUser()))
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
@@ -61,16 +65,21 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                // Start fetching courses and mentors in parallel
+                // Cleanup expired boosts first
+                fetchDataRepository.cleanupExpiredBoosts()
+
+                // Start fetching courses, mentors, and boosted courses in parallel
                 val coursesDeferred = async { fetchDataRepository.fetchCourses(forceRefresh) }
                 val mentorsDeferred = async { fetchDataRepository.fetchMentors(forceRefresh) }
-                
+                val boostedCoursesDeferred = async { fetchDataRepository.fetchBoostedCourses() }
+
                 // Fetch user info from cache
                 val user = authRepository.getCachedUser()
-                
+
                 // Await results
                 val courses = coursesDeferred.await()
                 val rawMentors = mentorsDeferred.await()
+                val boostedCourses = boostedCoursesDeferred.await()
 
                 // Move heavy processing to Background thread to avoid UI jank
                 val processedData = withContext(Dispatchers.Default) {
@@ -83,43 +92,48 @@ class HomeViewModel @Inject constructor(
                     }
 
                     val userInterests = when (user) {
-                        is User.Student -> (user.favouriteSubjects ?: emptyList()) + (user.academicInterests ?: emptyList())
+                        is User.Student -> (user.favouriteSubjects
+                            ?: emptyList()) + (user.academicInterests ?: emptyList())
+
                         is User.Mentor -> user.subjects ?: emptyList()
                         else -> emptyList()
                     }.distinct()
 
                     val recommendedCourses = courses.filter { course ->
                         userInterests.any { fav ->
-                            val nFav = fav.trim().replace("_", " ")
-                            val nCat = course.category.trim().replace("_", " ")
+                            val nFav = fav.trim().replace("_", " ").uppercase()
+                            val nCat = course.category.name
 
-                            if (nCat.contains(nFav, ignoreCase = true) || nFav.contains(nCat, ignoreCase = true)) return@any true
+                            if (nCat.contains(nFav, ignoreCase = true) || nFav.contains(
+                                    nCat,
+                                    ignoreCase = true
+                                )
+                            ) return@any true
 
-                            val catEnum = com.example.holoverse.auth.domain.entities.MentorCategory.entries.find {
-                                it.name.replace("_", " ").equals(nCat, ignoreCase = true) ||
-                                it.name.equals(course.category.trim(), ignoreCase = true)
-                            }
-                            catEnum?.specializations?.any { spec ->
-                                spec.replace("_", " ").contains(nFav, ignoreCase = true) ||
-                                nFav.contains(spec.replace("_", " "), ignoreCase = true)
+                            course.category.specializations.any { spec ->
+                                spec.replace("_", " ").uppercase().contains(nFav, ignoreCase = true) ||
+                                        nFav.contains(spec.replace("_", " ").uppercase(), ignoreCase = true)
                             } == true
                         }
                     }
 
                     val recommendedMentors = mentors.filter { mentor ->
                         userInterests.any { fav ->
-                            val nFav = fav.trim().replace("_", " ")
-                            val nSpecName = mentor.specialization.name.replace("_", " ")
+                            val nFav = fav.trim().replace("_", " ").uppercase()
+                            val nSpecName = mentor.specialization.name
 
                             nSpecName.contains(nFav, ignoreCase = true) ||
-                            nFav.contains(nSpecName, ignoreCase = true) ||
-                            mentor.specialization.specializations.any { spec ->
-                                spec.replace("_", " ").contains(nFav, ignoreCase = true) ||
-                                nFav.contains(spec.replace("_", " "), ignoreCase = true)
-                            }
+                                    nFav.contains(nSpecName, ignoreCase = true) ||
+                                    mentor.specialization.specializations.any { spec ->
+                                        spec.replace("_", " ").uppercase().contains(nFav, ignoreCase = true) ||
+                                                nFav.contains(
+                                                    spec.replace("_", " ").uppercase(),
+                                                    ignoreCase = true
+                                                )
+                                    }
                         }
                     }
-                    
+
                     Triple(mentors, recommendedCourses, recommendedMentors)
                 }
 
@@ -139,10 +153,10 @@ class HomeViewModel @Inject constructor(
                 }
                 val savedCourses = courses.filter { it.id in savedCoursesIds }
 
-                val categories = listOf("All") + courses
-                    .mapNotNull { it.category.takeIf { cat -> cat.isNotBlank() } }
-                    .distinct()
-                    .sorted()
+                val categories = (listOf(AppCategory.OTHER) + courses
+                    .map { it.category }
+                    .distinct())
+                    .sortedBy { it.name }
 
                 _uiState.update {
                     it.copy(
@@ -155,6 +169,7 @@ class HomeViewModel @Inject constructor(
                         recommendedCourses = recommendedCourses,
                         allMentors = mentors,
                         recommendedMentors = recommendedMentors,
+                        boostedCourses = boostedCourses,
                         isOffline = false
                     )
                 }
@@ -164,7 +179,7 @@ class HomeViewModel @Inject constructor(
             } catch (e: Exception) {
                 // Log to analytics/crash reporting
                 Log.e("HomeViewModel", "Error fetching home data", e)
-                
+
                 val errorMessage = when (e) {
                     is IOException -> "Network error. Please check your connection."
                     else -> e.localizedMessage ?: "Failed to fetch home data"
@@ -189,27 +204,32 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(selectedTab = tab) }
     }
 
-    fun onCategorySelected(category: String) {
+    fun onCategorySelected(category: AppCategory) {
         applyFilter(category)
     }
 
-    fun applyFilter(category: String) {
+    fun applyFilter(category: AppCategory) {
         _uiState.update { state ->
-            val filteredCourses = if (category == "All") {
+            val filteredCourses = if (category == AppCategory.OTHER) {
                 state.allCourses
             } else {
                 state.allCourses.filter { it.category == category }
             }
-            
-            val filteredMentors = if (category == "All") {
+
+            val filteredMentors = if (category == AppCategory.OTHER) {
                 state.allMentors
             } else {
                 state.allMentors.filter { mentor ->
-                    mentor.specialization.name.replace("_", " ").equals(category, ignoreCase = true) ||
-                    mentor.specialization.specializations.any { it.equals(category, ignoreCase = true) }
+                    mentor.specialization == category ||
+                            mentor.specialization.specializations.any {
+                                it.equals(
+                                    category.name.replace("_", " "),
+                                    ignoreCase = true
+                                )
+                            }
                 }
             }
-            
+
             state.copy(
                 selectedCategory = category,
                 courses = filteredCourses,

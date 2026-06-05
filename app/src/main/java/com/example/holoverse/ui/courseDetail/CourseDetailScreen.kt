@@ -34,9 +34,9 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
@@ -53,8 +53,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,7 +61,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -85,7 +82,6 @@ import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.courses.domain.CourseSession
 import com.example.holoverse.courses.domain.Courses
-import com.example.holoverse.ui.spatialTheme.Brush
 import com.example.holoverse.ui.theme.HoloCyan
 import com.example.holoverse.ui.theme.HoloPurple
 import com.example.holoverse.ui.theme.IbarraNovaFont
@@ -121,10 +117,16 @@ fun CourseDetailScreen(
                 onEnrollSuccess()
                 viewModel.resetEnrollmentState()
             }
+
             is Response.Error -> {
-                Toast.makeText(context, (enrollmentState as Response.Error).message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    (enrollmentState as Response.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
                 viewModel.resetEnrollmentState()
             }
+
             else -> {}
         }
     }
@@ -136,10 +138,13 @@ fun CourseDetailScreen(
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 viewModel.resetSaveStatus()
             }
+
             is Response.Error -> {
-                Toast.makeText(context, (saveStatus as Response.Error).message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, (saveStatus as Response.Error).message, Toast.LENGTH_SHORT)
+                    .show()
                 viewModel.resetSaveStatus()
             }
+
             else -> {}
         }
     }
@@ -200,7 +205,7 @@ fun CourseDetailScreen(
                         }
                     }
 
-                    )
+                )
             }
         },
         bottomBar = {
@@ -295,10 +300,30 @@ fun CourseDetailContent(
 
     val sessions = course.sessions.ifEmpty {
         listOf(
-            CourseSession("Introduction", "7/2/2026", "10:30 -> 11:30", "In this session, we will dive deep into the core concepts and practical applications of the topic. Expect hands-on exercises and expert insights."),
-            CourseSession("Fundamentals of Design", "9/2/2025", "12:00 -> 14:20", "In this session, we will dive deep into the core concepts and practical applications of the topic. Expect hands-on exercises and expert insights."),
-            CourseSession("Advanced Techniques", "11/2/2026", "13:00 -> 15:00", "In this session, we will dive deep into the core concepts and practical applications of the topic. Expect hands-on exercises and expert insights."),
-            CourseSession("Project Presentation", "11/2/2026", "13:00 -> 15:00", "In this session, we will dive deep into the core concepts and practical applications of the topic. Expect hands-on exercises and expert insights.")
+            CourseSession(
+                "Introduction",
+                "7/2/2026",
+                "10:30 -> 11:30",
+                "In this session, we will dive deep into the core concepts and practical applications of the topic. Expect hands-on exercises and expert insights."
+            ),
+            CourseSession(
+                "Fundamentals of Design",
+                "9/2/2025",
+                "12:00 -> 14:20",
+                "In this session, we will dive deep into the core concepts and practical applications of the topic. Expect hands-on exercises and expert insights."
+            ),
+            CourseSession(
+                "Advanced Techniques",
+                "11/2/2026",
+                "13:00 -> 15:00",
+                "In this session, we will dive deep into the core concepts and practical applications of the topic. Expect hands-on exercises and expert insights."
+            ),
+            CourseSession(
+                "Project Presentation",
+                "11/2/2026",
+                "13:00 -> 15:00",
+                "In this session, we will dive deep into the core concepts and practical applications of the topic. Expect hands-on exercises and expert insights."
+            )
         )
     }
 
@@ -306,186 +331,187 @@ fun CourseDetailContent(
         modifier = modifier
             .fillMaxSize()
     ) {
-            item {
-                // Course Image with Gradient Overlay
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(280.dp)
-                        .padding(16.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                ) {
-                    if (course.imageUrl.isNotEmpty()) {
-                        AsyncImage(
-                            model = course.imageUrl,
-                            contentDescription = "Course Image",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(
-                                            HoloPurple.copy(alpha = 0.7f),
-                                            HoloCyan.copy(alpha = 0.7f)
-                                        )
+        item {
+            // Course Image with Gradient Overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(24.dp))
+            ) {
+                if (course.imageUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = course.imageUrl,
+                        contentDescription = "Course Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        HoloPurple.copy(alpha = 0.7f),
+                                        HoloCyan.copy(alpha = 0.7f)
                                     )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = course.name,
-                                color = Color.White,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(24.dp)
-                            )
-                        }
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = course.name,
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(24.dp)
+                        )
                     }
                 }
+            }
 
-                Column(
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Text(
+                    text = course.name,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = null,
+                        tint = Color(0xFFFFC107),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = " ${course.rating} (${course.numReviews} reviews)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Instructor Info
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
+                        .clickable {
+                            val id = instructor?.userId ?: course.instructorId
+                            if (id.isNotEmpty()) {
+                                onInstructorClick(id)
+                            }
+                        }
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = course.name,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                    AsyncImage(
+                        model = instructor?.profileImageUrl,
+                        contentDescription = "Instructor Image",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentScale = ContentScale.Crop
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Star,
-                            contentDescription = null,
-                            tint = Color(0xFFFFC107),
-                            modifier = Modifier.size(20.dp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = instructor?.fullName
+                                ?: course.instructorName.ifEmpty { "Instructor" },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = " ${course.rating} (${course.numReviews} reviews)",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = instructor?.specialization?.name?.lowercase()
+                                ?.replaceFirstChar { it.uppercase() } ?: "Professional Instructor",
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Instructor Info
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
-                            .clickable {
-                                val id = instructor?.userId ?: course.instructorId
-                                if (id.isNotEmpty()) {
-                                    onInstructorClick(id)
-                                }
-                            }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        AsyncImage(
-                            model = instructor?.profileImageUrl,
-                            contentDescription = "Instructor Image",
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentScale = ContentScale.Crop
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = instructor?.fullName ?: course.instructorName.ifEmpty { "Instructor" },
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text(
-                                text = instructor?.specialization?.name?.lowercase()
-                                    ?.replaceFirstChar { it.uppercase() } ?: "Professional Instructor",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Info Chips
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        InfoChip(Icons.Default.AccessTime, course.duration)
-                        InfoChip(Icons.Default.Layers, course.level)
-                        InfoChip(Icons.Default.Group, "${course.numEnrolled} Students")
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    Text(
-                        text = "Description",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = course.description.ifEmpty { "No description available for this course yet. Stay tuned for updates!" },
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 24.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(40.dp))
-
-                    CourseDetailToggle(
-                        selectedTab = selectedTab,
-                        onTabSelected = { selectedTab = it }
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
-            }
 
-            if (selectedTab == CourseDetailTab.Courses) {
-                // Syllabus / Timeline
-                itemsIndexed(
-                    items = sessions,
-                    key = { _, session -> session.title },
-                    contentType = { _, _ -> "timeline_item" }
-                ) { index, session ->
-                    TimelineItem(
-                        session = session,
-                        isFirst = index == 0,
-                        isLast = index == sessions.size - 1
-                    )
-                }
-            } else {
-                item(
-                    key = "rating_section",
-                    contentType = "rating_section"
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Info Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    RatingSection(course)
+                    InfoChip(Icons.Default.AccessTime, course.duration)
+                    InfoChip(Icons.Default.Layers, course.level)
+                    InfoChip(Icons.Default.Group, "${course.numEnrolled} Students")
                 }
-            }
 
-            item {
                 Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Description",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = course.description.ifEmpty { "No description available for this course yet. Stay tuned for updates!" },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(40.dp))
+
+                CourseDetailToggle(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
+
+        if (selectedTab == CourseDetailTab.Courses) {
+            // Syllabus / Timeline
+            itemsIndexed(
+                items = sessions,
+                key = { _, session -> session.title },
+                contentType = { _, _ -> "timeline_item" }
+            ) { index, session ->
+                TimelineItem(
+                    session = session,
+                    isFirst = index == 0,
+                    isLast = index == sessions.size - 1
+                )
+            }
+        } else {
+            item(
+                key = "rating_section",
+                contentType = "rating_section"
+            ) {
+                RatingSection(course)
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(32.dp))
+        }
     }
+}
 
 
 @Composable
@@ -591,9 +617,11 @@ fun RatingSection(course: Courses) {
             }
 
             // Simplified Rating Bars
-            Column(modifier = Modifier
-                .weight(1f)
-                .padding(start = 32.dp)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 32.dp)
+            ) {
                 RatingBar(5, 0.8f)
                 RatingBar(4, 0.15f)
                 RatingBar(3, 0.03f)
@@ -801,7 +829,7 @@ fun TimelineItem(
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
                     )
-                    
+
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                         contentDescription = if (isExpanded) "Collapse" else "Expand",
@@ -944,7 +972,10 @@ fun PaymentConfirmationDialog(
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline
+                        )
                     ) {
                         Text("Cancel")
                     }
@@ -964,6 +995,7 @@ fun PaymentConfirmationDialog(
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun CourseDetailScreenPreview() {
@@ -1123,7 +1155,9 @@ fun CourseDetailBottomBar(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isEnrolled) MaterialTheme.colorScheme.secondaryContainer else HoloPurple,
                     contentColor = if (isEnrolled) MaterialTheme.colorScheme.onSecondaryContainer else Color.White,
-                    disabledContainerColor = if (isEnrolled) MaterialTheme.colorScheme.secondaryContainer else HoloPurple.copy(alpha = 0.6f)
+                    disabledContainerColor = if (isEnrolled) MaterialTheme.colorScheme.secondaryContainer else HoloPurple.copy(
+                        alpha = 0.6f
+                    )
                 ),
                 modifier = Modifier
                     .height(56.dp)

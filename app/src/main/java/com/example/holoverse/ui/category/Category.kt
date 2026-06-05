@@ -75,58 +75,108 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.R
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.ui.spatialTheme.Brush
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
 
-data class Category(val key: String, val nameRes: Int, val icon: ImageVector)
+data class Category(val appCategory: AppCategory, val nameRes: Int, val icon: ImageVector)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryScreen(
     onBackClick: () -> Unit,
-    onCategorySelected: (String) -> Unit,
+    onCategorySelected: (AppCategory) -> Unit,
     darkTheme: Boolean
 ) {
     LocalContext.current
     val categories = remember {
         listOf(
-            Category("3D DESIGN", R.string.category_3d_design, Icons.Default.Category),
-            Category("GRAPHIC DESIGN", R.string.category_graphic_design, Icons.Default.Draw),
-            Category("WEB DEVELOPMENT", R.string.category_web_development, Icons.Default.Code),
-            Category("SEO MARKETING", R.string.category_seo_marketing,
+            Category(AppCategory.THREE_D_DESIGN, R.string.category_3d_design, Icons.Default.Category),
+            Category(AppCategory.GRAPHIC_DESIGN, R.string.category_graphic_design, Icons.Default.Draw),
+            Category(AppCategory.WEB_DEVELOPMENT, R.string.category_web_development, Icons.Default.Code),
+            Category(
+                AppCategory.SEO_MARKETING, R.string.category_seo_marketing,
                 Icons.AutoMirrored.Filled.TrendingUp
             ),
-            Category("FINANCE & ACCOUNTING", R.string.category_finance_accounting, Icons.Default.AccountBalance),
-            Category("PERSONAL DEVELOPMENT", R.string.category_personal_development, Icons.Default.SelfImprovement),
-            Category("OFFICE PRODUCTIVITY", R.string.category_office_productivity, Icons.Default.Work),
-            Category("HR MANAGEMENT", R.string.category_hr_management, Icons.Default.Groups),
-            Category("DATA SCIENCE", R.string.category_data_science, Icons.Default.Science),
-            Category("MOBILE DEVELOPMENT", R.string.category_mobile_development, Icons.Default.Smartphone),
-            Category("MUSIC", R.string.category_music, Icons.Default.MusicNote),
-            Category("PHOTOGRAPHY", R.string.category_photography, Icons.Default.CameraAlt),
-            Category("BUSINESS", R.string.category_business, Icons.Default.BusinessCenter),
-            Category("HEALTH & FITNESS", R.string.category_health_fitness, Icons.Default.FitnessCenter),
-            Category("LANGUAGE LEARNING", R.string.category_language_learning, Icons.Default.Language),
-            Category("AI", R.string.category_ai, Icons.Default.AutoAwesome),
-            Category("MATHEMATICS", R.string.category_mathematics, Icons.Default.Calculate),
-            Category("SCIENCE", R.string.category_science, Icons.Default.Science),
-            Category("LANGUAGES", R.string.category_languages, Icons.Default.Language),
-            Category("HUMANITIES", R.string.category_humanities, Icons.AutoMirrored.Filled.MenuBook),
-            Category("TEST PREP", R.string.category_test_prep, Icons.AutoMirrored.Filled.Assignment),
-            Category("COMPUTER SCIENCE", R.string.category_computer_science, Icons.Default.Code),
-            Category("ARTS", R.string.category_arts, Icons.Default.Brush),
-            Category("SPECIAL EDUCATION", R.string.category_special_education, Icons.Default.Psychology),
-            Category("PHYSICS", R.string.category_physics, Icons.Default.Biotech),
-            Category("CHEMISTRY", R.string.category_chemistry, Icons.Default.Science),
-            Category("BIOLOGY", R.string.category_biology, Icons.Default.Science),
-            Category("HISTORY", R.string.category_history, Icons.Default.HistoryEdu),
-            Category("PHILOSOPHY", R.string.category_philosophy, Icons.Default.Lightbulb),
-            Category("PSYCHOLOGY", R.string.category_psychology, Icons.Default.Psychology),
-            Category("ECONOMICS", R.string.category_economics, Icons.AutoMirrored.Filled.TrendingUp),
-            Category("ENTREPRENEURSHIP", R.string.category_entrepreneurship, Icons.Default.Business),
-            Category("ELEMENTARY EDUCATION", R.string.category_elementary_education, Icons.Default.ChildCare),
-            Category("STUDY SKILLS", R.string.category_study_skills, Icons.Default.Edit)
+            Category(
+                AppCategory.FINANCE_ACCOUNTING,
+                R.string.category_finance_accounting,
+                Icons.Default.AccountBalance
+            ),
+            Category(
+                AppCategory.PERSONAL_DEVELOPMENT,
+                R.string.category_personal_development,
+                Icons.Default.SelfImprovement
+            ),
+            Category(
+                AppCategory.OFFICE_PRODUCTIVITY,
+                R.string.category_office_productivity,
+                Icons.Default.Work
+            ),
+            Category(AppCategory.HR_MANAGEMENT, R.string.category_hr_management, Icons.Default.Groups),
+            Category(AppCategory.DATA_SCIENCE, R.string.category_data_science, Icons.Default.Science),
+            Category(
+                AppCategory.MOBILE_DEVELOPMENT,
+                R.string.category_mobile_development,
+                Icons.Default.Smartphone
+            ),
+            Category(AppCategory.MUSIC, R.string.category_music, Icons.Default.MusicNote),
+            Category(AppCategory.PHOTOGRAPHY, R.string.category_photography, Icons.Default.CameraAlt),
+            Category(AppCategory.BUSINESS, R.string.category_business, Icons.Default.BusinessCenter),
+            Category(
+                AppCategory.HEALTH_FITNESS,
+                R.string.category_health_fitness,
+                Icons.Default.FitnessCenter
+            ),
+            Category(
+                AppCategory.LANGUAGE_LEARNING,
+                R.string.category_language_learning,
+                Icons.Default.Language
+            ),
+            Category(AppCategory.AI, R.string.category_ai, Icons.Default.AutoAwesome),
+            Category(AppCategory.MATHEMATICS, R.string.category_mathematics, Icons.Default.Calculate),
+            Category(AppCategory.SCIENCE, R.string.category_science, Icons.Default.Science),
+            Category(AppCategory.LANGUAGES, R.string.category_languages, Icons.Default.Language),
+            Category(
+                AppCategory.HUMANITIES,
+                R.string.category_humanities,
+                Icons.AutoMirrored.Filled.MenuBook
+            ),
+            Category(
+                AppCategory.TEST_PREP,
+                R.string.category_test_prep,
+                Icons.AutoMirrored.Filled.Assignment
+            ),
+            Category(AppCategory.COMPUTER_SCIENCE, R.string.category_computer_science, Icons.Default.Code),
+            Category(AppCategory.ARTS, R.string.category_arts, Icons.Default.Brush),
+            Category(
+                AppCategory.SPECIAL_EDUCATION,
+                R.string.category_special_education,
+                Icons.Default.Psychology
+            ),
+            Category(AppCategory.PHYSICS, R.string.category_physics, Icons.Default.Biotech),
+            Category(AppCategory.CHEMISTRY, R.string.category_chemistry, Icons.Default.Science),
+            Category(AppCategory.BIOLOGY, R.string.category_biology, Icons.Default.Science),
+            Category(AppCategory.HISTORY, R.string.category_history, Icons.Default.HistoryEdu),
+            Category(AppCategory.PHILOSOPHY, R.string.category_philosophy, Icons.Default.Lightbulb),
+            Category(AppCategory.PSYCHOLOGY, R.string.category_psychology, Icons.Default.Psychology),
+            Category(
+                AppCategory.ECONOMICS,
+                R.string.category_economics,
+                Icons.AutoMirrored.Filled.TrendingUp
+            ),
+            Category(
+                AppCategory.ENTREPRENEURSHIP,
+                R.string.category_entrepreneurship,
+                Icons.Default.Business
+            ),
+            Category(
+                AppCategory.ELEMENTARY_EDUCATION,
+                R.string.category_elementary_education,
+                Icons.Default.ChildCare
+            ),
+            Category(AppCategory.STUDY_SKILLS, R.string.category_study_skills, Icons.Default.Edit)
         )
     }
 
@@ -163,7 +213,7 @@ fun CategoryScreen(
                                 contentDescription = stringResource(R.string.back),
                             )
                         }
-                        
+
                         Text(
                             text = stringResource(R.string.all_categories),
                             style = MaterialTheme.typography.headlineSmall.copy(
@@ -174,16 +224,16 @@ fun CategoryScreen(
                         )
                     }
 
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
-                    
+
                     // Search Bar inside Header
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { 
+                        placeholder = {
                             Text(
-                                text = stringResource(R.string.search_for), 
+                                text = stringResource(R.string.search_for),
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                         },
@@ -212,7 +262,7 @@ fun CategoryScreen(
                 ) {
                     items(categories) { category ->
                         CategoryItem(category) {
-                            onCategorySelected(category.key)
+                            onCategorySelected(category.appCategory)
                         }
                     }
                 }
@@ -258,9 +308,9 @@ fun CategoryItem(category: Category, onClick: () -> Unit) {
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Text(
                 text = stringResource(category.nameRes),
                 style = MaterialTheme.typography.titleSmall,

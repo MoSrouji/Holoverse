@@ -6,12 +6,10 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,13 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.compose.rememberNavController
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.utils.LanguageManager
 import com.example.holoverse.utils.SplashViewModel
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -39,13 +37,16 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var navigator: AppNavigator
-    
+
     @Inject
     lateinit var languageManager: LanguageManager
 
     @Inject
     lateinit var authRepository: AuthRepository
-    
+
+    @Inject
+    lateinit var firestore: FirebaseFirestore
+
     private val splashViewModel: SplashViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -59,9 +60,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 //
         super.onCreate(savedInstanceState)
-        
+
         languageManager.applyLanguage()
         askNotificationPermission()
+
+//        lifecycleScope.launch {
+//            DummyDataPopulator(firestore).populateData()
+//        }
+
 
         installSplashScreen().apply {
             setKeepOnScreenCondition {
@@ -70,7 +76,7 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             val themeMode by splashViewModel.themeMode.collectAsStateWithLifecycle()
-            
+
             val darkTheme = when (themeMode) {
                 "light" -> false
                 "dark" -> true

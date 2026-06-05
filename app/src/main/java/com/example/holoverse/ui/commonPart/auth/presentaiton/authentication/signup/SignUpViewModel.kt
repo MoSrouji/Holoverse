@@ -30,7 +30,6 @@ class SignUpViewModel @Inject constructor(
     val signUpState: State<Response<Boolean>> = _signUpState
 
 
-
     private var fullNameValidationState =
         ValidationState(type = TextFieldType.Text, id = SignUpTextFieldId.FULL_NAME)
 
@@ -100,6 +99,6 @@ enum class SignUpTextFieldId : TextFieldId {
     FULL_NAME, EMAIL, PASSWORD, ACCOUNT_TYPE
 }
 
-enum class SignUpTextFields: TextFieldId{
+enum class SignUpTextFields : TextFieldId {
     YEARS_OF_EXPERIENCE, SPECIALIZATION, SUBJECTS, CERTIFICATION, LANGUAGE_SPOKEN, HOURLY_RATE
 }

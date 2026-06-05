@@ -1,5 +1,10 @@
 package com.example.holoverse.ui.search
 
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,48 +20,47 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.example.holoverse.auth.domain.entities.MentorCategory
-import com.example.holoverse.search.domain.model.CourseFilters
-import com.example.holoverse.search.domain.model.MentorFilters
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -63,7 +68,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
+import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.core.domain.model.AppCategory
+import com.example.holoverse.search.domain.model.CourseFilters
+import com.example.holoverse.search.domain.model.MentorFilters
 import com.example.holoverse.ui.home.component.CourseCard
 import com.example.holoverse.ui.theme.ColorBlue
 import com.example.holoverse.ui.theme.IbarraNovaFont
@@ -75,11 +84,41 @@ fun SearchScreen(
     onCourseClick: (String) -> Unit,
     onMentorClick: (String) -> Unit,
     viewModel: SearchViewModel = hiltViewModel(),
-    darkTheme: Boolean = true
+    darkTheme: Boolean = true,
+    triggerVoice: Boolean = false
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val sheetState = rememberModalBottomSheetState()
     var showFilters by remember { mutableStateOf(false) }
+
+    val voiceLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            if (!results.isNullOrEmpty()) {
+                viewModel.onQueryChange(results[0])
+            }
+        }
+    }
+
+    val startVoiceRecognition = {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now to search")
+        }
+        voiceLauncher.launch(intent)
+    }
+
+    LaunchedEffect(Unit) {
+        if (triggerVoice) {
+            startVoiceRecognition()
+        }
+    }
 
     if (showFilters) {
         ModalBottomSheet(
@@ -128,7 +167,7 @@ fun SearchScreen(
                         }
                     },
 
-                )
+                    )
             }
         }
     ) { paddingValues ->
@@ -141,7 +180,7 @@ fun SearchScreen(
             SearchInputSection(
                 query = uiState.query,
                 onQueryChange = viewModel::onQueryChange,
-                onSearchClick = { /* Already handled by debounce */ },
+                onVoiceClick = startVoiceRecognition,
                 onFilterClick = { showFilters = true }
             )
 
@@ -175,7 +214,7 @@ fun SearchScreen(
 fun SearchInputSection(
     query: String,
     onQueryChange: (String) -> Unit,
-    onSearchClick: () -> Unit,
+    onVoiceClick: () -> Unit,
     onFilterClick: () -> Unit
 ) {
     Row(
@@ -206,10 +245,10 @@ fun SearchInputSection(
                 .size(56.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(ColorBlue)
-                .clickable { onSearchClick() },
+                .clickable { onVoiceClick() },
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.White)
+            Icon(Icons.Default.Mic, contentDescription = "Voice Search", tint = Color.White)
         }
     }
 }
@@ -316,9 +355,15 @@ fun SearchResultsSection(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     if (uiState.searchType == SearchType.COURSES) {
-                        val displayCourses = if (uiState.isLoading && uiState.searchResults.courses.isEmpty()) {
-                            List(5) { com.example.holoverse.courses.domain.Courses(id = "shimmer_$it", name = "Loading Course...") }
-                        } else uiState.searchResults.courses
+                        val displayCourses =
+                            if (uiState.isLoading && uiState.searchResults.courses.isEmpty()) {
+                                List(5) {
+                                    com.example.holoverse.courses.domain.Courses(
+                                        id = "shimmer_$it",
+                                        name = "Loading Course..."
+                                    )
+                                }
+                            } else uiState.searchResults.courses
 
                         items(
                             items = displayCourses,
@@ -327,15 +372,20 @@ fun SearchResultsSection(
                         ) { course ->
                             CourseCard(
                                 course = course,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { if (!uiState.isLoading) onCourseClick(course.id) }
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = { if (!uiState.isLoading) onCourseClick(course.id) }
                             )
                         }
                     } else {
-                        val displayMentors = if (uiState.isLoading && uiState.searchResults.mentors.isEmpty()) {
-                            List(5) { User.Mentor(userId = "shimmer_$it", fullName = "Loading Mentor...") }
-                        } else uiState.searchResults.mentors
+                        val displayMentors =
+                            if (uiState.isLoading && uiState.searchResults.mentors.isEmpty()) {
+                                List(5) {
+                                    User.Mentor(
+                                        userId = "shimmer_$it",
+                                        fullName = "Loading Mentor..."
+                                    )
+                                }
+                            } else uiState.searchResults.mentors
 
                         items(
                             items = displayMentors,
@@ -344,7 +394,11 @@ fun SearchResultsSection(
                         ) { mentor ->
                             MentorSearchResultItem(
                                 mentor = mentor,
-                                onClick = { if (!uiState.isLoading) onMentorClick(mentor.userId ?: "") }
+                                onClick = {
+                                    if (!uiState.isLoading) onMentorClick(
+                                        mentor.userId ?: ""
+                                    )
+                                }
                             )
                         }
                     }
@@ -411,10 +465,10 @@ fun FilterBottomSheetContent(
     uiState: SearchUiState,
     onClose: () -> Unit,
     onClear: () -> Unit,
-    onUpdateCourseCategory: (String?) -> Unit,
+    onUpdateCourseCategory: (AppCategory?) -> Unit,
     onUpdateCourseLevel: (String?) -> Unit,
     onUpdateCoursePrice: (Double?, Double?) -> Unit,
-    onUpdateMentorSpecialization: (String?) -> Unit,
+    onUpdateMentorSpecialization: (AppCategory?) -> Unit,
     onUpdateMentorRate: (Double?, Double?) -> Unit,
     onUpdateMentorRating: (Double?) -> Unit
 ) {
@@ -480,21 +534,25 @@ fun FilterBottomSheetContent(
 @Composable
 fun CourseFilterSection(
     filters: CourseFilters,
-    onUpdateCategory: (String?) -> Unit,
+    onUpdateCategory: (AppCategory?) -> Unit,
     onUpdateLevel: (String?) -> Unit,
     onUpdatePrice: (Double?, Double?) -> Unit
 ) {
-    val categories = listOf("3D Design", "Graphic Design", "Programming", "Marketing", "Business")
+    val categories = AppCategory.entries.filter { it != AppCategory.OTHER }
     val levels = listOf("Beginner", "Intermediate", "Advanced")
 
-    Text("Category", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(
+        stringResource(R.string.categories_title),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
     Spacer(modifier = Modifier.height(12.dp))
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(categories) { category ->
             FilterChip(
                 selected = filters.category == category,
                 onClick = { onUpdateCategory(if (filters.category == category) null else category) },
-                label = { Text(category) }
+                label = { Text(stringResource(category.titleRes)) }
             )
         }
     }
@@ -517,8 +575,8 @@ fun CourseFilterSection(
 
     Text("Price Range", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     Spacer(modifier = Modifier.height(12.dp))
-    var sliderPosition by remember { 
-        mutableStateOf((filters.minPrice?.toFloat() ?: 0f)..(filters.maxPrice?.toFloat() ?: 500f)) 
+    var sliderPosition by remember {
+        mutableStateOf((filters.minPrice?.toFloat() ?: 0f)..(filters.maxPrice?.toFloat() ?: 500f))
     }
     RangeSlider(
         value = sliderPosition,
@@ -538,20 +596,24 @@ fun CourseFilterSection(
 @Composable
 fun MentorFilterSection(
     filters: MentorFilters,
-    onUpdateSpecialization: (String?) -> Unit,
+    onUpdateSpecialization: (AppCategory?) -> Unit,
     onUpdateRate: (Double?, Double?) -> Unit,
     onUpdateRating: (Double?) -> Unit
 ) {
-    val specializations = MentorCategory.entries.map { it.name }
+    val categories = AppCategory.entries.filter { it != AppCategory.OTHER }
 
-    Text("Specialization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(
+        "Specialization",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
     Spacer(modifier = Modifier.height(12.dp))
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(specializations) { spec ->
+        items(categories) { category ->
             FilterChip(
-                selected = filters.specialization == spec,
-                onClick = { onUpdateSpecialization(if (filters.specialization == spec) null else spec) },
-                label = { Text(spec) }
+                selected = filters.specialization == category,
+                onClick = { onUpdateSpecialization(if (filters.specialization == category) null else category) },
+                label = { Text(stringResource(category.titleRes)) }
             )
         }
     }
@@ -560,8 +622,10 @@ fun MentorFilterSection(
 
     Text("Hourly Rate", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     Spacer(modifier = Modifier.height(12.dp))
-    var sliderPosition by remember { 
-        mutableStateOf((filters.minHourlyRate?.toFloat() ?: 0f)..(filters.maxHourlyRate?.toFloat() ?: 200f)) 
+    var sliderPosition by remember {
+        mutableStateOf(
+            (filters.minHourlyRate?.toFloat() ?: 0f)..(filters.maxHourlyRate?.toFloat() ?: 200f)
+        )
     }
     RangeSlider(
         value = sliderPosition,
@@ -578,16 +642,25 @@ fun MentorFilterSection(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    Text("Minimum Rating", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(
+        "Minimum Rating",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
     Spacer(modifier = Modifier.height(12.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(3.0, 4.0, 4.5).forEach { rating ->
             FilterChip(
                 selected = filters.minRating == rating,
                 onClick = { onUpdateRating(if (filters.minRating == rating) null else rating) },
-                label = { 
+                label = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, null, tint = Color(0xFFFFB400), modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.Star,
+                            null,
+                            tint = Color(0xFFFFB400),
+                            modifier = Modifier.size(16.dp)
+                        )
                         Text("$rating+")
                     }
                 }

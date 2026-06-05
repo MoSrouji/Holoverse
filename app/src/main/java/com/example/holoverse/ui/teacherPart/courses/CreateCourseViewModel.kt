@@ -2,12 +2,16 @@ package com.example.holoverse.ui.teacherPart.courses
 
 import android.net.Uri
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.cloudinary_services.domain.use_case.UploadPhotoUseCase
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.data.CourseRepo
+import com.example.holoverse.courses.domain.BoostedCourse
+import com.example.holoverse.courses.domain.CourseSession
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,14 +24,39 @@ import javax.inject.Inject
 class CreateCourseViewModel @Inject constructor(
     private val courseRepo: CourseRepo,
     private val authRepo: AuthRepository,
-    private val uploadPhotoUseCase: UploadPhotoUseCase
+    private val uploadPhotoUseCase: UploadPhotoUseCase,
 ) : ViewModel() {
 
     private val _createCourseState = mutableStateOf<Response<Boolean>?>(null)
     val createCourseState: State<Response<Boolean>?> = _createCourseState
 
+    private val _boostCourseState = mutableStateOf<Response<Boolean>?>(null)
+    val boostCourseState: State<Response<Boolean>?> = _boostCourseState
+
+    private val _lastCreatedCourse = mutableStateOf<Courses?>(null)
+    val lastCreatedCourse: State<Courses?> = _lastCreatedCourse
+
     private val _uploadImageState = mutableStateOf<Response<String>?>(null)
     val uploadImageState: State<Response<String>?> = _uploadImageState
+
+    private val _sessions = mutableStateListOf<CourseSession>()
+    val sessions: List<CourseSession> = _sessions
+
+    fun addSession(session: CourseSession) {
+        _sessions.add(session)
+    }
+
+    fun removeSession(index: Int) {
+        if (index in _sessions.indices) {
+            _sessions.removeAt(index)
+        }
+    }
+
+    fun updateSession(index: Int, session: CourseSession) {
+        if (index in _sessions.indices) {
+            _sessions[index] = session
+        }
+    }
 
     fun uploadImage(uri: Uri) {
         viewModelScope.launch {
@@ -43,7 +72,7 @@ class CreateCourseViewModel @Inject constructor(
 
     fun createCourse(
         name: String,
-        category: String,
+        category: AppCategory,
         price: String,
         duration: String,
         level: String,
@@ -66,11 +95,24 @@ class CreateCourseViewModel @Inject constructor(
                 instructorId = instructorId,
                 instructorName = instructorName,
                 description = description,
-                imageUrl = imageUrl
+                imageUrl = imageUrl,
+                sessions = _sessions.toList()
             )
 
             courseRepo.addCourse(course).collectLatest { response ->
+                if (response is Response.Success) {
+                    _lastCreatedCourse.value = course
+                }
                 _createCourseState.value = response
+            }
+        }
+    }
+
+    fun boostCourse(boostedCourse: BoostedCourse) {
+        viewModelScope.launch {
+            _boostCourseState.value = Response.Loading
+            courseRepo.boostCourse(boostedCourse).collectLatest { response ->
+                _boostCourseState.value = response
             }
         }
     }

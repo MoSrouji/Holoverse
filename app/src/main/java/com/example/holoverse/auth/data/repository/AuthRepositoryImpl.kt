@@ -70,7 +70,7 @@ class AuthRepositoryImpl @Inject constructor(
                     mentor
                 }
             }
-            
+
             preferenceManager.saveUser(savedUser)
             emit(Response.Success(true))
 
@@ -152,15 +152,15 @@ class AuthRepositoryImpl @Inject constructor(
 
                 teacherDoc.update(updateData).await()
                 Log.d("AuthRepository", "Firestore update successful for Mentor. Data: $updateData")
-                
+
                 // Refresh local cache
                 val updatedUser = getCurrentUser()
                 Log.d("AuthRepository", "Fetched updated user from Firestore: $updatedUser")
-                updatedUser?.let { 
+                updatedUser?.let {
                     preferenceManager.saveUser(it)
                     Log.d("AuthRepository", "Saved updated user to PreferenceManager")
                 }
-                
+
                 emit(Response.Success(true))
 
             } catch (e: Exception) {
@@ -198,12 +198,15 @@ class AuthRepositoryImpl @Inject constructor(
                 }
 
                 studentDoc.update(updateData).await()
-                Log.d("AuthRepository", "Firestore update successful for Student. Data: $updateData")
-                
+                Log.d(
+                    "AuthRepository",
+                    "Firestore update successful for Student. Data: $updateData"
+                )
+
                 // Refresh local cache
                 val updatedUser = getCurrentUser()
                 Log.d("AuthRepository", "Fetched updated user from Firestore: $updatedUser")
-                updatedUser?.let { 
+                updatedUser?.let {
                     preferenceManager.saveUser(it)
                     Log.d("AuthRepository", "Saved updated user to PreferenceManager")
                 }
@@ -222,13 +225,15 @@ class AuthRepositoryImpl @Inject constructor(
 
         return try {
             // Check students collection first
-            val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS).document(uid).get().await()
+            val studentDoc =
+                firestore.collection(COLLECTION_NAME_STUDENTS).document(uid).get().await()
             if (studentDoc.exists()) {
                 return studentDoc.toObject(User.Student::class.java)?.copy(userId = uid)
             }
 
             // If not found, check teachers collection
-            val teacherDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(uid).get().await()
+            val teacherDoc =
+                firestore.collection(COLLECTION_NAME_MENTORS).document(uid).get().await()
             if (teacherDoc.exists()) {
                 return teacherDoc.toObject(User.Mentor::class.java)?.copy(userId = uid)
             }
@@ -252,8 +257,9 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun updateFcmToken(token: String): Response<Boolean> {
         return try {
-            val userId = firebaseAuth.currentUser?.uid ?: return Response.Error("User not authenticated")
-            
+            val userId =
+                firebaseAuth.currentUser?.uid ?: return Response.Error("User not authenticated")
+
             // Try updating in students collection
             val studentRef = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId)
             val studentDoc = studentRef.get().await()
@@ -279,11 +285,13 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun getFcmToken(userId: String): String? {
         return try {
             // Check students
-            val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId).get().await()
+            val studentDoc =
+                firestore.collection(COLLECTION_NAME_STUDENTS).document(userId).get().await()
             if (studentDoc.exists()) return studentDoc.getString("fcmToken")
 
             // Check mentors
-            val mentorDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(userId).get().await()
+            val mentorDoc =
+                firestore.collection(COLLECTION_NAME_MENTORS).document(userId).get().await()
             if (mentorDoc.exists()) return mentorDoc.getString("fcmToken")
 
             null
@@ -294,8 +302,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun followMentor(followerId: String, mentorId: String): Response<Boolean> {
         return try {
-            val currentUser = getCachedUser() ?: getCurrentUser() ?: return Response.Error("Not authenticated")
-            val collection = if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val currentUser =
+                getCachedUser() ?: getCurrentUser() ?: return Response.Error("Not authenticated")
+            val collection =
+                if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
             val followerRef = firestore.collection(collection).document(followerId)
             val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId)
 
@@ -317,8 +327,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun unfollowMentor(followerId: String, mentorId: String): Response<Boolean> {
         return try {
-            val currentUser = getCachedUser() ?: getCurrentUser() ?: return Response.Error("Not authenticated")
-            val collection = if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val currentUser =
+                getCachedUser() ?: getCurrentUser() ?: return Response.Error("Not authenticated")
+            val collection =
+                if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
             val followerRef = firestore.collection(collection).document(followerId)
             val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId)
 
@@ -341,7 +353,8 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun isFollowing(followerId: String, mentorId: String): Boolean {
         return try {
             val currentUser = getCachedUser() ?: getCurrentUser() ?: return false
-            val collection = if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val collection =
+                if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
             val followerDoc = firestore.collection(collection).document(followerId).get().await()
             val followingList = followerDoc.get("following") as? List<*>
             followingList?.contains(mentorId) == true
@@ -352,8 +365,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun enrollInCourse(userId: String, courseId: String): Response<Boolean> {
         return try {
-            val user = getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
-            val collection = if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val user =
+                getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
+            val collection =
+                if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
             val userRef = firestore.collection(collection).document(userId)
 
             firestore.runBatch { batch ->
@@ -373,8 +388,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun toggleSaveCourse(userId: String, courseId: String): Response<Boolean> {
         return try {
-            val user = getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
-            val collection = if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
+            val user =
+                getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
+            val collection =
+                if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
             val userRef = firestore.collection(collection).document(userId)
 
             val isSaved = when (user) {

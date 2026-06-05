@@ -32,6 +32,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 
 @Composable
@@ -71,7 +73,7 @@ fun CourseCard(
                     .padding(10.dp)
             ) {
                 CourseTypeWithButton(
-                    category = course.category,
+                    category = stringResource(course.category.titleRes),
                     isSaved = isSaved,
                     onSaveClick = onSaveClick
                 )
@@ -140,7 +142,7 @@ fun CourseCardPreview() {
     CourseCard(
         course = Courses(
             name = "Graphic Design Advanced",
-            category = "Graphic Design",
+            category = AppCategory.GRAPHIC_DESIGN,
             price = 28.0,
             rating = 4.2,
             numEnrolled = 7830

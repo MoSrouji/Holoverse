@@ -1,5 +1,6 @@
 package com.example.holoverse.ui.three_D_Part
 
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.three_d_model.domain.model.Model
 
 
@@ -12,7 +13,7 @@ data class ModelUiState(
     val modelRotation: Float = 0f,
     val modelScale: Float = 1f,
     val searchQuery: String = "",
-    val selectedCategory: String = "All",
+    val selectedCategory: AppCategory = AppCategory.OTHER,
     val downloadProgress: Map<String, DownloadProgress> = emptyMap()
 )
 

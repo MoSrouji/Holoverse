@@ -39,6 +39,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.theme.ColorVerdigris
 import com.example.holoverse.ui.theme.HoloCyan
@@ -126,9 +128,14 @@ fun PromotionalStyleHolographic(course: Courses, modifier: Modifier = Modifier) 
             )
             Spacer(modifier = Modifier.weight(1f))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Star, contentDescription = null, tint = Color.Yellow, modifier = Modifier.height(16.dp))
+                Icon(
+                    Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color.Yellow,
+                    modifier = Modifier.height(16.dp)
+                )
                 Text(
-                    text = " ${course.rating}  •  ${course.category}",
+                    text = " ${course.rating}  •  ${stringResource(course.category.titleRes)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White
                 )
@@ -155,7 +162,14 @@ fun PromotionalStyleFeatured(course: Courses, modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.8f)
+                        )
+                    )
+                )
         )
         Column(
             modifier = Modifier
@@ -201,7 +215,9 @@ fun PromotionalStyleDynamicSplit(course: Courses, modifier: Modifier = Modifier)
             .height(160.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+        Box(modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight()) {
             AsyncImage(
                 model = course.imageUrl,
                 contentDescription = null,
@@ -218,7 +234,7 @@ fun PromotionalStyleDynamicSplit(course: Courses, modifier: Modifier = Modifier)
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = course.category.uppercase(),
+                text = stringResource(course.category.titleRes).uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
@@ -247,7 +263,12 @@ fun PromotionalStyleDynamicSplit(course: Courses, modifier: Modifier = Modifier)
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = null,
                     tint = HoloPurple,
-                    modifier = Modifier.background(HoloPurple.copy(alpha = 0.1f), RoundedCornerShape(50.dp)).padding(4.dp)
+                    modifier = Modifier
+                        .background(
+                            HoloPurple.copy(alpha = 0.1f),
+                            RoundedCornerShape(50.dp)
+                        )
+                        .padding(4.dp)
                 )
             }
         }
@@ -260,7 +281,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
         listOf(
             Courses(
                 name = "Mastering Augmented Reality",
-                category = "3D Design",
+                category = AppCategory.THREE_D_DESIGN,
                 price = 49.99,
                 rating = 4.9,
                 numEnrolled = 1250,
@@ -268,7 +289,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
             ),
             Courses(
                 name = "VR World Building",
-                category = "Development",
+                category = AppCategory.WEB_DEVELOPMENT,
                 price = 59.99,
                 rating = 4.8,
                 numEnrolled = 850,
@@ -276,7 +297,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
             ),
             Courses(
                 name = "Spatial UI Design",
-                category = "Design",
+                category = AppCategory.GRAPHIC_DESIGN,
                 price = 39.99,
                 rating = 4.7,
                 numEnrolled = 2100,
@@ -284,7 +305,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
             ),
             Courses(
                 name = "Advanced Holographics",
-                category = "Science",
+                category = AppCategory.SCIENCE,
                 price = 79.99,
                 rating = 5.0,
                 numEnrolled = 450,
@@ -292,7 +313,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
             ),
             Courses(
                 name = "Mixed Reality for Beginners",
-                category = "Technology",
+                category = AppCategory.COMPUTER_SCIENCE,
                 price = 29.99,
                 rating = 4.5,
                 numEnrolled = 3000,
@@ -300,7 +321,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
             ),
             Courses(
                 name = "Unity XR Foundations",
-                category = "Coding",
+                category = AppCategory.COMPUTER_SCIENCE,
                 price = 69.99,
                 rating = 4.6,
                 numEnrolled = 1100,
@@ -352,15 +373,18 @@ fun CarouselAdds(isLoading: Boolean = false) {
 @Preview
 fun CarouselAddsCards(text: String = " Enter\nAR Lab") {
     Box(
-        modifier = Modifier.clip(
-            shape = RoundedCornerShape(12.dp)
-        )
+        modifier = Modifier
+            .clip(
+                shape = RoundedCornerShape(12.dp)
+            )
             .height(160.dp)
             .width(320.dp)
             .background(
                 Brush.verticalGradient(
-                    listOf(HoloPurple.copy(alpha = 0.7f),
-                        HoloCyan.copy(alpha = 0.7f))
+                    listOf(
+                        HoloPurple.copy(alpha = 0.7f),
+                        HoloCyan.copy(alpha = 0.7f)
+                    )
                 )
             )
     ) {
@@ -381,7 +405,7 @@ fun CarouselAddsCards(text: String = " Enter\nAR Lab") {
 fun PreviewCoursePromotionalCards() {
     val sampleCourse = Courses(
         name = "Mastering Augmented Reality with ARCore",
-        category = "3D Design",
+        category = AppCategory.GRAPHIC_DESIGN,
         price = 49.99,
         rating = 4.9,
         numEnrolled = 1250,

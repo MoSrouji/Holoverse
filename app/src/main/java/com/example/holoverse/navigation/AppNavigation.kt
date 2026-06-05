@@ -24,6 +24,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.ui.category.CategoryCoursesScreen
 import com.example.holoverse.ui.category.CategoryScreen
 import com.example.holoverse.ui.chat.ChatScreen
@@ -42,6 +43,7 @@ import com.example.holoverse.ui.home.coursesList.RecommendationScreen
 import com.example.holoverse.ui.home.mentorsList.RecommendedMentorsScreen
 import com.example.holoverse.ui.home.mentorsList.TopMentorsScreen
 import com.example.holoverse.ui.mentor.MentorProfileScreen
+import com.example.holoverse.ui.mentor.analysis.MentorAnalysisScreen
 import com.example.holoverse.ui.search.SearchScreen
 import com.example.holoverse.ui.spatialTheme.HoloIntroScreen
 import com.example.holoverse.ui.teacherPart.courses.CreateCourseScreen
@@ -128,11 +130,11 @@ fun AppNavHost(
         entry<AppDestination.SignUpStudentPreference> { StudentPreferenceInfoInput(navController = navigator, navToHomeScreen = { navigator.navigateTo(AppDestination.HomeScreen) }, studentStates = studentState, darkTheme = darkTheme) }
 
         // Home & Main
-        entry<AppDestination.HomeScreen> { HomeScreen(darkTheme = darkTheme, onNavigateToCreateCourse = { navigator.navigateTo(AppDestination.CreateCourse) }, onNavigateToChat = { navigator.navigateTo(AppDestination.ChatList) }, onNavigateToSearch = { navigator.navigateTo(AppDestination.Search) }, onCategoryClick = { navigator.navigateTo(AppDestination.Category) }, onPopularCoursesClick = { navigator.navigateTo(AppDestination.PopularCourses) }, onRecommendedCoursesClick = { navigator.navigateTo(AppDestination.Recommended) }, onTopMentorClick = { navigator.navigateTo(AppDestination.RecommendedMentors) }, onTopMentorsListClick = { navigator.navigateTo(AppDestination.TopMentors) }, onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, onCourseClick = { course -> navigator.navigateTo(AppDestination.CourseDetail(course.id)) }, onCategorySelected = { cat -> if (cat != "All") navigator.navigateTo(AppDestination.CategoryCourses(cat)) }) }
+        entry<AppDestination.HomeScreen> { HomeScreen(darkTheme = darkTheme, onNavigateToCreateCourse = { navigator.navigateTo(AppDestination.CreateCourse) }, onNavigateToAnalytics = { navigator.navigateTo(AppDestination.MentorAnalysis) }, onNavigateToChat = { navigator.navigateTo(AppDestination.ChatList) }, onNavigateToSearch = { triggerVoice -> navigator.navigateTo(AppDestination.Search(triggerVoice)) }, onCategoryClick = { navigator.navigateTo(AppDestination.Category) }, onPopularCoursesClick = { navigator.navigateTo(AppDestination.PopularCourses) }, onRecommendedCoursesClick = { navigator.navigateTo(AppDestination.Recommended) }, onTopMentorClick = { navigator.navigateTo(AppDestination.RecommendedMentors) }, onTopMentorsListClick = { navigator.navigateTo(AppDestination.TopMentors) }, onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, onCourseClick = { course -> navigator.navigateTo(AppDestination.CourseDetail(course.id)) }, onCategorySelected = { cat -> if (cat != AppCategory.OTHER) navigator.navigateTo(AppDestination.CategoryCourses(cat)) }) }
         entry<AppDestination.Profile> { ProfileScreen(onEditProfileClick = { navigator.navigateTo(AppDestination.EditProfile) }, onTermsAndConditionsClick = { navigator.navigateTo(AppDestination.TermsAndConditions) }, onSignOutSuccess = { navigator.navigateTo(AppDestination.HoloIntro) }, darkTheme = darkTheme) }
         entry<AppDestination.Category> { CategoryScreen(onCategorySelected = { category -> navigator.navigateTo(AppDestination.CategoryCourses(category)) }, darkTheme = darkTheme, onBackClick = { navigator.popBackStack() }) }
         entry<AppDestination.CategoryCourses> { key: AppDestination.CategoryCourses ->
-            CategoryCoursesScreen(categoryName = key.categoryName, onBackClick = { navigator.popBackStack() }, onCourseClick = { courseId -> navigator.navigateTo(AppDestination.CourseDetail(courseId)) }, darkTheme = darkTheme)
+            CategoryCoursesScreen(category = key.category, onBackClick = { navigator.popBackStack() }, onCourseClick = { courseId -> navigator.navigateTo(AppDestination.CourseDetail(courseId)) }, darkTheme = darkTheme)
         }
         entry<AppDestination.ChatList>(
             metadata = ListDetailSceneStrategy.listPane(
@@ -160,7 +162,15 @@ fun AppNavHost(
 
         // SubGraph
         entry<AppDestination.CreateCourse> { CreateCourseScreen(onCourseCreated = { navigator.popBackStack() }, darkTheme = darkTheme) }
-        entry<AppDestination.Search> { SearchScreen(onBackClick = { navigator.popBackStack() }, onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) }, onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, darkTheme = darkTheme) }
+        entry<AppDestination.Search> { key: AppDestination.Search ->
+            SearchScreen(
+                onBackClick = { navigator.popBackStack() },
+                onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) },
+                onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) },
+                darkTheme = darkTheme,
+                triggerVoice = key.triggerVoice
+            )
+        }
         entry<AppDestination.PopularCourses> { PopularCoursesScreen(onBackClick = { navigator.popBackStack() }, onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) }, darkTheme = darkTheme) }
         entry<AppDestination.Recommended> { RecommendationScreen(onBackClick = { navigator.popBackStack() }, onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) }, darkTheme = darkTheme) }
         entry<AppDestination.TopMentors> { TopMentorsScreen(onBackClick = { navigator.popBackStack() }, onMentorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) }, darkTheme = darkTheme) }
@@ -171,6 +181,9 @@ fun AppNavHost(
         }
         entry<AppDestination.MentorProfile> { key: AppDestination.MentorProfile ->
             MentorProfileScreen(mentorId = key.mentorId, onBackClick = { navigator.popBackStack() }, onCourseClick = { id -> navigator.navigateTo(AppDestination.CourseDetail(id)) }, onMessageClick = { id -> navigator.navigateTo(AppDestination.ChatScreen(id)) }, darkTheme = darkTheme)
+        }
+        entry<AppDestination.MentorAnalysis> {
+            MentorAnalysisScreen(onBackClick = { navigator.popBackStack() }, darkTheme = darkTheme)
         }
 
         // ModelGraph
@@ -205,7 +218,10 @@ fun AppNavHost(
                 .padding(padding),
             entries = navigationState.toEntries(entryProvider),
             onBack = { nav3Navigator.goBack() },
-            sceneStrategies = listOf(listDetailStrategy)
+            sceneStrategies = listOf(listDetailStrategy),
+            transitionSpec = { NavAnimations.forward() },
+            popTransitionSpec = { NavAnimations.backward() },
+            predictivePopTransitionSpec = { NavAnimations.backward() }
         )
     }
 }

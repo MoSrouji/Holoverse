@@ -57,6 +57,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.home.HomeViewModel
 import com.example.holoverse.ui.theme.HoloverseTheme
@@ -74,17 +76,16 @@ fun TopMentorsScreen(
     val mentors = uiState.mentors
 
     val categories = remember(mentors) {
-        listOf("All") + mentors.map { it.specialization.name.lowercase().replaceFirstChar { char -> char.uppercase() } }.distinct().sorted()
+        listOf(AppCategory.OTHER) + mentors.map { it.specialization }.distinct().sortedBy { it.name }
     }
-    var selectedCategory by remember { mutableStateOf("All") }
+    var selectedCategory by remember { mutableStateOf(AppCategory.OTHER) }
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredMentors = mentors.filter {
-        val categoryName = it.specialization.name.lowercase().replaceFirstChar { char -> char.uppercase() }
-        (selectedCategory == "All" || categoryName == selectedCategory) &&
-                (it.fullName?.contains(searchQuery, ignoreCase = true) == true || 
-                 it.bio?.contains(searchQuery, ignoreCase = true) == true ||
-                 categoryName.contains(searchQuery, ignoreCase = true))
+        (selectedCategory == AppCategory.OTHER || it.specialization == selectedCategory) &&
+                (it.fullName?.contains(searchQuery, ignoreCase = true) == true ||
+                        it.bio?.contains(searchQuery, ignoreCase = true) == true ||
+                        it.specialization.name.contains(searchQuery, ignoreCase = true))
     }
 
     Scaffold(
@@ -92,8 +93,12 @@ fun TopMentorsScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(bottomStart = 32.dp,
-                        bottomEnd = 32.dp))
+                    .clip(
+                        RoundedCornerShape(
+                            bottomStart = 32.dp,
+                            bottomEnd = 32.dp
+                        )
+                    )
             ) {
                 TopAppBar(
                     title = {
@@ -114,7 +119,7 @@ fun TopMentorsScreen(
                         }
                     },
 
-                )
+                    )
             }
         }
     ) { paddingValues ->
@@ -130,8 +135,19 @@ fun TopMentorsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search mentors...", style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                placeholder = {
+                    Text(
+                        "Search mentors...",
+                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
@@ -166,7 +182,7 @@ fun TopMentorsScreen(
                         onClick = { selectedCategory = category },
                         label = {
                             Text(
-                                category,
+                                stringResource(category.titleRes),
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = if (category == selectedCategory) FontWeight.Bold else FontWeight.Medium
                                 )
@@ -230,7 +246,13 @@ fun TopMentorsScreen(
                         ) { mentor ->
                             MentorListItem(
                                 mentor = mentor,
-                                onClick = { if (!uiState.isLoading) mentor.userId?.let { onMentorClick(it) } }
+                                onClick = {
+                                    if (!uiState.isLoading) mentor.userId?.let {
+                                        onMentorClick(
+                                            it
+                                        )
+                                    }
+                                }
                             )
                         }
                     }
@@ -324,11 +346,12 @@ fun MentorListItem(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = mentor.specialization.name.lowercase().replaceFirstChar { it.uppercase() },
+                        text = mentor.specialization.name.lowercase()
+                            .replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
@@ -347,7 +370,11 @@ fun MentorListItem(
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
-                        text = String.format(java.util.Locale.US, "%.1f", mentor.averageRating ?: 0.0),
+                        text = String.format(
+                            java.util.Locale.US,
+                            "%.1f",
+                            mentor.averageRating ?: 0.0
+                        ),
                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(

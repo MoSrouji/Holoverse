@@ -27,6 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.holoverse.R
+import com.example.holoverse.courses.domain.BoostedCourse
+import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import java.util.Calendar
 
@@ -35,7 +37,10 @@ fun HomeScreenHeader(
     fullName: String?,
     isLoading: Boolean,
     darkTheme: Boolean,
-    onNavigateToSearch: () -> Unit,
+    boostedCourses: List<BoostedCourse>,
+    allCourses: List<Courses>,
+    onCourseClick: (Courses) -> Unit,
+    onNavigateToSearch: (Boolean) -> Unit,
     onNavigateToNotifications: () -> Unit,
     brush: (Boolean) -> Brush
 ) {
@@ -84,12 +89,21 @@ fun HomeScreenHeader(
             Spacer(modifier = Modifier.height(24.dp))
 
             HomeSearchBar(
-                onSearchClick = onNavigateToSearch
+                onSearchClick = { onNavigateToSearch(false) },
+                onVoiceClick = { onNavigateToSearch(true) }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            CarouselAdds(isLoading = isLoading)
+            if (boostedCourses.isNotEmpty()) {
+                BoostedCarouselSection(
+                    boostedCourses = boostedCourses,
+                    allCourses = allCourses,
+                    onCourseClick = onCourseClick
+                )
+            } else {
+                CarouselAdds(isLoading = isLoading)
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
         }

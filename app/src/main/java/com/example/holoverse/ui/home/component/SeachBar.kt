@@ -41,6 +41,7 @@ import com.example.holoverse.R
 @Composable
 fun HomeSearchBar(
     onSearchClick: () -> Unit,
+    onVoiceClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -77,6 +78,7 @@ fun HomeSearchBar(
             Surface(
                 modifier = Modifier
                     .size(44.dp),
+                onClick = onVoiceClick,
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.primary
             ) {

@@ -38,10 +38,10 @@
     <string name="hourlyRate">الأجر الساعي</string>
     <string name="skip">تخطي</string>
     <string name="Warning">تحذير</string>
-    <string name="skipPresed">هذا النموذج يساعدنا في تقديم توصيات أفضل لك</string>
-    <string name="Categories">التصنيفات</string>
-    <string name="popular_Courses">الدورات الشائعة</string>
-    <string name="top_Mentor">أفضل المرشدين</string>
+    <string name="skip_pressed_message">هذا النموذج يساعدنا في تقديم توصيات أفضل لك</string>
+    <string name="categories_title">التصنيفات</string>
+    <string name="popular_courses">الدورات الشائعة</string>
+    <string name="top_mentor">أفضل المرشدين</string>
     <string name="profile">الملف الشخصي</string>
     <string name="edit_profile">تعديل الملف الشخصي</string>
     <string name="payment_option">خيار الدفع</string>

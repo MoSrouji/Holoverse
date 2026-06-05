@@ -1,5 +1,6 @@
 package com.example.holoverse.auth.domain.entities
 
+import com.example.holoverse.core.domain.model.AppCategory
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -77,7 +78,7 @@ sealed interface User {
 
         // Professional Information
         val yearsOfExperience: String? = null,
-        val specialization: MentorCategory = MentorCategory.OTHER,
+        val specialization: AppCategory = AppCategory.OTHER,
         val subjects: List<String>? = null,
         val certifications: String? = null,
         val languagesSpoken: List<String>? = null,
@@ -121,104 +122,4 @@ sealed interface User {
 @Serializable
 enum class UserType {
     Student, Mentor
-}
-
-@Serializable
-enum class MentorCategory(val specializations: List<String>) {
-    MATHEMATICS(
-        listOf(
-            "Elementary Mathematics",
-            "Algebra Specialist",
-            "Geometry Expert",
-            "Calculus Expert",
-            "Statistics & Probability",
-            "Math Competition Coach"
-        )
-    ),
-    SCIENCE(
-        listOf(
-            "Physics Specialist",
-            "Chemistry Expert",
-            "Biology Mentor",
-            "Environmental Science",
-            "Earth Science",
-            "AP Science"
-        )
-    ),
-    LANGUAGES(
-        listOf(
-            "English Language Arts",
-            "ESL/EFL Specialist",
-            "Foreign Languages",
-            "Reading Specialist",
-            "Writing Coach"
-        )
-    ),
-    HUMANITIES(
-        listOf(
-            "History Mentor",
-            "Social Studies",
-            "Geography",
-            "Philosophy",
-            "Psychology"
-        )
-    ),
-    TEST_PREP(
-        listOf(
-            "SAT/ACT Prep Specialist",
-            "College Entrance Exams",
-            "Graduate Test Prep (GRE/GMAT)",
-            "Standardized Test Strategies"
-        )
-    ),
-    COMPUTER_SCIENCE(
-        listOf(
-            "Computer Science Mentor",
-            "Programming Mentor",
-            "Web Development",
-            "Data Science"
-        )
-    ),
-    ARTS(
-        listOf(
-            "Music Mentor",
-            "Art & Design",
-            "Drama/Theater",
-            "Creative Writing"
-        )
-    ),
-    SPECIAL_EDUCATION(
-        listOf(
-            "Learning Disabilities Specialist",
-            "Autism Spectrum Support",
-            "Dyslexia Intervention",
-            "Inclusive Education"
-        )
-    ),
-    BUSINESS(
-        listOf(
-            "Business Studies",
-            "Economics",
-            "Accounting",
-            "Entrepreneurship"
-        )
-    ),
-    OTHER(
-        listOf(
-            "Elementary Education",
-            "Specialized Tutor",
-            "Homework Help",
-            "Study Skills"
-        )
-    );
-
-    companion object {
-        fun fromString(name: String): MentorCategory {
-            return entries.find { it.name.equals(name, ignoreCase = true) } ?: OTHER
-        }
-
-        fun getAllCategoryNames(): List<String> {
-            return entries.map { it.name }
-        }
-    }
 }
