@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -65,7 +67,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
-import androidx.compose.ui.res.stringResource
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeViewModel
@@ -261,7 +262,10 @@ fun PopularCoursesScreen(
                         ) { course ->
                             CourseItem(
                                 course = course,
-                                onClick = { if (!uiState.isLoading) onCourseClick(course.id) }
+                                onClick = { if (!uiState.isLoading) onCourseClick(course.id) },
+                                isSaved = uiState.savedCourses.any { it.id == course.id },
+                                isSaving = uiState.savingCourseIds.contains(course.id),
+                                onSaveClick = { viewModel.toggleSaveCourse(course.id) }
                             )
                         }
                     }
@@ -303,8 +307,15 @@ fun EmptyState() {
 }
 
 @Composable
-fun CourseItem(course: Courses, onClick: () -> Unit) {
-    var isBookmarked by remember { mutableStateOf(false) }
+fun CourseItem(
+    course: Courses,
+    onClick: () -> Unit,
+    isSaved: Boolean = false,
+    isSaving: Boolean = false,
+    onSaveClick: (() -> Unit)? = null
+) {
+    var localIsBookmarked by remember { mutableStateOf(false) }
+    val isBookmarked = onSaveClick?.let { isSaved } ?: localIsBookmarked
 
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -356,21 +367,35 @@ fun CourseItem(course: Courses, onClick: () -> Unit) {
                             modifier = Modifier.weight(1f)
                         )
                         IconButton(
-                            onClick = { isBookmarked = !isBookmarked },
+                            onClick = {
+                                if (onSaveClick != null) {
+                                    onSaveClick()
+                                } else {
+                                    localIsBookmarked = !localIsBookmarked
+                                }
+                            },
                             modifier = Modifier.size(24.dp)
                         ) {
-                            Icon(
-                                imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = "Bookmark",
-                                tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.LightGray,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            if (isSaving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                                    contentDescription = "Bookmark",
+                                    tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.LightGray,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.padding(2.dp))
 
                     Text(
-                        text = course.category.toString(),
+                        text = stringResource(course.category.titleRes),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
@@ -389,7 +414,7 @@ fun CourseItem(course: Courses, onClick: () -> Unit) {
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
-                        text = course.rating.toString(),
+                        text = "%.2f".format(course.rating),
                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(

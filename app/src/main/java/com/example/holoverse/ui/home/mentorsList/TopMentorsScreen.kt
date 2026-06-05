@@ -61,6 +61,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.ui.home.HomeViewModel
+import com.example.holoverse.ui.reviews.ui.components.LiveMentorRating
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
 
@@ -363,23 +364,15 @@ fun MentorListItem(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        Icons.Default.Star,
-                        contentDescription = "Rating",
-                        tint = Color(0xFFFFC107),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = String.format(
-                            java.util.Locale.US,
-                            "%.1f",
-                            mentor.averageRating ?: 0.0
-                        ),
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Text(
-                        text = "(${mentor.reviewsCount ?: 0} reviews)",
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                    LiveMentorRating(
+                        mentorId = mentor.userId ?: "",
+                        initialRating = mentor.averageRating ?: 0.0,
+                        initialReviewsCount = mentor.reviewsCount ?: 0,
+                        textStyle = MaterialTheme.typography.bodySmall,
+                        iconSize = 14.dp,
+                        showReviewsCount = true,
+                        reviewsCountStyle = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                        iconTint = Color(0xFFFFC107)
                     )
                     Text("|", color = Color.LightGray)
                     Text(

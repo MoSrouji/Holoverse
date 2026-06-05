@@ -36,12 +36,17 @@
     <string name="specialization">التخصص</string>
     <string name="subjects">المواد</string>
     <string name="hourlyRate">الأجر الساعي</string>
+    <string name="university">اسم الجامعة</string>
+    <string name="faculty">الكلية</string>
     <string name="skip">تخطي</string>
     <string name="Warning">تحذير</string>
     <string name="skip_pressed_message">هذا النموذج يساعدنا في تقديم توصيات أفضل لك</string>
     <string name="categories_title">التصنيفات</string>
     <string name="popular_courses">الدورات الشائعة</string>
     <string name="top_mentor">أفضل المرشدين</string>
+    <string name="for_you_courses">دورات موصى بها</string>
+    <string name="for_you_mentor">مرشدون موصى بهم</string>
+
     <string name="profile">الملف الشخصي</string>
     <string name="edit_profile">تعديل الملف الشخصي</string>
     <string name="payment_option">خيار الدفع</string>
@@ -52,7 +57,10 @@
     <string name="terms_conditions">الشروط والأحكام</string>
     <string name="help_center">مركز المساعدة</string>
     <string name="invite_friends">دعوة الأصدقاء</string>
+    <string name="invite_message">انضم إلي في Holoverse! قم بتحميل التطبيق الآن وابدأ التعلم. https://holoverse.example.com</string>
     <string name="logout">تسجيل الخروج</string>
+
+    <!-- Languages -->
     <string name="english">الإنجليزية</string>
     <string name="arabic">العربية</string>
     <string name="spanish">الإسبانية</string>
@@ -63,6 +71,7 @@
     <string name="all_categories">جميع التصنيفات</string>
     <string name="search_for">البحث عن...</string>
     <string name="back">رجوع</string>
+    <string name="clear">مسح</string>
     <string name="search_icon">أيقونة البحث</string>
     <string name="category_3d_design">تصميم ثلاثي الأبعاد</string>
     <string name="category_graphic_design">تصميم جرافيك</string>
@@ -72,10 +81,68 @@
     <string name="category_personal_development">التطوير الشخصي</string>
     <string name="category_office_productivity">الإنتاجية المكتبية</string>
     <string name="category_hr_management">إدارة الموارد البشرية</string>
+    <string name="category_data_science">علم البيانات</string>
+    <string name="category_mobile_development">تطوير تطبيقات الجوال</string>
+    <string name="category_music">موسيقى</string>
+    <string name="category_photography">تصوير فوتوغرافي</string>
+    <string name="category_business">أعمال</string>
+    <string name="category_health_fitness">الصحة واللياقة</string>
+    <string name="category_language_learning">تعلم اللغات</string>
+    <string name="category_ai">الذكاء الاصطناعي</string>
+    <string name="category_mathematics">الرياضيات</string>
+    <string name="category_science">العلوم</string>
+    <string name="category_languages">لغات</string>
+    <string name="category_humanities">العلوم الإنسانية</string>
+    <string name="category_test_prep">التحضير للاختبارات</string>
+    <string name="category_computer_science">علوم الحاسوب</string>
+    <string name="category_arts">فنون</string>
+    <string name="category_special_education">التربية الخاصة</string>
+    <string name="category_physics">فيزياء</string>
+    <string name="category_chemistry">كيمياء</string>
+    <string name="category_biology">أحياء</string>
+    <string name="category_history">تاريخ</string>
+    <string name="category_philosophy">فلسفة</string>
+    <string name="category_psychology">علم النفس</string>
+    <string name="category_economics">اقتصاد</string>
+    <string name="category_entrepreneurship">ريادة الأعمال</string>
+    <string name="category_elementary_education">التعليم الابتدائي</string>
+    <string name="category_study_skills">مهارات الدراسة</string>
 
     <!-- Home Tabs -->
     <string name="tab_explore">استكشاف</string>
     <string name="tab_your_courses">دوراتك</string>
+
+    <!-- Home Screen -->
+    <string name="create_course">إنشاء دورة</string>
+    <string name="analytics">التحليلات</string>
+    <string name="teacher_tools">أدوات المعلم</string>
+    <string name="messages">الرسائل</string>
+    <string name="announcements">الإعلانات</string>
+    <string name="ongoing_learning">التعلم المستمر</string>
+    <string name="no_enrolled_courses">لم تشترك في أي دورات بعد.</string>
+    <string name="start_exploring">ابدأ الاستكشاف</string>
+    <string name="no_courses_available">لا توجد دورات متاحة بعد</string>
+    <string name="no_mentors_found">لم يتم العثور على مرشدين</string>
+    <string name="good_morning">صباح الخير</string>
+    <string name="good_afternoon">مساء الخير</string>
+    <string name="good_evening">مساء الخير</string>
+    <string name="guest">زائر</string>
+    <string name="notifications_desc">التنبيهات</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="offline_mode">وضع عدم الاتصال - عرض البيانات المخزنة مؤقتاً</string>
+
+    <!-- Recommendation Screen -->
+    <string name="recommendation_title">توصيات</string>
+    <string name="search_recommendation_placeholder">ابحث عن دورات موصى بها...</string>
+    <string name="showing_courses">عرض %1$d من الدورات</string>
+    <string name="search_results">نتائج البحث (%1$d)</string>
+    <string name="no_recommended_found">لم يتم العثور على دورات موصى بها</string>
+    <string name="adjust_search_query">حاول تعديل استعلام البحث الخاص بك</string>
+    <string name="reviews_count">(%1$d تقييم)</string>
+    <string name="enrolled_count">%1$s طالب</string>
+    <string name="rating_desc">تقييم</string>
+    <string name="bookmark_desc">إشارة مرجعية</string>
+    <string name="price_format">%1$.2f دولار</string>
 
     <!-- Mentor Profile -->
     <string name="courses">الدورات</string>
@@ -84,6 +151,51 @@
     <string name="following">متابع</string>
     <string name="message">رسالة</string>
     <string name="students">الطلاب</string>
-    <string name="retry">إعادة المحاولة</string>
-    <string name="offline_mode">وضع عدم الاتصال - عرض البيانات المخزنة مؤقتاً</string>
+    <string name="unknown_error">خطأ غير معروف</string>
+    <string name="at_google">في جوجل</string>
+    <string name="Categories">التصنيفات</string>
+
+    <!-- AppCategory Specializations -->
+    <string name="spec_cs_programming">البرمجة</string>
+    <string name="spec_business_studies">دراسات الأعمال</string>
+    <string name="spec_business_accounting">المحاسبة</string>
+    <string name="spec_business_finance">المالية</string>
+    <string name="spec_math_elementary">الرياضيات الابتدائية</string>
+    <string name="spec_math_algebra">خبير جبر</string>
+    <string name="spec_math_geometry">خبير هندسة</string>
+    <string name="spec_math_calculus">خبير تفاضل وتكامل</string>
+    <string name="spec_math_statistics">الإحصاء والاحتمالات</string>
+    <string name="spec_math_competition">مدرب مسابقات رياضيات</string>
+    <string name="spec_science_physics">أخصائي فيزياء</string>
+    <string name="spec_science_chemistry">خبير كيمياء</string>
+    <string name="spec_science_biology">مرشد أحياء</string>
+    <string name="spec_science_environmental">العلوم البيئية</string>
+    <string name="spec_science_earth">علوم الأرض</string>
+    <string name="spec_science_ap">علوم AP</string>
+    <string name="spec_languages_english">فنون اللغة الإنجليزية</string>
+    <string name="spec_languages_esl">أخصائي ESL/EFL</string>
+    <string name="spec_languages_foreign">لغات أجنبية</string>
+    <string name="spec_languages_reading">أخصائي قراءة</string>
+    <string name="spec_languages_writing">مدرب كتابة</string>
+    <string name="spec_humanities_history">مرشد تاريخ</string>
+    <string name="spec_humanities_social_studies">الدراسات الاجتماعية</string>
+    <string name="spec_humanities_geography">الجغرافيا</string>
+    <string name="spec_arts_music">مرشد موسيقى</string>
+    <string name="spec_arts_art_design">الفن والتصميم</string>
+    <string name="spec_arts_drama_theater">الدراما والمسرح</string>
+    <string name="spec_arts_creative_writing">الكتابة الإبداعية</string>
+    <string name="spec_health_physical_education">التربية البدنية</string>
+    <string name="spec_health_nutrition">التغذية</string>
+    <string name="spec_health_mental_wellness">الصحة النفسية</string>
+    <string name="spec_test_prep_sat_act">أخصائي تحضير SAT/ACT</string>
+    <string name="spec_test_prep_college_entrance">امتحانات القبول الجامعي</string>
+    <string name="spec_test_prep_graduate">تحضير اختبارات الدراسات العليا (GRE/GMAT)</string>
+    <string name="spec_test_prep_strategies">استراتيجيات الاختبارات المعيارية</string>
+    <string name="spec_special_ed_learning_disabilities">أخصائي صعوبات تعلم</string>
+    <string name="spec_special_ed_autism">دعم طيف التوحد</string>
+    <string name="spec_special_ed_dyslexia">تدخل عسر القراءة</string>
+    <string name="spec_special_ed_inclusive">التعليم الشامل</string>
+    <string name="spec_other_specialized">مدرس متخصص</string>
+    <string name="spec_other_homework">مساعدة في الواجبات</string>
+    <string name="spec_other_mentorship">إرشاد عام</string>
 </resources>

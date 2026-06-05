@@ -7,7 +7,7 @@
     <string name="login">Login</string>
     <string name="create_account">Create Account</string>
     <string name="please_sign_in_to_continue">Please sign in to continue</string>
-    <string name="please_complete_you_auth_to_continue">Please Complete your auth to continue</string>
+    <string name="please_complete_you_auth_to_continue">Please complete your authentication to continue</string>
     <string name="login_capital">LOGIN</string>
     <string name="signup_capital">SIGN UP</string>
     <string name="password">Password</string>
@@ -22,16 +22,16 @@
     <string name="the_field_can_not_be_blank">The field can\'t be blank</string>
     <string name="that_is_not_a_valid_email">That\'s not a valid email</string>
     <string name="that_is_not_a_valid_phone_number">That\'s not a valid phone number</string>
-    <string name="the_field_can_not_be_less_then_10_digits">The field can\'t be less than 10 digits </string>
+    <string name="the_field_can_not_be_less_then_10_digits">The field can\'t be less than 10 digits</string>
     <string name="the_password_needs_to_contain_at_least_one_letter_and_digit">
         The password needs to contain at least one letter and digit</string>
     <string name="the_password_needs_to_consist_of_at_least_8_characters">
         The password needs to consist of at least 8 characters</string>
     <string name="must_be_from_9_to_12_digits">Must be from 9 to 12 digits</string>
     <string name="validation_successfully">Validation Successfully</string>
-    <string name="sign_up_successfully">Sign Up Successfully\n</string>
-    <string name="fill_the_form">Please Fill The Form \n</string>
-    <string name="sign_in_successfully">Sign in successfully\n</string>
+    <string name="sign_up_successfully">Sign Up Successfully</string>
+    <string name="fill_the_form">Please Fill The Form</string>
+    <string name="sign_in_successfully">Sign in successfully</string>
     <string name="select_role">Select User Type</string>
 
     <!-- Profile -->
@@ -52,7 +52,7 @@
     <string name="university">University Name</string>
     <string name="faculty">Faculty / College</string>
     <string name="skip">Skip</string>
-    <string name="Warning">warning\n</string>
+    <string name="Warning">Warning</string>
     <string name="skip_pressed_message">This form helps us make recommendations for you to get a better experience</string>
     <string name="categories_title">Categories</string>
     <string name="popular_courses">Popular Courses</string>
@@ -82,7 +82,7 @@
 
     <!-- Category Screen -->
     <string name="all_categories">All Categories</string>
-    <string name="search_for">Search for...</string>
+    <string name="search_for">Search for&#8230;</string>
     <string name="back">Back</string>
     <string name="clear">Clear</string>
     <string name="search_icon">Search Icon</string>
@@ -152,7 +152,7 @@
     <string name="no_recommended_found">No recommended courses found</string>
     <string name="adjust_search_query">Try adjusting your search query</string>
     <string name="reviews_count">(%1$d reviews)</string>
-    <string name="enrolled_count">%1$s std</string>
+    <string name="enrolled_count">%1$s students</string>
     <string name="rating_desc">Rating</string>
     <string name="bookmark_desc">Bookmark</string>
     <string name="price_format">$%1$.2f</string>
@@ -163,7 +163,51 @@
     <string name="following">Following</string>
     <string name="message">Message</string>
     <string name="unknown_error">Unknown error</string>
-    <string name="at_google">\u0020At Google</string>
+    <string name="at_google"> at Google</string>
     <string name="Categories">Categories</string>
+
+    <!-- AppCategory Specializations -->
+    <string name="spec_cs_programming">Programming</string>
+    <string name="spec_business_studies">Business Studies</string>
+    <string name="spec_business_accounting">Accounting</string>
+    <string name="spec_business_finance">Finance</string>
+    <string name="spec_math_elementary">Elementary Mathematics</string>
+    <string name="spec_math_algebra">Algebra Specialist</string>
+    <string name="spec_math_geometry">Geometry Expert</string>
+    <string name="spec_math_calculus">Calculus Expert</string>
+    <string name="spec_math_statistics">Statistics &amp; Probability</string>
+    <string name="spec_math_competition">Math Competition Coach</string>
+    <string name="spec_science_physics">Physics Specialist</string>
+    <string name="spec_science_chemistry">Chemistry Expert</string>
+    <string name="spec_science_biology">Biology Mentor</string>
+    <string name="spec_science_environmental">Environmental Science</string>
+    <string name="spec_science_earth">Earth Science</string>
+    <string name="spec_science_ap">AP Science</string>
+    <string name="spec_languages_english">English Language Arts</string>
+    <string name="spec_languages_esl">ESL/EFL Specialist</string>
+    <string name="spec_languages_foreign">Foreign Languages</string>
+    <string name="spec_languages_reading">Reading Specialist</string>
+    <string name="spec_languages_writing">Writing Coach</string>
+    <string name="spec_humanities_history">History Mentor</string>
+    <string name="spec_humanities_social_studies">Social Studies</string>
+    <string name="spec_humanities_geography">Geography</string>
+    <string name="spec_arts_music">Music Mentor</string>
+    <string name="spec_arts_art_design">Art &amp; Design</string>
+    <string name="spec_arts_drama_theater">Drama/Theater</string>
+    <string name="spec_arts_creative_writing">Creative Writing</string>
+    <string name="spec_health_physical_education">Physical Education</string>
+    <string name="spec_health_nutrition">Nutrition</string>
+    <string name="spec_health_mental_wellness">Mental Wellness</string>
+    <string name="spec_test_prep_sat_act">SAT/ACT Prep Specialist</string>
+    <string name="spec_test_prep_college_entrance">College Entrance Exams</string>
+    <string name="spec_test_prep_graduate">Graduate Test Prep (GRE/GMAT)</string>
+    <string name="spec_test_prep_strategies">Standardized Test Strategies</string>
+    <string name="spec_special_ed_learning_disabilities">Learning Disabilities Specialist</string>
+    <string name="spec_special_ed_autism">Autism Spectrum Support</string>
+    <string name="spec_special_ed_dyslexia">Dyslexia Intervention</string>
+    <string name="spec_special_ed_inclusive">Inclusive Education</string>
+    <string name="spec_other_specialized">Specialized Tutor</string>
+    <string name="spec_other_homework">Homework Help</string>
+    <string name="spec_other_mentorship">General Mentorship</string>
 
 </resources>

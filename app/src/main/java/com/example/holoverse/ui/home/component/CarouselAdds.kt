@@ -135,7 +135,7 @@ fun PromotionalStyleHolographic(course: Courses, modifier: Modifier = Modifier) 
                     modifier = Modifier.height(16.dp)
                 )
                 Text(
-                    text = " ${course.rating}  •  ${stringResource(course.category.titleRes)}",
+                    text = " ${"%.2f".format(course.rating)}  •  ${stringResource(course.category.titleRes)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White
                 )
@@ -281,7 +281,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
         listOf(
             Courses(
                 name = "Mastering Augmented Reality",
-                category = AppCategory.THREE_D_DESIGN,
+                category = AppCategory.ARTS,
                 price = 49.99,
                 rating = 4.9,
                 numEnrolled = 1250,
@@ -289,7 +289,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
             ),
             Courses(
                 name = "VR World Building",
-                category = AppCategory.WEB_DEVELOPMENT,
+                category = AppCategory.COMPUTER_SCIENCE,
                 price = 59.99,
                 rating = 4.8,
                 numEnrolled = 850,
@@ -297,7 +297,7 @@ fun CarouselAdds(isLoading: Boolean = false) {
             ),
             Courses(
                 name = "Spatial UI Design",
-                category = AppCategory.GRAPHIC_DESIGN,
+                category = AppCategory.ARTS,
                 price = 39.99,
                 rating = 4.7,
                 numEnrolled = 2100,
@@ -405,7 +405,7 @@ fun CarouselAddsCards(text: String = " Enter\nAR Lab") {
 fun PreviewCoursePromotionalCards() {
     val sampleCourse = Courses(
         name = "Mastering Augmented Reality with ARCore",
-        category = AppCategory.GRAPHIC_DESIGN,
+        category = AppCategory.ARTS,
         price = 49.99,
         rating = 4.9,
         numEnrolled = 1250,

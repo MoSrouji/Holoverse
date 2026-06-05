@@ -43,14 +43,16 @@ class TeacherProfessionalViewModel @Inject constructor(
         specialization: AppCategory,
         subjects: List<String>,
         certifications: String,
-        languages: List<String>
+        languages: List<String>,
+        hourlyRate: Double?
     ) {
         _mentorScreenState.value = _mentorScreenState.value.copy(
             yearsOfExperience = years,
             specialization = specialization,
             subjects = subjects,
             certifications = certifications,
-            languagesSpoken = languages
+            languagesSpoken = languages,
+            hourlyRate = hourlyRate
         )
     }
 
@@ -99,7 +101,7 @@ class TeacherProfessionalViewModel @Inject constructor(
         forms[SignUpTextFields.SUBJECTS] = subjectsValidationState
         forms[SignUpTextFields.CERTIFICATION] = certificationsValidationState
         forms[SignUpTextFields.LANGUAGE_SPOKEN] = languagesSpokenValidationState
-        //forms[SignUpTextFields.HOURLY_RATE] = hourlyRateValidationState
+        forms[SignUpTextFields.HOURLY_RATE] = hourlyRateValidationState
     }
 
     fun firebaseSingUp(

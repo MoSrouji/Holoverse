@@ -130,7 +130,7 @@ fun CourseBottomDivider(price: Double, rating: Double, numEnrolled: Int) {
     ) {
         Text(text = "$${"%.2f".format(price)}", fontWeight = FontWeight.Bold)
         VerticalDivider(modifier = Modifier.height(16.dp), thickness = 1.dp)
-        Text(text = rating.toString())
+        Text(text = "%.2f".format(rating))
         VerticalDivider(modifier = Modifier.height(16.dp), thickness = 1.dp)
         Text(text = "$numEnrolled Std")
     }
@@ -142,7 +142,7 @@ fun CourseCardPreview() {
     CourseCard(
         course = Courses(
             name = "Graphic Design Advanced",
-            category = AppCategory.GRAPHIC_DESIGN,
+            category = AppCategory.ARTS,
             price = 28.0,
             rating = 4.2,
             numEnrolled = 7830

@@ -37,12 +37,17 @@
     <string name="specialization">Specializzazione</string>
     <string name="subjects">Materie</string>
     <string name="hourlyRate">Tariffa oraria</string>
+    <string name="university">Nome dell\'Università</string>
+    <string name="faculty">Facoltà / College</string>
     <string name="skip">Salta</string>
-    <string name="Warning">Avvertimento\n</string>
+    <string name="Warning">Avvertimento</string>
     <string name="skip_pressed_message">Questo modulo ci aiuta a darti consigli migliori per un\'esperienza ottimale</string>
     <string name="categories_title">Categorie</string>
     <string name="popular_courses">Corsi popolari</string>
     <string name="top_mentor">Miglior Mentore</string>
+    <string name="for_you_courses">Corsi consigliati</string>
+    <string name="for_you_mentor">Mentori consigliati</string>
+
     <string name="profile">Profilo</string>
     <string name="edit_profile">Modifica profilo</string>
     <string name="payment_option">Opzione di pagamento</string>
@@ -53,16 +58,92 @@
     <string name="terms_conditions">Termini e Condizioni</string>
     <string name="help_center">Centro Assistenza</string>
     <string name="invite_friends">Invita amici</string>
+    <string name="invite_message">Unisciti a me su Holoverse! Scarica l\'app ora e inizia a imparare. https://holoverse.example.com</string>
     <string name="logout">Esci</string>
+
     <string name="english">Inglese</string>
     <string name="arabic">Arabo</string>
     <string name="spanish">Spagnolo</string>
     <string name="italian">Italiano</string>
     <string name="device_language">Lingua del dispositivo</string>
 
+    <!-- Category Screen -->
+    <string name="all_categories">Tutte le categorie</string>
+    <string name="search_for">Cerca&#8230;</string>
+    <string name="back">Indietro</string>
+    <string name="clear">Pulisci</string>
+    <string name="search_icon">Icona di ricerca</string>
+    <string name="category_3d_design">Design 3D</string>
+    <string name="category_graphic_design">Graphic Design</string>
+    <string name="category_web_development">Sviluppo Web</string>
+    <string name="category_seo_marketing">SEO e Marketing</string>
+    <string name="category_finance_accounting">Finanza e Contabilità</string>
+    <string name="category_personal_development">Sviluppo Personale</string>
+    <string name="category_office_productivity">Produttività Ufficio</string>
+    <string name="category_hr_management">Gestione Risorse Umane</string>
+    <string name="category_data_science">Scienza dei Dati</string>
+    <string name="category_mobile_development">Sviluppo Mobile</string>
+    <string name="category_music">Musica</string>
+    <string name="category_photography">Fotografia</string>
+    <string name="category_business">Business</string>
+    <string name="category_health_fitness">Salute e Fitness</string>
+    <string name="category_language_learning">Apprendimento Lingue</string>
+    <string name="category_ai">Intelligenza Artificiale</string>
+    <string name="category_mathematics">Matematica</string>
+    <string name="category_science">Scienza</string>
+    <string name="category_languages">Lingue</string>
+    <string name="category_humanities">Scienze Umanistiche</string>
+    <string name="category_test_prep">Prep. Esami</string>
+    <string name="category_computer_science">Informatica</string>
+    <string name="category_arts">Arti</string>
+    <string name="category_special_education">Educazione Speciale</string>
+    <string name="category_physics">Fisica</string>
+    <string name="category_chemistry">Chimica</string>
+    <string name="category_biology">Biologia</string>
+    <string name="category_history">Storia</string>
+    <string name="category_philosophy">Filosofia</string>
+    <string name="category_psychology">Psicologia</string>
+    <string name="category_economics">Economia</string>
+    <string name="category_entrepreneurship">Imprenditorialità</string>
+    <string name="category_elementary_education">Istruzione Elementare</string>
+    <string name="category_study_skills">Abilità di Studio</string>
+
     <!-- Home Tabs -->
     <string name="tab_explore">Esplora</string>
     <string name="tab_your_courses">I Tuoi Corsi</string>
+
+    <!-- Home Screen -->
+    <string name="create_course">Crea Corso</string>
+    <string name="analytics">Analitica</string>
+    <string name="teacher_tools">Strumenti Insegnante</string>
+    <string name="students">Studenti</string>
+    <string name="messages">Messaggi</string>
+    <string name="announcements">Annunci</string>
+    <string name="ongoing_learning">Apprendimento in Corso</string>
+    <string name="no_enrolled_courses">Non ti sei ancora iscritto a nessun corso.</string>
+    <string name="start_exploring">Inizia a Esplorare</string>
+    <string name="no_courses_available">Nessun corso ancora disponibile</string>
+    <string name="no_mentors_found">Nessun mentore trovato</string>
+    <string name="good_morning">Buongiorno</string>
+    <string name="good_afternoon">Buon pomeriggio</string>
+    <string name="good_evening">Buonasera</string>
+    <string name="guest">Ospite</string>
+    <string name="notifications_desc">Notifiche</string>
+    <string name="retry">Riprova</string>
+    <string name="offline_mode">Modalità offline - Visualizzazione dati memorizzati nella cache</string>
+
+    <!-- Recommendation Screen -->
+    <string name="recommendation_title">Raccomandazione</string>
+    <string name="search_recommendation_placeholder">Cerca corsi consigliati&#8230;</string>
+    <string name="showing_courses">Visualizzazione di %1$d corsi</string>
+    <string name="search_results">Risultati della ricerca (%1$d)</string>
+    <string name="no_recommended_found">Nessun corso consigliato trovato</string>
+    <string name="adjust_search_query">Prova a modificare la tua query di ricerca</string>
+    <string name="reviews_count">(%1$d recensioni)</string>
+    <string name="enrolled_count">%1$s std.</string>
+    <string name="rating_desc">Valutazione</string>
+    <string name="bookmark_desc">Segnalibro</string>
+    <string name="price_format">€%1$.2f</string>
 
     <!-- Mentor Profile -->
     <string name="courses">Corsi</string>
@@ -70,7 +151,51 @@
     <string name="follow">Segui</string>
     <string name="following">Seguito</string>
     <string name="message">Messaggio</string>
-    <string name="students">Studenti</string>
-    <string name="retry">Riprova</string>
-    <string name="offline_mode">Modalità offline - Visualizzazione dati memorizzati nella cache</string>
+    <string name="unknown_error">Errore sconosciuto</string>
+    <string name="at_google"> presso Google</string>
+    <string name="Categories">Categorie</string>
+
+    <!-- AppCategory Specializations -->
+    <string name="spec_cs_programming">Programmazione</string>
+    <string name="spec_business_studies">Studi Aziendali</string>
+    <string name="spec_business_accounting">Contabilità</string>
+    <string name="spec_business_finance">Finanza</string>
+    <string name="spec_math_elementary">Matematica Elementare</string>
+    <string name="spec_math_algebra">Specialista in Algebra</string>
+    <string name="spec_math_geometry">Esperto in Geometria</string>
+    <string name="spec_math_calculus">Esperto in Analisi</string>
+    <string name="spec_math_statistics">Statistica e Probabilità</string>
+    <string name="spec_math_competition">Coach di Gare di Matematica</string>
+    <string name="spec_science_physics">Specialista in Fisica</string>
+    <string name="spec_science_chemistry">Esperto in Chimica</string>
+    <string name="spec_science_biology">Mentore di Biologia</string>
+    <string name="spec_science_environmental">Scienze Ambientali</string>
+    <string name="spec_science_earth">Scienze della Terra</string>
+    <string name="spec_science_ap">Scienze AP</string>
+    <string name="spec_languages_english">Arti del Linguaggio Inglese</string>
+    <string name="spec_languages_esl">Specialista ESL/EFL</string>
+    <string name="spec_languages_foreign">Lingue Straniere</string>
+    <string name="spec_languages_reading">Specialista della Lettura</string>
+    <string name="spec_languages_writing">Coach di Scrittura</string>
+    <string name="spec_humanities_history">Mentore di Storia</string>
+    <string name="spec_humanities_social_studies">Studi Sociali</string>
+    <string name="spec_humanities_geography">Geografia</string>
+    <string name="spec_arts_music">Mentore di Musica</string>
+    <string name="spec_arts_art_design">Arte e Design</string>
+    <string name="spec_arts_drama_theater">Dramma/Teatro</string>
+    <string name="spec_arts_creative_writing">Scrittura Creativa</string>
+    <string name="spec_health_physical_education">Educazione Fisica</string>
+    <string name="spec_health_nutrition">Nutrizione</string>
+    <string name="spec_health_mental_wellness">Benessere Mentale</string>
+    <string name="spec_test_prep_sat_act">Specialista Prep. SAT/ACT</string>
+    <string name="spec_test_prep_college_entrance">Esami di Ammissione all\'Università</string>
+    <string name="spec_test_prep_graduate">Prep. Test Graduati (GRE/GMAT)</string>
+    <string name="spec_test_prep_strategies">Strategie per Test Standardizzati</string>
+    <string name="spec_special_ed_learning_disabilities">Specialista Disabilità Apprendimento</string>
+    <string name="spec_special_ed_autism">Supporto Spettro Autistico</string>
+    <string name="spec_special_ed_dyslexia">Intervento Dislessia</string>
+    <string name="spec_special_ed_inclusive">Educazione Inclusiva</string>
+    <string name="spec_other_specialized">Tutor Specializzato</string>
+    <string name="spec_other_homework">Aiuto Compiti</string>
+    <string name="spec_other_mentorship">Mentorship Generale</string>
 </resources>

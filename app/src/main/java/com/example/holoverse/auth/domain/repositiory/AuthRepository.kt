@@ -30,6 +30,7 @@ interface AuthRepository {
     suspend fun unfollowMentor(followerId: String, mentorId: String): Response<Boolean>
     suspend fun isFollowing(followerId: String, mentorId: String): Boolean
 
-    suspend fun enrollInCourse(userId: String, courseId: String): Response<Boolean>
+    suspend fun enrollInCourse(userId: String, courseId: String, instructorId: String): Response<Boolean>
     suspend fun toggleSaveCourse(userId: String, courseId: String): Response<Boolean>
+    suspend fun addCourseToMentor(mentorId: String, courseId: String): Response<Boolean>
 }

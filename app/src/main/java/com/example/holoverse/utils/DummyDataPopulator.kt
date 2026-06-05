@@ -122,7 +122,7 @@ class DummyDataPopulator(private val firestore: FirebaseFirestore) {
             ),
             Triple(
                 "Spanish for Travelers",
-                AppCategory.LANGUAGE_LEARNING,
+                AppCategory.LANGUAGES,
                 "Essential vocabulary and phrases for your next trip to Spain or Latin America."
             ),
             Triple(

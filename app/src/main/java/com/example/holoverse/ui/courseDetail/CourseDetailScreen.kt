@@ -394,7 +394,7 @@ fun CourseDetailContent(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = " ${course.rating} (${course.numReviews} reviews)",
+                        text = " ${"%.2f".format(course.rating)} (${course.numReviews} reviews)",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -591,7 +591,7 @@ fun RatingSection(course: Courses) {
         ) {
             Column {
                 Text(
-                    text = "${course.rating}",
+                    text = "%.2f".format(course.rating),
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground

@@ -102,6 +102,8 @@ class CreateCourseViewModel @Inject constructor(
             courseRepo.addCourse(course).collectLatest { response ->
                 if (response is Response.Success) {
                     _lastCreatedCourse.value = course
+                    // Link course to mentor
+                    authRepo.addCourseToMentor(instructorId, course.id)
                 }
                 _createCourseState.value = response
             }

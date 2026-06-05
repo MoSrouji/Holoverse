@@ -79,6 +79,9 @@ sealed interface AppDestination : NavKey {
     data object MentorAnalysis : AppDestination
 
     @Serializable
+    data object StudentsList : AppDestination
+
+    @Serializable
     data object Transactions : AppDestination
 
     @Serializable

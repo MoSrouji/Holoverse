@@ -112,20 +112,20 @@ fun MentorStatsGrid(uiState: MentorAnalysisUiState) {
                 color = Color(0xFF42A5F5)
             )
             StatCard(
-                title = "Avg Rating",
-                value = String.format(Locale.getDefault(), "%.1f", uiState.averageRating),
-                icon = Icons.Default.Star,
+                title = "Total Followers",
+                value = uiState.totalFollowers.toString(),
+                icon = Icons.Default.PersonAdd,
                 modifier = Modifier.weight(1f),
-                color = Color(0xFFFFCA28)
+                color = Color(0xFFAB47BC)
             )
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatCard(
-                title = "Total Courses",
-                value = uiState.courses.size.toString(),
-                icon = Icons.Default.Book,
+                title = "Avg Rating",
+                value = String.format(Locale.getDefault(), "%.2f", uiState.averageRating),
+                icon = Icons.Default.Star,
                 modifier = Modifier.weight(1f),
-                color = Color(0xFF66BB6A)
+                color = Color(0xFFFFCA28)
             )
             StatCard(
                 title = "Total Revenue",
@@ -134,6 +134,17 @@ fun MentorStatsGrid(uiState: MentorAnalysisUiState) {
                 modifier = Modifier.weight(1f),
                 color = Color(0xFFEC407A)
             )
+        }
+        uiState.mentor?.hourlyRate?.let { rate ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                StatCard(
+                    title = "Hourly Rate",
+                    value = String.format(Locale.getDefault(), "$%.2f/hr", rate),
+                    icon = Icons.Default.AttachMoney,
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFF66BB6A)
+                )
+            }
         }
     }
 }
@@ -181,6 +192,15 @@ fun CourseAnalysisCard(course: Courses) {
                 CourseMetric("Avg Progress", String.format(Locale.getDefault(), "%.0f%%", course.averageProgress * 100))
                 CourseMetric("Revenue", String.format(Locale.getDefault(), "$%.0f", course.price * course.numEnrolled))
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Show Enrollment breakdown hint
+            Text(
+                text = "Total Enrollments: ${course.numEnrolled}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
             

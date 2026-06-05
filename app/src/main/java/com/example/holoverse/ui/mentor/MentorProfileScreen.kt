@@ -61,8 +61,6 @@ import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
-import androidx.compose.ui.res.stringResource
-import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.reviews.domain.Review
 import com.example.holoverse.ui.reviews.ui.ReviewViewModel
@@ -142,6 +140,7 @@ fun MentorProfileScreen(
                         savedCourseIds = uiState.savedCourseIds,
                         savingCourseIds = uiState.savingCourseIds,
                         reviews = reviewState.reviews,
+                        averageRating = reviewState.averageRating,
                         existingReview = existingReview,
                         isFollowing = uiState.isFollowing,
                         isUserLoggedIn = uiState.isUserLoggedIn,
@@ -193,6 +192,7 @@ fun MentorProfileContent(
     savedCourseIds: List<String>,
     savingCourseIds: Set<String>,
     reviews: List<Review>,
+    averageRating: Double,
     existingReview: Review?,
     isFollowing: Boolean,
     isFollowLoading: Boolean,
@@ -235,12 +235,20 @@ fun MentorProfileContent(
             )
 
             Text(
-                text = "${
-                    mentor.specialization.name.lowercase().replaceFirstChar { it.uppercase() }
-                }${stringResource(R.string.at_google)}",
+                text = stringResource(mentor.specialization.titleRes),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+//            mentor.hourlyRate?.let { rate ->
+//                Spacer(modifier = Modifier.height(8.dp))
+//                Text(
+//                    text = stringResource(R.string.price_format, rate) + "/hr",
+//                    style = MaterialTheme.typography.titleMedium,
+//                    color = MaterialTheme.colorScheme.primary,
+//                    fontWeight = FontWeight.Bold
+//                )
+//            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -262,7 +270,7 @@ fun MentorProfileContent(
                 )
                 StatItem(
                     label = stringResource(R.string.ratings),
-                    value = String.format(Locale.US, "%.1f", mentor.averageRating ?: 0.0)
+                    value = String.format(Locale.US, "%.1f", averageRating)
                 )
             }
 

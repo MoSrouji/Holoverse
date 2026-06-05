@@ -1,5 +1,6 @@
 package com.example.holoverse.ui.home
 
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -40,6 +41,7 @@ data class HomeUiState(
     val allMentors: List<User.Mentor> = emptyList(),
     val recommendedMentors: List<User.Mentor> = emptyList(),
     val boostedCourses: List<BoostedCourse> = emptyList(),
+    val savingCourseIds: Set<String> = emptySet(),
     val selectedTab: HomeTab = HomeTab.Explore,
     val selectedCategory: AppCategory = AppCategory.OTHER,
     val error: String? = null,
@@ -50,7 +52,8 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val fetchDataRepository: FetchDataRepository,
     private val authRepository: AuthRepository,
-    private val cloudinaryRepository: CloudinaryRepository
+    private val cloudinaryRepository: CloudinaryRepository,
+    private val application: Application
 ) : ViewModel() {
 
     private val _uiState =
@@ -110,7 +113,8 @@ class HomeViewModel @Inject constructor(
                                 )
                             ) return@any true
 
-                            course.category.specializations.any { spec ->
+                            course.category.specializations.any { specRes ->
+                                val spec = application.getString(specRes)
                                 spec.replace("_", " ").uppercase().contains(nFav, ignoreCase = true) ||
                                         nFav.contains(spec.replace("_", " ").uppercase(), ignoreCase = true)
                             } == true
@@ -124,7 +128,8 @@ class HomeViewModel @Inject constructor(
 
                             nSpecName.contains(nFav, ignoreCase = true) ||
                                     nFav.contains(nSpecName, ignoreCase = true) ||
-                                    mentor.specialization.specializations.any { spec ->
+                                    mentor.specialization.specializations.any { specRes ->
+                                        val spec = application.getString(specRes)
                                         spec.replace("_", " ").uppercase().contains(nFav, ignoreCase = true) ||
                                                 nFav.contains(
                                                     spec.replace("_", " ").uppercase(),
@@ -221,8 +226,8 @@ class HomeViewModel @Inject constructor(
             } else {
                 state.allMentors.filter { mentor ->
                     mentor.specialization == category ||
-                            mentor.specialization.specializations.any {
-                                it.equals(
+                            mentor.specialization.specializations.any { specRes ->
+                                application.getString(specRes).equals(
                                     category.name.replace("_", " "),
                                     ignoreCase = true
                                 )
@@ -243,11 +248,13 @@ class HomeViewModel @Inject constructor(
         val userId = user?.userId ?: return
 
         viewModelScope.launch {
+            _uiState.update { it.copy(savingCourseIds = it.savingCourseIds + courseId) }
             val response = authRepository.toggleSaveCourse(userId, courseId)
             if (response is Response.Success) {
                 // Refresh data to update UI
                 fetchHomeData(forceRefresh = true)
             }
+            _uiState.update { it.copy(savingCourseIds = it.savingCourseIds - courseId) }
         }
     }
 }

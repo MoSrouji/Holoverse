@@ -446,7 +446,7 @@ fun MentorSearchResultItem(mentor: User.Mentor, onClick: () -> Unit) {
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = " ${mentor.averageRating ?: 0.0} (${mentor.reviewsCount ?: 0} reviews)",
+                    text = " ${"%.2f".format(mentor.averageRating ?: 0.0)} (${mentor.reviewsCount ?: 0} reviews)",
                     style = MaterialTheme.typography.bodySmall
                 )
             }

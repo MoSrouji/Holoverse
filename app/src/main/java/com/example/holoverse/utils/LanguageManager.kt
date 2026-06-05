@@ -23,7 +23,7 @@ class LanguageManager @Inject constructor(
 
     fun setLocale(languageCode: String?) {
         preferenceManager.saveLanguage(languageCode)
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val localeList = if (languageCode != null) {
                 LocaleList.forLanguageTags(languageCode)

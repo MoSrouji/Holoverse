@@ -53,22 +53,40 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
         try {
             val snapshot = firestore.collection("courses").document(courseId).get().await()
             val course = snapshot.toObject(Courses::class.java)
-            emit(Response.Success(course))
+            if (course != null) {
+                // Ensure ID is set and category is correctly mapped
+                val categoryString = snapshot.getString("category")
+                val courseWithId = course.copy(
+                    id = snapshot.id,
+                    category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(categoryString) else course.category
+                )
+                emit(Response.Success(courseWithId))
+            } else {
+                emit(Response.Success(null))
+            }
         } catch (e: Exception) {
             Log.e("CourseRepoImpl", "Error getting course by id", e)
             emit(Response.Error(e.message ?: "Error fetching course"))
         }
     }
 
-    override suspend fun getCoursesByCategory(category: AppCategory): Flow<Response<List<Courses>>> =
+    override suspend fun getCoursesByCategory(category: com.example.holoverse.core.domain.model.AppCategory): Flow<Response<List<Courses>>> =
         flow {
             emit(Response.Loading)
             try {
                 val snapshot = firestore.collection("courses")
-                    .whereEqualTo("category", category)
+                    .whereEqualTo("category", category.name) // Use .name to match Firestore storage
                     .get()
                     .await()
-                val courses = snapshot.toObjects(Courses::class.java)
+                val courses = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(Courses::class.java)?.let { course ->
+                        val categoryString = doc.getString("category")
+                        course.copy(
+                            id = doc.id,
+                            category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(categoryString) else course.category
+                        )
+                    }
+                }
                 emit(Response.Success(courses))
             } catch (e: Exception) {
                 Log.e("CourseRepoImpl", "Error getting courses by category", e)
@@ -84,7 +102,15 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                     .whereEqualTo("instructorId", instructorId)
                     .get()
                     .await()
-                val courses = snapshot.toObjects(Courses::class.java)
+                val courses = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(Courses::class.java)?.let { course ->
+                        val categoryString = doc.getString("category")
+                        course.copy(
+                            id = doc.id,
+                            category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(categoryString) else course.category
+                        )
+                    }
+                }
                 emit(Response.Success(courses))
             } catch (e: Exception) {
                 Log.e("CourseRepoImpl", "Error getting courses by instructor id", e)

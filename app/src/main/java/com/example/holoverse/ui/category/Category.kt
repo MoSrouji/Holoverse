@@ -23,32 +23,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Biotech
 import androidx.compose.material.icons.filled.Brush
-import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.HistoryEdu
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SelfImprovement
-import androidx.compose.material.icons.filled.Smartphone
-import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -92,49 +76,8 @@ fun CategoryScreen(
     LocalContext.current
     val categories = remember {
         listOf(
-            Category(AppCategory.THREE_D_DESIGN, R.string.category_3d_design, Icons.Default.Category),
-            Category(AppCategory.GRAPHIC_DESIGN, R.string.category_graphic_design, Icons.Default.Draw),
-            Category(AppCategory.WEB_DEVELOPMENT, R.string.category_web_development, Icons.Default.Code),
-            Category(
-                AppCategory.SEO_MARKETING, R.string.category_seo_marketing,
-                Icons.AutoMirrored.Filled.TrendingUp
-            ),
-            Category(
-                AppCategory.FINANCE_ACCOUNTING,
-                R.string.category_finance_accounting,
-                Icons.Default.AccountBalance
-            ),
-            Category(
-                AppCategory.PERSONAL_DEVELOPMENT,
-                R.string.category_personal_development,
-                Icons.Default.SelfImprovement
-            ),
-            Category(
-                AppCategory.OFFICE_PRODUCTIVITY,
-                R.string.category_office_productivity,
-                Icons.Default.Work
-            ),
-            Category(AppCategory.HR_MANAGEMENT, R.string.category_hr_management, Icons.Default.Groups),
-            Category(AppCategory.DATA_SCIENCE, R.string.category_data_science, Icons.Default.Science),
-            Category(
-                AppCategory.MOBILE_DEVELOPMENT,
-                R.string.category_mobile_development,
-                Icons.Default.Smartphone
-            ),
-            Category(AppCategory.MUSIC, R.string.category_music, Icons.Default.MusicNote),
-            Category(AppCategory.PHOTOGRAPHY, R.string.category_photography, Icons.Default.CameraAlt),
+            Category(AppCategory.COMPUTER_SCIENCE, R.string.category_computer_science, Icons.Default.Code),
             Category(AppCategory.BUSINESS, R.string.category_business, Icons.Default.BusinessCenter),
-            Category(
-                AppCategory.HEALTH_FITNESS,
-                R.string.category_health_fitness,
-                Icons.Default.FitnessCenter
-            ),
-            Category(
-                AppCategory.LANGUAGE_LEARNING,
-                R.string.category_language_learning,
-                Icons.Default.Language
-            ),
-            Category(AppCategory.AI, R.string.category_ai, Icons.Default.AutoAwesome),
             Category(AppCategory.MATHEMATICS, R.string.category_mathematics, Icons.Default.Calculate),
             Category(AppCategory.SCIENCE, R.string.category_science, Icons.Default.Science),
             Category(AppCategory.LANGUAGES, R.string.category_languages, Icons.Default.Language),
@@ -143,44 +86,40 @@ fun CategoryScreen(
                 R.string.category_humanities,
                 Icons.AutoMirrored.Filled.MenuBook
             ),
+            Category(AppCategory.ARTS, R.string.category_arts, Icons.Default.Brush),
+            Category(
+                AppCategory.HEALTH_FITNESS,
+                R.string.category_health_fitness,
+                Icons.Default.FitnessCenter
+            ),
             Category(
                 AppCategory.TEST_PREP,
                 R.string.category_test_prep,
                 Icons.AutoMirrored.Filled.Assignment
             ),
-            Category(AppCategory.COMPUTER_SCIENCE, R.string.category_computer_science, Icons.Default.Code),
-            Category(AppCategory.ARTS, R.string.category_arts, Icons.Default.Brush),
             Category(
                 AppCategory.SPECIAL_EDUCATION,
                 R.string.category_special_education,
                 Icons.Default.Psychology
             ),
-            Category(AppCategory.PHYSICS, R.string.category_physics, Icons.Default.Biotech),
-            Category(AppCategory.CHEMISTRY, R.string.category_chemistry, Icons.Default.Science),
-            Category(AppCategory.BIOLOGY, R.string.category_biology, Icons.Default.Science),
-            Category(AppCategory.HISTORY, R.string.category_history, Icons.Default.HistoryEdu),
-            Category(AppCategory.PHILOSOPHY, R.string.category_philosophy, Icons.Default.Lightbulb),
-            Category(AppCategory.PSYCHOLOGY, R.string.category_psychology, Icons.Default.Psychology),
-            Category(
-                AppCategory.ECONOMICS,
-                R.string.category_economics,
-                Icons.AutoMirrored.Filled.TrendingUp
-            ),
-            Category(
-                AppCategory.ENTREPRENEURSHIP,
-                R.string.category_entrepreneurship,
-                Icons.Default.Business
-            ),
-            Category(
-                AppCategory.ELEMENTARY_EDUCATION,
-                R.string.category_elementary_education,
-                Icons.Default.ChildCare
-            ),
-            Category(AppCategory.STUDY_SKILLS, R.string.category_study_skills, Icons.Default.Edit)
+            Category(AppCategory.OTHER, R.string.Categories, Icons.Default.Edit)
         )
     }
 
     var searchQuery by remember { mutableStateOf("") }
+
+    val filteredCategories = remember(searchQuery) {
+        if (searchQuery.isBlank()) {
+            categories
+        } else {
+            categories.filter { category ->
+                // Basic search in the category name resource
+                // Note: In a real app, you might want to search against the actual string, 
+                // but since we don't have the context here, we filter by nameRes or AppCategory name
+                category.appCategory.name.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
 
     Scaffold(
         containerColor = Color.Transparent
@@ -260,7 +199,7 @@ fun CategoryScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(16.dp)
                 ) {
-                    items(categories) { category ->
+                    items(filteredCategories) { category ->
                         CategoryItem(category) {
                             onCategorySelected(category.appCategory)
                         }

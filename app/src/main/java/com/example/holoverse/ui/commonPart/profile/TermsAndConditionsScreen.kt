@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.holoverse.R
-import com.example.holoverse.ui.spatialTheme.SpatialBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,9 +37,13 @@ fun TermsAndConditionsScreen(onBackClick: () -> Unit, darkTheme: Boolean = true)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
             ) {
-                SpatialBackground(isDark = darkTheme)
                 TopAppBar(
-                    title = { Text(stringResource(R.string.terms_conditions), fontWeight = FontWeight.Bold) },
+                    title = {
+                        Text(
+                            stringResource(R.string.terms_conditions),
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -98,7 +101,7 @@ fun TermsAndConditionsScreen(onBackClick: () -> Unit, darkTheme: Boolean = true)
             )
 
             Text(
-                text = "Last updated: October 2023",
+                text = "Last updated: October 2026",
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 24.dp, bottom = 16.dp)
             )

@@ -41,23 +41,20 @@ class ReviewViewModel @Inject constructor(
             repository.getReviewsByTargetId(targetId).collect { response ->
                 when (response) {
                     is Response.Loading -> _uiState.value = _uiState.value.copy(isLoading = true)
-                    is Response.Success -> _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        reviews = response.data,
-                        error = null
-                    )
+                    is Response.Success -> {
+                        val reviews = response.data
+                        val average = if (reviews.isEmpty()) 0.0 else reviews.map { it.rating }.average()
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            reviews = reviews,
+                            averageRating = average,
+                            error = null
+                        )
+                    }
                     is Response.Error -> _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = response.message
                     )
-                }
-            }
-        }
-        
-        viewModelScope.launch {
-            repository.getAverageRating(targetId).collect { response ->
-                if (response is Response.Success) {
-                    _uiState.value = _uiState.value.copy(averageRating = response.data)
                 }
             }
         }

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.ui.reviews.ui.components.LiveMentorRating
 import com.example.holoverse.utils.GlassCard
 
 @Composable
@@ -66,29 +68,28 @@ fun TeacherCard(
         )
 
         Text(
-            text = mentor.specialization.name.lowercase().replaceFirstChar { it.uppercase() },
+            text = stringResource(mentor.specialization.titleRes),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.secondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
+        LiveMentorRating(
+            mentorId = mentor.userId ?: "",
+            initialRating = mentor.averageRating ?: 0.0,
+            initialReviewsCount = mentor.reviewsCount ?: 0,
+            textStyle = MaterialTheme.typography.labelMedium,
+            iconSize = 14.dp,
             modifier = Modifier.padding(top = 4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Star,
-                contentDescription = null,
-                tint = Color(0xFFFFB74D),
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
+        )
+
+        mentor.hourlyRate?.let { rate ->
             Text(
-                text = String.format("%.1f", mentor.averageRating ?: 0.0),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold
+                text = stringResource(R.string.price_format, rate) + "/hr",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
         }
     }

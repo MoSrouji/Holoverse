@@ -22,6 +22,7 @@ data class MentorAnalysisUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val totalStudents: Int = 0,
+    val totalFollowers: Int = 0,
     val totalRevenue: Double = 0.0,
     val averageRating: Double = 0.0,
     val averageCompletionRate: Double = 0.0,
@@ -73,7 +74,9 @@ class MentorAnalysisViewModel @Inject constructor(
     }
 
     private fun calculateStats(courses: List<Courses>) {
-        val totalStudents = courses.sumOf { it.numEnrolled }
+        val mentor = _uiState.value.mentor
+        val totalStudents = mentor?.totalStudentsTaught ?: courses.sumOf { it.numEnrolled }
+        val totalFollowers = mentor?.followersCount ?: mentor?.followers?.size ?: 0
         val totalRevenue = courses.sumOf { it.price * it.numEnrolled }
         val avgRating = if (courses.isNotEmpty()) courses.sumOf { it.rating } / courses.size else 0.0
         val avgCompletion = if (courses.isNotEmpty()) courses.sumOf { it.completionRate } / courses.size else 0.0
@@ -81,11 +84,12 @@ class MentorAnalysisViewModel @Inject constructor(
 
         _uiState.update { 
             it.copy(
-                courses = courses,
+                courses = courses.sortedByDescending { c -> c.numEnrolled },
                 isLoading = false,
                 totalStudents = totalStudents,
+                totalFollowers = totalFollowers,
                 totalRevenue = totalRevenue,
-                averageRating = avgRating,
+                averageRating = mentor?.averageRating ?: avgRating,
                 averageCompletionRate = avgCompletion,
                 averageProgress = avgProgress
             )

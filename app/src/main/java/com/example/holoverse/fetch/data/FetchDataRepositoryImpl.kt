@@ -140,4 +140,27 @@ class FetchDataRepositoryImpl(
             Log.e(TAG, "Error cleaning up expired boosts", e)
         }
     }
+
+    override suspend fun fetchStudentsByIds(studentIds: List<String>): List<User.Student> {
+        if (studentIds.isEmpty()) return emptyList()
+        
+        return try {
+            val snapshot = firestore.collection(NetworkConstant.COLLECTION_NAME_STUDENTS)
+                .whereIn("userId", studentIds)
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                try {
+                    doc.toObject(User.Student::class.java)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error mapping student: ${doc.id}", e)
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching students by ids", e)
+            emptyList()
+        }
+    }
 }

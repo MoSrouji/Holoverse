@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.collectUserData.student.viewModels.StudentPreferenceViewModel
 import com.example.holoverse.ui.collectUserData.student.viewModels.StudentPreferenceTextField
@@ -60,7 +61,7 @@ fun StudentPreferenceInfoInput(
 ) {
     val gradeItems = listOf("Grade 10", "Grade 11", "Grade 12", "University 1st Year", "University 2nd Year", "Other")
     val learningTimeItems = listOf("Morning", "Afternoon", "Evening", "Night")
-    val interestItems = listOf("Mathematics", "Science", "Languages", "History", "Computer Science", "Arts", "Business")
+    val interestItems = AppCategory.entries.map { stringResource(it.titleRes) }
 
     val context = LocalContext.current
     var isGradeExpanded by remember { mutableStateOf(false) }

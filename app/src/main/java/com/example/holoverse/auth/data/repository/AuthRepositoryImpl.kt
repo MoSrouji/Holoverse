@@ -235,7 +235,13 @@ class AuthRepositoryImpl @Inject constructor(
             val teacherDoc =
                 firestore.collection(COLLECTION_NAME_MENTORS).document(uid).get().await()
             if (teacherDoc.exists()) {
-                return teacherDoc.toObject(User.Mentor::class.java)?.copy(userId = uid)
+                val mentor = teacherDoc.toObject(User.Mentor::class.java)
+                // Fix for AppCategory deserialization
+                val specString = teacherDoc.getString("specialization")
+                return mentor?.copy(
+                    userId = uid,
+                    specialization = if (specString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(specString) else mentor.specialization
+                )
             }
 
             null
@@ -363,17 +369,26 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun enrollInCourse(userId: String, courseId: String): Response<Boolean> {
+    override suspend fun enrollInCourse(userId: String, courseId: String, instructorId: String): Response<Boolean> {
         return try {
             val user =
                 getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
             val collection =
                 if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
             val userRef = firestore.collection(collection).document(userId)
+            val courseRef = firestore.collection("courses").document(courseId)
+            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(instructorId)
 
             firestore.runBatch { batch ->
+                // Update User
                 batch.update(userRef, "enrolledCourses", FieldValue.arrayUnion(courseId))
                 batch.update(userRef, "currentCourses", FieldValue.arrayUnion(courseId))
+                
+                // Update Course stats
+                batch.update(courseRef, "numEnrolled", FieldValue.increment(1))
+                
+                // Update Mentor stats
+                batch.update(mentorRef, "totalStudentsTaught", FieldValue.increment(1))
             }.await()
 
             // Refresh local cache
@@ -413,6 +428,24 @@ class AuthRepositoryImpl @Inject constructor(
             Response.Success(true)
         } catch (e: Exception) {
             Response.Error(e.message ?: "Failed to update saved courses")
+        }
+    }
+
+    override suspend fun addCourseToMentor(mentorId: String, courseId: String): Response<Boolean> {
+        return try {
+            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId)
+            mentorRef.update("coursesCreated", FieldValue.arrayUnion(courseId)).await()
+            
+            // Refresh local cache if the current user is this mentor
+            val currentUser = getCachedUser()
+            if (currentUser?.userId == mentorId) {
+                val updatedUser = getCurrentUser()
+                updatedUser?.let { preferenceManager.saveUser(it) }
+            }
+            
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Failed to add course to mentor")
         }
     }
 }

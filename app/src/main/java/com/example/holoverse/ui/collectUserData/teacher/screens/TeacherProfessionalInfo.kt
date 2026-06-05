@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
@@ -38,11 +40,13 @@ import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.ui.collectUserData.teacher.viewModels.TeacherProfessionalViewModel
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
+import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
 import com.example.holoverse.ui.commonPart.auth.widget.CheckBoxMenu
 import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
 import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
+import com.example.holoverse.ui.commonPart.auth.widget.textfield.AuthenticationTextField
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
 import com.example.holoverse.ui.theme.IbarraNovaSemiBoldPlatinum17
@@ -94,6 +98,7 @@ fun TeacherProfessionalInfoInput(
                         subjects = listOf(viewModel.selectSubjects),
                         certifications = viewModel.forms[SignUpTextFields.CERTIFICATION]!!.text,
                         languagesSpoken = viewModel.selectLanguage.toList(),
+                        hourlyRate = viewModel.forms[SignUpTextFields.HOURLY_RATE]!!.text.toDoubleOrNull()
                     )
                     viewModel.firebaseSingUp(userDto = userState)
                 }
@@ -254,7 +259,7 @@ fun TeacherProfessionalInfoInput(
                         viewModel.subject = if (selectedCategory.specializations.isEmpty()) {
                             listOf(item)
                         } else {
-                            selectedCategory.specializations
+                            selectedCategory.specializations.map { context.resources.getString(it) }
                         }
                     },
                     state = viewModel.forms[SignUpTextFields.SPECIALIZATION]!!,
@@ -282,6 +287,21 @@ fun TeacherProfessionalInfoInput(
                     menuItems = viewModel.subject,
                     showIcon = false,
                     labelText = "Specific Subjects"
+                )
+
+                AuthenticationTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    state = viewModel.forms[SignUpTextFields.HOURLY_RATE]!!,
+                    hint = R.string.hourlyRate,
+                    onValueChange = {
+                        viewModel.onEvent(
+                            ValidationEvent.TextFieldValueChange(
+                                viewModel.forms[SignUpTextFields.HOURLY_RATE]!!.copy(text = it)
+                            )
+                        )
+                    },
+                    type = TextFieldType.Text,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
 

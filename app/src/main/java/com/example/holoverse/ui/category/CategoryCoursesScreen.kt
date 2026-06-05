@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +56,8 @@ fun CategoryCoursesScreen(
     }
 
     val coursesState = viewModel.coursesState.value
+    val savedCourseIds by viewModel.savedCourseIds
+    val savingCourseIds by viewModel.savingCourseIds
     val categoryName = stringResource(category.titleRes)
 
     Scaffold { paddingValues ->
@@ -165,7 +168,10 @@ fun CategoryCoursesScreen(
                                     ) { course ->
                                         CourseItem(
                                             course = course,
-                                            onClick = { onCourseClick(course.id) }
+                                            onClick = { onCourseClick(course.id) },
+                                            isSaved = savedCourseIds.contains(course.id),
+                                            isSaving = savingCourseIds.contains(course.id),
+                                            onSaveClick = { viewModel.toggleSaveCourse(course.id) }
                                         )
                                     }
                                 }

@@ -72,6 +72,7 @@ fun HomeScreen(
     onMentorClick: (String) -> Unit,
     onNavigateToCreateCourse: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
+    onNavigateToStudentsList: () -> Unit,
     onNavigateToChat: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
@@ -98,6 +99,7 @@ fun HomeScreen(
         onMentorClick = onMentorClick,
         onNavigateToCreateCourse = onNavigateToCreateCourse,
         onNavigateToAnalytics = onNavigateToAnalytics,
+        onNavigateToStudentsList = onNavigateToStudentsList,
         onNavigateToChat = onNavigateToChat,
         onNavigateToSearch = onNavigateToSearch,
         onCourseClick = onCourseClick,
@@ -122,6 +124,7 @@ fun HomeScreenContent(
     onMentorClick: (String) -> Unit,
     onNavigateToCreateCourse: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
+    onNavigateToStudentsList: () -> Unit,
     onNavigateToChat: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
@@ -169,7 +172,7 @@ fun HomeScreenContent(
                 onNavigateToAnalytics()
             },
             FabMenuItem(studentsLabel, Icons.Default.Groups) {
-                /* Navigate to Students List */
+                onNavigateToStudentsList()
             },
             FabMenuItem(messagesLabel, Icons.Default.Chat) {
                 onNavigateToChat()
@@ -336,6 +339,7 @@ fun HomeScreenPreview() {
             onMentorClick = {},
             onNavigateToCreateCourse = {},
             onNavigateToAnalytics = {},
+            onNavigateToStudentsList = {},
             onNavigateToChat = {},
             onNavigateToSearch = {},
             onCourseClick = {},

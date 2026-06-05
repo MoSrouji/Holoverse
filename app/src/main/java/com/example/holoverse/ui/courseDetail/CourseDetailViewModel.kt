@@ -114,7 +114,7 @@ class CourseDetailViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            authRepository.enrollInCourse(userId, courseId).let { response ->
+            authRepository.enrollInCourse(userId, courseId, course?.instructorId ?: "").let { response ->
                 _enrollmentState.value = response
                 if (response is Response.Success) {
                     _isEnrolled.value = true
