@@ -76,6 +76,7 @@ fun CategoryScreen(
     LocalContext.current
     val categories = remember {
         listOf(
+            Category(AppCategory.OTHER, R.string.Categories, Icons.Default.Edit),
             Category(AppCategory.COMPUTER_SCIENCE, R.string.category_computer_science, Icons.Default.Code),
             Category(AppCategory.BUSINESS, R.string.category_business, Icons.Default.BusinessCenter),
             Category(AppCategory.MATHEMATICS, R.string.category_mathematics, Icons.Default.Calculate),
@@ -101,8 +102,7 @@ fun CategoryScreen(
                 AppCategory.SPECIAL_EDUCATION,
                 R.string.category_special_education,
                 Icons.Default.Psychology
-            ),
-            Category(AppCategory.OTHER, R.string.Categories, Icons.Default.Edit)
+            )
         )
     }
 

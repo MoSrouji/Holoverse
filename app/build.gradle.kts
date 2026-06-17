@@ -81,6 +81,7 @@ android {
 dependencies {
     // AndroidX and Core Libraries
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.graphics.core)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -200,5 +201,7 @@ dependencies {
     baselineProfile(project(":baselineprofile"))
 
     implementation(libs.compose.auto.shimmer)
+    implementation(libs.webrtc)
+    implementation(libs.webrtc.ktx)
     debugImplementation(libs.leakcanary.android)
 }

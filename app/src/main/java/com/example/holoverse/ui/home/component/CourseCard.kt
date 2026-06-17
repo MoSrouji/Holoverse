@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -27,12 +30,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
-import androidx.compose.ui.res.stringResource
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
 
@@ -41,6 +44,7 @@ fun CourseCard(
     course: Courses,
     modifier: Modifier = Modifier,
     isSaved: Boolean = false,
+    isSaving: Boolean = false,
     onSaveClick: () -> Unit = {},
     onClick: () -> Unit = {}
 ) {
@@ -75,6 +79,7 @@ fun CourseCard(
                 CourseTypeWithButton(
                     category = stringResource(course.category.titleRes),
                     isSaved = isSaved,
+                    isSaving = isSaving,
                     onSaveClick = onSaveClick
                 )
                 Spacer(modifier = Modifier.padding(4.dp))
@@ -95,10 +100,12 @@ fun CourseCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CourseTypeWithButton(
     category: String,
     isSaved: Boolean,
+    isSaving: Boolean,
     onSaveClick: () -> Unit
 ) {
     Row(
@@ -112,12 +119,19 @@ fun CourseTypeWithButton(
             color = MaterialTheme.colorScheme.tertiary,
             fontWeight = FontWeight.Bold
         )
-        Icon(
-            imageVector = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkAdd,
-            contentDescription = "Save For Later",
-            modifier = Modifier.clickable { onSaveClick() },
-            tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        if (isSaving) {
+            LoadingIndicator(
+                modifier = Modifier.size(22.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+        } else {
+            Icon(
+                imageVector = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkAdd,
+                contentDescription = "Save For Later",
+                modifier = Modifier.clickable { onSaveClick() },
+                tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

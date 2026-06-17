@@ -1,6 +1,5 @@
 package com.example.holoverse.three_d_model.data.remote.dto
 
-import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.three_d_model.domain.model.Model
 import com.squareup.moshi.JsonClass
 
@@ -19,7 +18,7 @@ fun ModelResponseDto.toModels(): List<Model> {
             name = key.replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
             path = "$baseUrl/$path",
             description = "3D Model: ${key.replace("_", " ")}",
-            category = AppCategory.fromString(path.substringBefore("/", "OTHER"))
+            category = path.substringBefore("/", "Other")
         )
     }
 }

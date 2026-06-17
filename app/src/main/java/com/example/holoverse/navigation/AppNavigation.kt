@@ -270,7 +270,17 @@ fun AppNavHost(
             ChatScreen(
                 darkTheme = darkTheme,
                 mentorId = key.mentorId,
-                onBackClick = { navigator.popBackStack() }
+                onBackClick = { navigator.popBackStack() },
+                onNavigateToVideoCall = { callId ->
+                    navigator.navigateTo(AppDestination.VideoCall(callId))
+                }
+            )
+        }
+        entry<AppDestination.VideoCall> { key: AppDestination.VideoCall ->
+            com.example.holoverse.webrtc.VideoCallScreen(
+                callId = key.callId,
+                isOffer = true, // For now, assume initiator
+                onCallEnded = { navigator.popBackStack() }
             )
         }
         entry<AppDestination.EditProfile> {

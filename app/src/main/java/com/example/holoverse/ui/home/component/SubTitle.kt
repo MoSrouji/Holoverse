@@ -19,13 +19,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.holoverse.R
 
 @Composable
 fun SubTitle(
    @StringRes text: Int,
     onSubTitleButtonClick:()-> Unit ={ }
 ){
-    Row(modifier= Modifier.clickable(onClick = onSubTitleButtonClick)
+    Row(modifier= Modifier
+        .clickable(onClick = onSubTitleButtonClick)
         .fillMaxWidth()
         .padding(8.dp) ,
         horizontalArrangement = Arrangement.SpaceBetween ,
@@ -38,14 +40,14 @@ fun SubTitle(
         Row(modifier = Modifier ,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center) {
-            Text(text = "SEE ALL " ,
+            Text(text = stringResource(R.string.see_all),
                 color = MaterialTheme.colorScheme.tertiary ,
                 fontWeight = FontWeight.Bold ,
                 style = MaterialTheme.typography.bodyMedium)
 
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                contentDescription = "More discover movies",
+                contentDescription = stringResource(R.string.more_discover_movies),
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
 

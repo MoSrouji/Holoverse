@@ -64,9 +64,11 @@ class HomeViewModel @Inject constructor(
         fetchHomeData()
     }
 
-    private fun fetchHomeData(forceRefresh: Boolean = false) {
+    private fun fetchHomeData(forceRefresh: Boolean = false, showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            if (showLoading) {
+                _uiState.update { it.copy(isLoading = true, error = null) }
+            }
             try {
                 // Cleanup expired boosts first
                 fetchDataRepository.cleanupExpiredBoosts()
@@ -158,9 +160,10 @@ class HomeViewModel @Inject constructor(
                 }
                 val savedCourses = courses.filter { it.id in savedCoursesIds }
 
-                val categories = (listOf(AppCategory.OTHER) + courses
+                val categories = listOf(AppCategory.OTHER) + courses
                     .map { it.category }
-                    .distinct())
+                    .distinct()
+                    .filter { it != AppCategory.OTHER }
                     .sortedBy { it.name }
 
                 _uiState.update {
@@ -251,8 +254,9 @@ class HomeViewModel @Inject constructor(
             _uiState.update { it.copy(savingCourseIds = it.savingCourseIds + courseId) }
             val response = authRepository.toggleSaveCourse(userId, courseId)
             if (response is Response.Success) {
-                // Refresh data to update UI
-                fetchHomeData(forceRefresh = true)
+                // Refresh data to update UI without global loading
+                // Use forceRefresh = false to avoid shuffling the course list from the repository
+                fetchHomeData(forceRefresh = false, showLoading = false)
             }
             _uiState.update { it.copy(savingCourseIds = it.savingCourseIds - courseId) }
         }

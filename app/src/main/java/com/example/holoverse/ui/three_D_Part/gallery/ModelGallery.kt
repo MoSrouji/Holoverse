@@ -1,7 +1,10 @@
 package com.example.holoverse.ui.three_D_Part.gallery
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -81,11 +84,17 @@ fun ModelGalleryOverlay(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Show detailed download progress for the selected model
-            if (currentProgress != null && currentProgress.progress < 1.0f) {
-                ModelDownloadStatus(
-                    progress = currentProgress,
-                    modifier = Modifier.padding(start = 32.dp, end = 32.dp, bottom = 8.dp)
-                )
+            AnimatedVisibility(
+                visible = currentProgress != null && currentProgress.progress < 1.0f,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                if (currentProgress != null) {
+                    ModelDownloadStatus(
+                        progress = currentProgress,
+                        modifier = Modifier.padding(start = 32.dp, end = 32.dp, bottom = 8.dp)
+                    )
+                }
             }
 
             LazyRow(
@@ -136,7 +145,11 @@ fun ModelDownloadStatus(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "${formatSize(progress.downloadedSize)} / ${formatSize(progress.totalSize)}",
+                text = if (progress.totalSize > 0) {
+                    "${formatSize(progress.downloadedSize)} / ${formatSize(progress.totalSize)}"
+                } else {
+                    formatSize(progress.downloadedSize)
+                },
                 color = Color.White.copy(alpha = 0.7f),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium
@@ -145,22 +158,33 @@ fun ModelDownloadStatus(
         
         Spacer(modifier = Modifier.height(10.dp))
         
-        LinearProgressIndicator(
-            progress = { progress.progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = Color.White.copy(alpha = 0.2f),
-            strokeCap = StrokeCap.Round
-        )
+        if (progress.progress >= 0f) {
+            LinearProgressIndicator(
+                progress = { progress.progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = Color.White.copy(alpha = 0.2f),
+                strokeCap = StrokeCap.Round
+            )
+        } else {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = Color.White.copy(alpha = 0.2f),
+                strokeCap = StrokeCap.Round
+            )
+        }
     }
 }
 
 private fun formatSize(bytes: Long): String {
     if (bytes <= 0) return "0 B"
     val units = arrayOf("B", "KB", "MB", "GB", "TB")
-    val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
+    val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt().coerceIn(0, units.size - 1)
     return String.format(
         Locale.US,
         "%.1f %s",
@@ -271,29 +295,50 @@ fun ModelCard(
             }
 
             // Download progress overlay
-            if (progress != null && progress.progress < 1.0f) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(
-                            progress = { progress.progress },
-                            modifier = Modifier.size(32.dp),
-                            color = Color.White,
-                            strokeWidth = 3.dp,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        val totalMB = progress.totalSize / (1024f * 1024f)
-                        if (totalMB > 0) {
-                            Text(
-                                text = String.format(Locale.US, "%.1f MB", totalMB),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
+            this@Card.AnimatedVisibility(
+                visible = progress != null && progress.progress < 1.0f,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                if (progress != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.6f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (progress.progress >= 0f) {
+                                CircularProgressIndicator(
+                                    progress = { progress.progress },
+                                    modifier = Modifier.size(32.dp),
+                                    color = Color.White,
+                                    strokeWidth = 3.dp,
+                                )
+                            } else {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    color = Color.White,
+                                    strokeWidth = 3.dp,
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            val totalMB = progress.totalSize / (1024f * 1024f)
+                            if (totalMB > 0) {
+                                Text(
+                                    text = String.format(Locale.US, "%.1f MB", totalMB),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else if (progress.downloadedSize > 0) {
+                                Text(
+                                    text = formatSize(progress.downloadedSize),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

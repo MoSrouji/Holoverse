@@ -136,6 +136,7 @@ class ModelCacheManager(
                 }
                 
                 // If we reached here, download was successful
+                onProgress?.invoke(1.0f, tempFile.length(), tempFile.length())
                 lastException = null
                 break 
             } catch (e: Exception) {

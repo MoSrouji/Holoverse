@@ -2,7 +2,6 @@ package com.example.holoverse.ui.three_D_Part
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.three_d_model.data.local.ModelCacheManager
 import com.example.holoverse.three_d_model.domain.model.Model
 import com.example.holoverse.three_d_model.domain.usecase.GetModelsUseCase
@@ -31,16 +30,16 @@ class ModelViewModel @Inject constructor(
             state.models.filter { model ->
                 val matchesSearch = model.name.contains(state.searchQuery, ignoreCase = true) ||
                         model.description.contains(state.searchQuery, ignoreCase = true)
-                val matchesCategory = state.selectedCategory == AppCategory.OTHER || model.category == state.selectedCategory
+                val matchesCategory = state.selectedCategory == "All" || model.category == state.selectedCategory
                 matchesSearch && matchesCategory
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val categories: StateFlow<List<AppCategory>> = _uiState
+    val categories: StateFlow<List<String>> = _uiState
         .map { state ->
-            val modelCategories = state.models.map { it.category }.distinct().filter { it != AppCategory.OTHER }.sortedBy { it.name }
-            listOf(AppCategory.OTHER) + modelCategories
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf(AppCategory.OTHER))
+            val modelCategories = state.models.map { it.category }.distinct().sorted()
+            listOf("All") + modelCategories
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("All"))
 
     init {
         fetchModels()
@@ -79,7 +78,7 @@ class ModelViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
 
-    fun updateSelectedCategory(category: AppCategory) {
+    fun updateSelectedCategory(category: String) {
         _uiState.value = _uiState.value.copy(selectedCategory = category)
     }
 
@@ -133,7 +132,7 @@ class ModelViewModel @Inject constructor(
             name = name,
             path = path,
             description = "Local model from storage",
-            category = AppCategory.OTHER
+            category = "Other"
         )
         _uiState.update { state ->
             val updatedModels = listOf(newModel) + state.models

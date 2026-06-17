@@ -22,16 +22,20 @@ import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -55,13 +59,38 @@ class ChatRepositoryImpl @Inject constructor(
     private val _messagesState = MutableStateFlow<Map<String, List<Message>>>(emptyMap())
     override val messagesState: StateFlow<Map<String, List<Message>>> = _messagesState.asStateFlow()
 
+    private val messageListeners = mutableMapOf<String, ListenerRegistration>()
+    private var chatsListener: ListenerRegistration? = null
+
     override fun getMessages(chatId: String): Flow<List<Message>> {
-        repositoryScope.launch {
-            syncMessagesFromRemote(chatId)
+        // Start remote listener if not already started
+        if (!messageListeners.containsKey(chatId)) {
+            val listener = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS)
+                .document(chatId)
+                .collection(NetworkConstant.COLLECTION_NAME_MESSAGES)
+                .orderBy("timestamp", Query.Direction.ASCENDING)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("ChatRepository", "Error listening for messages: ${error.message}")
+                        return@addSnapshotListener
+                    }
+                    snapshot?.let {
+                        val messages = it.documents.mapNotNull { doc ->
+                            doc.toObject(Message::class.java)?.copy(id = doc.id)
+                        }
+                        repositoryScope.launch {
+                            messageDao.insertMessages(messages.map { m -> m.toEntity(chatId) })
+                        }
+                    }
+                }
+            messageListeners[chatId] = listener
         }
+
+        // Return local flow and update messagesState
         val flow = messageDao.getMessagesForChat(chatId).map { entities ->
             entities.map { it.toDomain() }
         }
+
         repositoryScope.launch {
             flow.collect { messages ->
                 _messagesState.value = _messagesState.value.toMutableMap().apply {
@@ -72,32 +101,29 @@ class ChatRepositoryImpl @Inject constructor(
         return flow
     }
 
-    private suspend fun syncMessagesFromRemote(chatId: String) {
-        if (chatId.isBlank()) return
-        try {
-            val snapshot = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS)
-                .document(chatId)
-                .collection(NetworkConstant.COLLECTION_NAME_MESSAGES)
-                .orderBy("timestamp", Query.Direction.ASCENDING)
-                .limit(100)
-                .get()
-                .await()
-
-            val messages = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Message::class.java)?.copy(id = doc.id)
-            }
-            if (messages.isNotEmpty()) {
-                messageDao.insertMessages(messages.map { it.toEntity(chatId) })
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
     override fun getChats(userId: String): Flow<List<Chat>> {
-        repositoryScope.launch {
-            syncChatsFromRemote(userId)
+        // Start remote listener for chats if not already started
+        if (chatsListener == null) {
+            chatsListener = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS)
+                .whereArrayContains("participants", userId)
+                .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("ChatRepository", "Error listening for chats: ${error.message}")
+                        return@addSnapshotListener
+                    }
+                    snapshot?.let {
+                        val chats = it.documents.mapNotNull { doc ->
+                            doc.toObject(Chat::class.java)?.copy(id = doc.id)
+                        }
+                        repositoryScope.launch {
+                            chatDao.insertChats(chats.map { it.toEntity() })
+                        }
+                    }
+                }
         }
+
+        // Return local flow and update chatsState
         val flow = chatDao.getChatsForUser(userId).map { entities ->
             entities.map { it.toDomain() }
         }
@@ -107,25 +133,6 @@ class ChatRepositoryImpl @Inject constructor(
             }
         }
         return flow
-    }
-
-    private suspend fun syncChatsFromRemote(userId: String) {
-        try {
-            val snapshot = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS)
-                .whereArrayContains("participants", userId)
-                .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
-                .get()
-                .await()
-
-            val chats = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Chat::class.java)?.copy(id = doc.id)
-            }
-            if (chats.isNotEmpty()) {
-                chatDao.insertChats(chats.map { it.toEntity() })
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 
     override suspend fun createOrGetChat(
@@ -455,5 +462,12 @@ class ChatRepositoryImpl @Inject constructor(
             participantNames = this.participantNames,
             participantProfileImages = this.participantProfileImages
         )
+    }
+
+    fun cleanup() {
+        messageListeners.values.forEach { it.remove() }
+        messageListeners.clear()
+        chatsListener?.remove()
+        chatsListener = null
     }
 }

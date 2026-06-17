@@ -40,13 +40,14 @@ class FcmService : FirebaseMessagingService() {
         
         val title = message.notification?.title ?: message.data["title"]
         val body = message.notification?.body ?: message.data["body"]
+        val chatId = message.data["chatId"]
         
         if (title != null && body != null) {
-            sendNotification(title, body)
+            sendNotification(title, body, chatId)
         }
     }
 
-    private fun sendNotification(title: String, body: String) {
+    private fun sendNotification(title: String, body: String, chatId: String?) {
         val channelId = "chat_notifications"
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -65,11 +66,14 @@ class FcmService : FirebaseMessagingService() {
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            if (chatId != null) {
+                putExtra("chatId", chatId)
+            }
         }
         
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)

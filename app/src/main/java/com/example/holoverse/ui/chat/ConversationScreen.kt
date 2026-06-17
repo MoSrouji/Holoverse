@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -62,6 +63,7 @@ fun ConversationScreen(
     uiState: ChatUiState,
     viewModel: ChatViewModel,
     onBackClick: (() -> Unit)? = null,
+    onVideoCallClick: ((String) -> Unit)? = null,
     darkTheme: Boolean = true
 ) {
     var showEmojiPicker by remember { mutableStateOf(false) }
@@ -163,7 +165,18 @@ fun ConversationScreen(
                             )
                         }
                     },
-
+                    actions = {
+                        if (uiState.currentChatId != null) {
+                            IconButton(onClick = {
+                                onVideoCallClick?.invoke(uiState.currentChatId)
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Videocam,
+                                    contentDescription = "Video Call"
+                                )
+                            }
+                        }
+                    }
                 )
             }
         },

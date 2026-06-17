@@ -80,6 +80,7 @@ fun HomeContentSections(
             HorizontalCourseList(
                 courses = uiState.recommendedCourses,
                 isLoading = uiState.isLoading,
+                savingCourseIds = uiState.savingCourseIds,
                 onCourseClick = onCourseClick,
                 onSaveClick = onSaveCourseClick,
                 savedCourseIds = when (val user = uiState.currentUser) {
@@ -115,6 +116,7 @@ fun HomeContentSections(
             HorizontalCourseList(
                 courses = uiState.courses,
                 isLoading = uiState.isLoading,
+                savingCourseIds = uiState.savingCourseIds,
                 onCourseClick = onCourseClick,
                 onSaveClick = onSaveCourseClick,
                 savedCourseIds = when (val user = uiState.currentUser) {
@@ -171,6 +173,7 @@ fun HomeContentSections(
                     HorizontalCourseList(
                         courses = uiState.enrolledCourses,
                         isLoading = uiState.isLoading,
+                        savingCourseIds = uiState.savingCourseIds,
                         onCourseClick = onCourseClick,
                         onSaveClick = onSaveCourseClick,
                         savedCourseIds = when (val user = uiState.currentUser) {
@@ -193,6 +196,7 @@ fun HomeContentSections(
                     HorizontalCourseList(
                         courses = uiState.savedCourses,
                         isLoading = uiState.isLoading,
+                        savingCourseIds = uiState.savingCourseIds,
                         onCourseClick = onCourseClick,
                         onSaveClick = onSaveCourseClick,
                         savedCourseIds = when (val user = uiState.currentUser) {
@@ -221,7 +225,8 @@ private fun HorizontalCourseList(
     isLoading: Boolean,
     onCourseClick: (Courses) -> Unit,
     onSaveClick: (String) -> Unit = {},
-    savedCourseIds: List<String> = emptyList()
+    savedCourseIds: List<String> = emptyList(),
+    savingCourseIds: Set<String> = emptySet()
 ) {
     ShimmerBox(
         isLoading = isLoading,
@@ -251,6 +256,7 @@ private fun HorizontalCourseList(
                     CourseCard(
                         course = course,
                         isSaved = savedCourseIds.contains(course.id),
+                        isSaving = savingCourseIds.contains(course.id),
                         onSaveClick = { onSaveClick(course.id) },
                         onClick = { if (!isLoading) onCourseClick(course) }
                     )

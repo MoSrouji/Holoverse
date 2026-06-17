@@ -77,7 +77,10 @@ fun TopMentorsScreen(
     val mentors = uiState.mentors
 
     val categories = remember(mentors) {
-        listOf(AppCategory.OTHER) + mentors.map { it.specialization }.distinct().sortedBy { it.name }
+        listOf(AppCategory.OTHER) + mentors.map { it.specialization }
+            .distinct()
+            .filter { it != AppCategory.OTHER }
+            .sortedBy { it.name }
     }
     var selectedCategory by remember { mutableStateOf(AppCategory.OTHER) }
     var searchQuery by remember { mutableStateOf("") }
@@ -138,7 +141,7 @@ fun TopMentorsScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = {
                     Text(
-                        "Search mentors...",
+                        stringResource(R.string.search_mentors),
                         style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
                     )
                 },

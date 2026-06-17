@@ -91,6 +91,9 @@ sealed interface AppDestination : NavKey {
     data class ChatScreen(val mentorId: String? = null) : AppDestination
 
     @Serializable
+    data class VideoCall(val callId: String) : AppDestination
+
+    @Serializable
     data object TermsAndConditions : AppDestination
 
     @Serializable

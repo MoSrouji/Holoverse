@@ -86,7 +86,10 @@ fun PopularCoursesScreen(
     val courses = uiState.courses
 
     val categories = remember(courses) {
-        listOf(AppCategory.OTHER) + courses.map { it.category }.distinct().sortedBy { it.name }
+        listOf(AppCategory.OTHER) + courses.map { it.category }
+            .distinct()
+            .filter { it != AppCategory.OTHER }
+            .sortedBy { it.name }
     }
     var selectedCategory by remember { mutableStateOf(AppCategory.OTHER) }
     var searchQuery by remember { mutableStateOf("") }

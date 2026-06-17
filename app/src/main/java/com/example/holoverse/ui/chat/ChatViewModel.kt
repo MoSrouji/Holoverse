@@ -495,5 +495,6 @@ class ChatViewModel @Inject constructor(
         super.onCleared()
         mediaPlayer?.release()
         mediaRecorder?.release()
+        (chatRepository as? com.example.holoverse.chat_system.data.repository.ChatRepositoryImpl)?.cleanup()
     }
 }

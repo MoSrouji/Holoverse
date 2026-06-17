@@ -15,6 +15,7 @@ fun ChatScreen(
     mentorId: String? = null,
     viewModel: ChatViewModel = hiltViewModel(),
     onNavigateToConversation: ((String) -> Unit)? = null,
+    onNavigateToVideoCall: ((String) -> Unit)? = null,
     onBackClick: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -41,6 +42,7 @@ fun ChatScreen(
             uiState = uiState,
             viewModel = viewModel,
             onBackClick = onBackClick,
+            onVideoCallClick = onNavigateToVideoCall,
             darkTheme = darkTheme
         )
     }

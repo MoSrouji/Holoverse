@@ -199,4 +199,6 @@
     <string name="spec_other_specialized">Tutor Especializado</string>
     <string name="spec_other_homework">Ayuda con la Tarea</string>
     <string name="spec_other_mentorship">Mentoría General</string>
+    <string name="see_all">"SEE ALL "</string>
+    <string name="more_discover_movies">More discover movies</string>
 </resources>

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +21,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.navigation.AppDestination
+import android.content.Intent
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.utils.LanguageManager
 import com.example.holoverse.utils.SplashViewModel
@@ -58,8 +61,14 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
 //
         super.onCreate(savedInstanceState)
+
+        handleIntent(intent)
 
         languageManager.applyLanguage()
         askNotificationPermission()
@@ -106,6 +115,18 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        val chatId = intent?.getStringExtra("chatId")
+        if (chatId != null) {
+            navigator.navigateTo(AppDestination.ChatScreen(mentorId = chatId))
         }
     }
 
