@@ -12,6 +12,8 @@ import com.example.holoverse.chat_system.domain.model.Chat
 import com.example.holoverse.chat_system.domain.repository.ChatRepository
 import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
 import com.example.holoverse.fetch.domain.FetchDataRepository
+import com.example.holoverse.webrtc.data.datasource.SignalingClient
+import com.example.holoverse.webrtc.data.datasource.SignalingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +34,7 @@ class ChatViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val fetchDataRepository: FetchDataRepository,
     private val cloudinaryRepository: CloudinaryRepository,
+    private val signalingClient: SignalingClient,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -45,6 +48,25 @@ class ChatViewModel @Inject constructor(
     init {
         loadInitialData()
         observeRepositoryState()
+        observeIncomingCalls()
+
+    }
+
+    private fun observeIncomingCalls() {
+        viewModelScope.launch {
+            _uiState.map { it.currentChatId }.distinctUntilChanged().collectLatest { chatId ->
+                if (chatId == null) return@collectLatest
+                signalingClient.observeCall(chatId).collectLatest { event ->
+                    if (event is SignalingEvent.OfferReceived) {
+                        _uiState.update { it.copy(incomingCallId = chatId) }
+                    }
+                }
+            }
+        }
+    }
+
+    fun onIncomingCallHandled() {
+        _uiState.update { it.copy(incomingCallId = null) }
     }
 
     private fun loadInitialData() {

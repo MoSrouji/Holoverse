@@ -19,5 +19,7 @@ data class ChatUiState(
     val isRecording: Boolean = false,
     val isSendingAudio: Boolean = false,
     val isUploadingFile: Boolean = false,
-    val playingAudioUrl: String? = null
+    val playingAudioUrl: String? = null,
+    val incomingCallId: String? = null
+
 )

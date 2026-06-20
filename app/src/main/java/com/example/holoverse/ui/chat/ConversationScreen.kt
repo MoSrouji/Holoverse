@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,7 +51,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
-import com.example.holoverse.chat_system.domain.model.Message
 import com.example.holoverse.ui.chat.components.ChatInput
 import com.example.holoverse.ui.chat.components.EmojiPicker
 import com.example.holoverse.ui.chat.components.MessageBubble
@@ -64,6 +64,7 @@ fun ConversationScreen(
     viewModel: ChatViewModel,
     onBackClick: (() -> Unit)? = null,
     onVideoCallClick: ((String) -> Unit)? = null,
+    onIncomingCall: ((String) -> Unit)? = null,
     darkTheme: Boolean = true
 ) {
     var showEmojiPicker by remember { mutableStateOf(false) }
@@ -86,11 +87,12 @@ fun ConversationScreen(
         ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
-            val fileName = context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                cursor.moveToFirst()
-                cursor.getString(nameIndex)
-            }
+            val fileName =
+                context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    cursor.getString(nameIndex)
+                }
             viewModel.uploadAndSendFile(it, "pdf", fileName)
         }
     }
@@ -103,6 +105,12 @@ fun ConversationScreen(
         }
     }
 
+    LaunchedEffect(uiState.incomingCallId) {
+        uiState.incomingCallId?.let { callId ->
+            onIncomingCall?.invoke(callId)
+            viewModel.onIncomingCallHandled()
+        }
+    }
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -116,7 +124,7 @@ fun ConversationScreen(
 //                            bottomEnd = 32.dp
 //                        )
 //                    )
-                    . background (Brush(darkTheme))
+                    .background(Brush(darkTheme))
 
             ) {
                 TopAppBar(
@@ -139,7 +147,9 @@ fun ConversationScreen(
                                         )
                                     } else {
                                         Text(
-                                            if (uiState.selectedChatPartnerName.isEmpty()) "L" else uiState.selectedChatPartnerName.take(1).uppercase(),
+                                            if (uiState.selectedChatPartnerName.isEmpty()) "L" else uiState.selectedChatPartnerName.take(
+                                                1
+                                            ).uppercase(),
                                             style = MaterialTheme.typography.titleMedium,
                                         )
                                     }

@@ -1,12 +1,8 @@
 package com.example.holoverse.ui.chat
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 @Composable
@@ -16,6 +12,7 @@ fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
     onNavigateToConversation: ((String) -> Unit)? = null,
     onNavigateToVideoCall: ((String) -> Unit)? = null,
+    onIncomingCall: ((String) -> Unit)? = null,
     onBackClick: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,7 +40,8 @@ fun ChatScreen(
             viewModel = viewModel,
             onBackClick = onBackClick,
             onVideoCallClick = onNavigateToVideoCall,
-            darkTheme = darkTheme
+            darkTheme = darkTheme,
+            onIncomingCall = onIncomingCall
         )
     }
 }

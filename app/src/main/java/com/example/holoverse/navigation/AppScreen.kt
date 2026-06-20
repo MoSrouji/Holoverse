@@ -1,7 +1,7 @@
 package com.example.holoverse.navigation
 
-import com.example.holoverse.core.domain.model.AppCategory
 import androidx.navigation3.runtime.NavKey
+import com.example.holoverse.core.domain.model.AppCategory
 import kotlinx.serialization.Serializable
 
 
@@ -91,7 +91,7 @@ sealed interface AppDestination : NavKey {
     data class ChatScreen(val mentorId: String? = null) : AppDestination
 
     @Serializable
-    data class VideoCall(val callId: String) : AppDestination
+    data class VideoCall(val callId: String, val isOffer: Boolean) : AppDestination
 
     @Serializable
     data object TermsAndConditions : AppDestination

@@ -73,15 +73,13 @@ fun AppNavHost(
     )
 
     val navigationState = rememberNavigationState(
-        startRoute = startRoute,
-        topLevelRoutes = topLevelRoutes
+        startRoute = startRoute, topLevelRoutes = topLevelRoutes
     )
     val nav3Navigator = remember { Navigator(navigationState) }
 
     val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
     val directive = remember(windowAdaptiveInfo) {
-        calculatePaneScaffoldDirective(windowAdaptiveInfo)
-            .copy(horizontalPartitionSpacerSize = 0.dp)
+        calculatePaneScaffoldDirective(windowAdaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
     }
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
 
@@ -108,18 +106,11 @@ fun AppNavHost(
         .contains("COMPACT", ignoreCase = true)
 
     val showBottomBar = when (currentRoute) {
-        is AppDestination.HomeScreen,
-        is AppDestination.Category,
-        is AppDestination.ChatList,
-        is AppDestination.GalleryScreen,
-        is AppDestination.Profile ->
-            true
+        is AppDestination.HomeScreen, is AppDestination.Category, is AppDestination.ChatList, is AppDestination.GalleryScreen, is AppDestination.Profile -> true
 
-        is AppDestination.ChatScreen ->
-            !isCompact
+        is AppDestination.ChatScreen -> !isCompact
 
-        else ->
-            false
+        else -> false
     }
 
     val entryProvider = entryProvider<NavKey> {
@@ -210,8 +201,7 @@ fun AppNavHost(
                         )
                     )
                 },
-                onNavigateToStudentsList = { navigator.navigateTo(AppDestination.StudentsList) }
-            )
+                onNavigateToStudentsList = { navigator.navigateTo(AppDestination.StudentsList) })
         }
         entry<AppDestination.Profile> {
             ProfileScreen(
@@ -248,17 +238,14 @@ fun AppNavHost(
             metadata = ListDetailSceneStrategy.listPane(
                 detailPlaceholder = {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
                     ) {
                         Text("Select a chat to start messaging")
                     }
-                }
-            )
+                })
         ) {
             ChatScreen(
-                darkTheme = darkTheme,
-                onNavigateToConversation = { mentorId ->
+                darkTheme = darkTheme, onNavigateToConversation = { mentorId ->
                     navigator.navigateTo(
                         AppDestination.ChatScreen(mentorId = mentorId)
                     )
@@ -272,16 +259,20 @@ fun AppNavHost(
                 mentorId = key.mentorId,
                 onBackClick = { navigator.popBackStack() },
                 onNavigateToVideoCall = { callId ->
-                    navigator.navigateTo(AppDestination.VideoCall(callId))
-                }
-            )
+                    navigator.navigateTo(AppDestination.VideoCall(callId, isOffer = true))
+                },
+                onIncomingCall = { chatId ->
+                    navigator.navigateTo(
+                        AppDestination.VideoCall(
+                            chatId, isOffer = false
+                        )
+                    )
+                })
         }
         entry<AppDestination.VideoCall> { key: AppDestination.VideoCall ->
-            com.example.holoverse.webrtc.VideoCallScreen(
-                callId = key.callId,
-                isOffer = true, // For now, assume initiator
-                onCallEnded = { navigator.popBackStack() }
-            )
+            com.example.holoverse.webrtc.presentation.VideoCallScreen(
+                callId = key.callId, isOffer = key.isOffer,
+                onCallEnded = { navigator.popBackStack() })
         }
         entry<AppDestination.EditProfile> {
             EditProfileScreen(
@@ -292,16 +283,14 @@ fun AppNavHost(
         }
         entry<AppDestination.TermsAndConditions> {
             TermsAndConditionsScreen(
-                onBackClick = { navigator.popBackStack() },
-                darkTheme = darkTheme
+                onBackClick = { navigator.popBackStack() }, darkTheme = darkTheme
             )
         }
 
         // SubGraph
         entry<AppDestination.CreateCourse> {
             CreateCourseScreen(
-                onCourseCreated = { navigator.popBackStack() },
-                darkTheme = darkTheme
+                onCourseCreated = { navigator.popBackStack() }, darkTheme = darkTheme
             )
         }
         entry<AppDestination.Search> { key: AppDestination.Search ->
@@ -343,8 +332,7 @@ fun AppNavHost(
         }
         entry<AppDestination.Transactions> {
             TransactionScreen(
-                appNavigator = navigator,
-                darkTheme = darkTheme
+                appNavigator = navigator, darkTheme = darkTheme
             )
         }
         entry<AppDestination.CourseDetail> { key: AppDestination.CourseDetail ->
@@ -373,8 +361,7 @@ fun AppNavHost(
                 onBackClick = { navigator.popBackStack() },
                 onStudentClick = { studentId ->
                     navigator.navigateTo(AppDestination.MentorProfile(studentId))
-                }
-            )
+                })
         }
 
         // ModelGraph
@@ -396,13 +383,10 @@ fun AppNavHost(
         bottomBar = {
             if (showBottomBar) {
                 HoloBottomDock(
-                    navigationState = navigationState,
-                    navigator = navigator,
-                    darkTheme = darkTheme
+                    navigationState = navigationState, navigator = navigator, darkTheme = darkTheme
                 )
             }
-        }
-    ) { padding ->
+        }) { padding ->
         NavDisplay(
             modifier = Modifier
                 .fillMaxSize()
@@ -412,7 +396,6 @@ fun AppNavHost(
             sceneStrategies = listOf(listDetailStrategy),
             transitionSpec = { NavAnimations.forward() },
             popTransitionSpec = { NavAnimations.backward() },
-            predictivePopTransitionSpec = { NavAnimations.backward() }
-        )
+            predictivePopTransitionSpec = { NavAnimations.backward() })
     }
 }
