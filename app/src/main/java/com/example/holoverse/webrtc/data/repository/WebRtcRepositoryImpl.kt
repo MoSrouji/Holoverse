@@ -2,6 +2,7 @@ package com.example.holoverse.webrtc.data.repository
 
 import com.example.holoverse.webrtc.data.datasource.WebRtcSessionManager
 import com.example.holoverse.webrtc.domain.repository.WebRtcRepository
+import android.view.Surface
 import kotlinx.coroutines.flow.StateFlow
 import org.webrtc.EglBase
 import org.webrtc.VideoTrack
@@ -17,6 +18,9 @@ class WebRtcRepositoryImpl @Inject constructor(
     override val remoteVideoTrack: StateFlow<VideoTrack?> = sessionManager.remoteVideoTrack
     override val connectionState: StateFlow<org.webrtc.PeerConnection.PeerConnectionState?> = sessionManager.connectionState
     override val isCallEnded: StateFlow<Boolean> = sessionManager.isCallEnded
+    override val isArEnabled: StateFlow<Boolean> = sessionManager.isArEnabled
+    override val isWhiteboardEnabled: StateFlow<Boolean> = sessionManager.isWhiteboardEnabled
+    override val arMirrorSurface: StateFlow<Surface?> = sessionManager.arMirrorSurface
 
     override fun init(callId: String, isOffer: Boolean) {
         sessionManager.init(callId, isOffer)
@@ -48,5 +52,13 @@ class WebRtcRepositoryImpl @Inject constructor(
 
     override fun switchCamera() {
         sessionManager.switchCamera()
+    }
+
+    override fun toggleArMode(enabled: Boolean) {
+        sessionManager.toggleArMode(enabled)
+    }
+
+    override fun toggleWhiteboardMode(enabled: Boolean) {
+        sessionManager.toggleWhiteboardMode(enabled)
     }
 }

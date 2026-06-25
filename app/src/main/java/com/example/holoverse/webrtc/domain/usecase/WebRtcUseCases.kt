@@ -50,3 +50,23 @@ class ToggleSpeakerUseCase @Inject constructor(private val repository: WebRtcRep
 class SwitchCameraUseCase @Inject constructor(private val repository: WebRtcRepository) {
     operator fun invoke() = repository.switchCamera()
 }
+
+class ToggleArModeUseCase @Inject constructor(private val repository: WebRtcRepository) {
+    operator fun invoke(enabled: Boolean) = repository.toggleArMode(enabled)
+}
+
+class ToggleWhiteboardModeUseCase @Inject constructor(private val repository: WebRtcRepository) {
+    operator fun invoke(enabled: Boolean) = repository.toggleWhiteboardMode(enabled)
+}
+
+class ObserveIsArEnabledUseCase @Inject constructor(private val repository: WebRtcRepository) {
+    operator fun invoke() = repository.isArEnabled
+}
+
+class ObserveIsWhiteboardEnabledUseCase @Inject constructor(private val repository: WebRtcRepository) {
+    operator fun invoke() = repository.isWhiteboardEnabled
+}
+
+class ObserveArMirrorSurfaceUseCase @Inject constructor(private val repository: WebRtcRepository) {
+    operator fun invoke() = repository.arMirrorSurface
+}

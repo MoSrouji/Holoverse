@@ -47,6 +47,8 @@ import io.github.sceneview.node.CubeNode
 import io.github.sceneview.node.ModelNode
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelLoader
+import io.github.sceneview.rememberRenderer
+import io.github.sceneview.rememberARView
 import io.github.sceneview.rememberOnGestureListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,9 +66,12 @@ fun ArViewer(
     modifier: Modifier = Modifier,
     rotation: Float = 0f,
     scale: Float = 1f,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    mirrorSurface: android.view.Surface? = null
 ) {
     val engine = rememberEngine()
+    val renderer = rememberRenderer(engine)
+    val view = rememberARView(engine)
     val modelLoader = rememberModelLoader(engine)
 
     val currentFrame = remember { AtomicReference<Frame?>(null) }
@@ -83,6 +88,16 @@ fun ArViewer(
     // Frame processing throttle: 33ms (30fps) is ideal for logic vs performance balance
     var lastFrameProcessTime by remember { mutableLongStateOf(0L) }
     val frameProcessInterval = 33L
+
+    // Mirroring SwapChain for WebRTC
+    val mirrorSwapChain = remember(mirrorSurface) {
+        mirrorSurface?.let { engine.createSwapChain(it) }
+    }
+    DisposableEffect(mirrorSwapChain) {
+        onDispose {
+            mirrorSwapChain?.let { engine.destroySwapChain(it) }
+        }
+    }
 
     // Memory Leak Safeguard: Detach anchors and clear frame references on dispose
     DisposableEffect(Unit) {
@@ -129,6 +144,8 @@ fun ArViewer(
         ARSceneView(
             modifier = Modifier.fillMaxSize(),
             engine = engine,
+            renderer = renderer,
+            view = view,
             modelLoader = modelLoader,
             planeRenderer = true,
             sessionCameraConfig = { session ->
@@ -179,6 +196,14 @@ fun ArViewer(
                         surfaceStabilityCount >= requiredStabilityFrames -> SurfaceDetectionQuality.EXCELLENT
                         surfaceStabilityCount > 0 -> SurfaceDetectionQuality.DETECTING
                         else -> SurfaceDetectionQuality.SCANNING
+                    }
+
+                    // Mirroring logic
+                    mirrorSwapChain?.let { sc ->
+                        if (renderer.beginFrame(sc, System.nanoTime())) {
+                            renderer.render(view)
+                            renderer.endFrame()
+                        }
                     }
                 }
             },
