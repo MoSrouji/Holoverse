@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.rememberLifecycleOwner
 import com.google.ar.core.Anchor
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
@@ -45,11 +46,11 @@ import io.github.sceneview.math.Scale
 import io.github.sceneview.model.ModelInstance
 import io.github.sceneview.node.CubeNode
 import io.github.sceneview.node.ModelNode
+import io.github.sceneview.rememberARView
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelLoader
-import io.github.sceneview.rememberRenderer
-import io.github.sceneview.rememberARView
 import io.github.sceneview.rememberOnGestureListener
+import io.github.sceneview.rememberRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.EnumSet
@@ -73,6 +74,7 @@ fun ArViewer(
     val renderer = rememberRenderer(engine)
     val view = rememberARView(engine)
     val modelLoader = rememberModelLoader(engine)
+    val composableLifecycleOwner = rememberLifecycleOwner()
 
     val currentFrame = remember { AtomicReference<Frame?>(null) }
     var trackingState by remember { mutableStateOf(TrackingState.PAUSED) }
@@ -148,15 +150,18 @@ fun ArViewer(
             view = view,
             modelLoader = modelLoader,
             planeRenderer = true,
+            lifecycle = composableLifecycleOwner.lifecycle,
             sessionCameraConfig = { session ->
                 val filter = CameraConfigFilter(session).apply {
                     // FORCE 30 FPS: This is critical for keeping the phone cool during video calls
                     setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30))
                     // Prefer depth but allow fallback to ensure 100% device compatibility
-                    setDepthSensorUsage(EnumSet.of(
-                        CameraConfig.DepthSensorUsage.DO_NOT_USE,
-                        CameraConfig.DepthSensorUsage.REQUIRE_AND_USE
-                    ))
+                    setDepthSensorUsage(
+                        EnumSet.of(
+                            CameraConfig.DepthSensorUsage.DO_NOT_USE,
+                            CameraConfig.DepthSensorUsage.REQUIRE_AND_USE
+                        )
+                    )
                 }
                 session.getSupportedCameraConfigs(filter).firstOrNull() ?: session.cameraConfig
             },
@@ -311,8 +316,8 @@ private fun findBestSurfaceHit(frame: Frame, x: Float, y: Float): HitResult? {
     val planeHit = frame.hitTest(x, y).firstOrNull { hit ->
         val trackable = hit.trackable
         trackable is Plane &&
-        trackable.isPoseInPolygon(hit.hitPose) &&
-        trackable.trackingState == TrackingState.TRACKING
+                trackable.isPoseInPolygon(hit.hitPose) &&
+                trackable.trackingState == TrackingState.TRACKING
     }
     if (planeHit != null) return planeHit
 
@@ -326,8 +331,8 @@ private fun hasGoodSurfaceForPlacement(session: Session): Boolean {
     // Check all trackables instead of just "updated" ones to prevent flickering when stationary
     return session.getAllTrackables(Plane::class.java).any { plane ->
         plane.trackingState == TrackingState.TRACKING &&
-        plane.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
-        plane.subsumedBy == null
+                plane.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
+                plane.subsumedBy == null
     }
 }
 

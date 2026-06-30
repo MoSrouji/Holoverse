@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>Sketchfab</w>
+      <w>firestore</w>
       <w>snackbar</w>
     </words>
   </dictionary>
