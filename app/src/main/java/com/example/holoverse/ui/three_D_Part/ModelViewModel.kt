@@ -118,12 +118,20 @@ class ModelViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(modelRotation = rotation)
     }
 
+    fun updateVerticalRotation(rotation: Float) {
+        _uiState.value = _uiState.value.copy(modelVerticalRotation = rotation)
+    }
+
     fun updateScale(scale: Float) {
         _uiState.value = _uiState.value.copy(modelScale = scale)
     }
 
     fun resetTransformations() {
-        _uiState.value = _uiState.value.copy(modelRotation = 0f, modelScale = 1f)
+        _uiState.value = _uiState.value.copy(
+            modelRotation = 0f,
+            modelVerticalRotation = 0f,
+            modelScale = 1f
+        )
     }
 
     fun addLocalModel(name: String, path: String) {

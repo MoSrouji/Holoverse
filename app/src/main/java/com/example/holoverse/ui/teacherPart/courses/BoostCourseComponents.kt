@@ -3,7 +3,17 @@ package com.example.holoverse.ui.teacherPart.courses
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,8 +21,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +63,13 @@ fun BoostConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Boost Course Visibility?", fontFamily = IbarraNovaFont, fontWeight = FontWeight.Bold) },
+        title = {
+            Text(
+                "Boost Course Visibility?",
+                fontFamily = IbarraNovaFont,
+                fontWeight = FontWeight.Bold
+            )
+        },
         text = { Text("Reach more students by boosting your course to the top of the home screen.") },
         confirmButton = {
             Button(
@@ -99,7 +130,9 @@ fun AdCardSelectionDialog(
 
                 Button(
                     onClick = { onStyleSelected(selectedStyle) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = HoloPurple)
                 ) {
@@ -131,7 +164,7 @@ fun AdCardPreview(
         BoostedCourseCard(course = course, style = style)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = when(style) {
+            text = when (style) {
                 AdCardStyle.STYLE_1 -> "Minimal Clean"
                 AdCardStyle.STYLE_2 -> "Modern Overlay"
                 AdCardStyle.STYLE_3 -> "Vibrant Gradient"
@@ -167,20 +200,30 @@ fun BoostedCourseCard(
 
 @Composable
 fun MinimalStyle(course: Courses) {
-    Row(modifier = Modifier.fillMaxSize().background(Color.White)) {
+    Row(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.White)) {
         AsyncImage(
             model = course.imageUrl,
             contentDescription = null,
-            modifier = Modifier.weight(0.4f).fillMaxHeight(),
+            modifier = Modifier
+                .weight(0.4f)
+                .fillMaxHeight(),
             contentScale = ContentScale.Crop
         )
         Column(
-            modifier = Modifier.weight(0.6f).padding(12.dp),
+            modifier = Modifier
+                .weight(0.6f)
+                .padding(12.dp),
             verticalArrangement = Arrangement.Center
         ) {
             Text(course.name, fontWeight = FontWeight.Bold, color = Color.Black, maxLines = 2)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(course.instructorName, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            Text(
+                course.instructorName,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Learn Now",
@@ -211,7 +254,9 @@ fun ModernStyle(course: Courses) {
                 )
         )
         Column(
-            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
         ) {
             Surface(
                 color = HoloCyan,
@@ -227,7 +272,11 @@ fun ModernStyle(course: Courses) {
                 )
             }
             Text(course.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Text(course.instructorName, color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+            Text(
+                course.instructorName,
+                color = Color.White.copy(alpha = 0.8f),
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }
@@ -243,9 +292,19 @@ fun VibrantStyle(course: Courses) {
                 )
             )
     ) {
-        Row(modifier = Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Column(modifier = Modifier.weight(1f)) {
-                Icon(Icons.Default.Star, contentDescription = null, tint = Color.Yellow, modifier = Modifier.size(20.dp))
+                Icon(
+                    Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color.Yellow,
+                    modifier = Modifier.size(20.dp)
+                )
                 Text(
                     course.name,
                     color = Color.White,
@@ -297,8 +356,12 @@ fun SubscriptionPlanDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Select Boost Plan", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                
+                Text(
+                    "Select Boost Plan",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
                 plans.forEach { (duration, price, tag) ->
                     PlanItem(duration, price, tag) {
                         onPlanSelected(duration, price)
@@ -316,10 +379,19 @@ fun SubscriptionPlanDialog(
 @Composable
 fun PlanItem(duration: String, price: Int, tag: String, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                alpha = 0.5f
+            )
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant
+        )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -350,7 +422,9 @@ fun PaymentSimulationDialog(
 
     Dialog(onDismissRequest = {}) {
         Card(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             shape = RoundedCornerShape(28.dp)
         ) {
             Column(

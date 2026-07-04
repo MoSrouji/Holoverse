@@ -10,6 +10,7 @@ data class ModelUiState(
     val error: String? = null,
     val showModelGallery: Boolean = true,
     val modelRotation: Float = 0f,
+    val modelVerticalRotation: Float = 0f,
     val modelScale: Float = 1f,
     val searchQuery: String = "",
     val selectedCategory: String = "All",

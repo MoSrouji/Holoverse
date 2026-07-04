@@ -68,9 +68,9 @@ fun ModelGalleryOverlay(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         Color.Transparent,
-                        Color.Black.copy(alpha = 0.05f),
-                        Color.Black.copy(alpha = 0.4f),
-                        Color.Black.copy(alpha = 0.85f)
+                        Color.Black.copy(alpha = 0.2f),
+                        Color.Black.copy(alpha = 0.6f),
+                        Color.Black.copy(alpha = 0.9f)
                     ),
                     startY = 0f
                 )
@@ -80,7 +80,7 @@ fun ModelGalleryOverlay(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp, top = 24.dp),
+                .padding(bottom = 32.dp, top = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Show detailed download progress for the selected model
@@ -92,14 +92,16 @@ fun ModelGalleryOverlay(
                 if (currentProgress != null) {
                     ModelDownloadStatus(
                         progress = currentProgress,
-                        modifier = Modifier.padding(start = 32.dp, end = 32.dp, bottom = 8.dp)
+                        modifier = Modifier
+                            .padding(horizontal = 32.dp)
+                            .padding(bottom = 16.dp)
                     )
                 }
             }
 
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 item {
@@ -236,30 +238,31 @@ fun ModelCard(
     onClick: () -> Unit
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.2f else 1.0f,
+        targetValue = if (isSelected) 1.15f else 1.0f,
         label = "scale"
     )
     val backgroundColor by animateColorAsState(
-        if (isSelected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+        if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+        else Color.White.copy(alpha = 0.15f),
         label = "backgroundColor"
     )
     val contentColor by animateColorAsState(
         if (isSelected) MaterialTheme.colorScheme.onPrimary
-        else MaterialTheme.colorScheme.onSecondaryContainer,
+        else Color.White,
         label = "contentColor"
     )
 
     Card(
         modifier = Modifier
-            .size(width = 110.dp, height = 130.dp)
+            .size(width = 110.dp, height = 140.dp)
             .scale(scale)
             .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor,
             contentColor = contentColor
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 12.dp else 0.dp)
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -271,7 +274,7 @@ fun ModelCard(
                     contentDescription = model.name,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
-                    alpha = if (isSelected) 1f else 0.6f,
+                    alpha = if (isSelected) 1f else 0.8f,
                     placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
                     error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                 )
@@ -280,17 +283,10 @@ fun ModelCard(
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
-                                startY = 50f
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
+                                startY = 100f
                             )
                         )
-                )
-            } else {
-                Text(
-                    text = model.name.take(1).uppercase(),
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Black,
-                    color = contentColor.copy(alpha = 0.15f)
                 )
             }
 
@@ -308,37 +304,19 @@ fun ModelCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            if (progress.progress >= 0f) {
-                                CircularProgressIndicator(
-                                    progress = { progress.progress },
-                                    modifier = Modifier.size(32.dp),
-                                    color = Color.White,
-                                    strokeWidth = 3.dp,
-                                )
-                            } else {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(32.dp),
-                                    color = Color.White,
-                                    strokeWidth = 3.dp,
-                                )
-                            }
+                            CircularProgressIndicator(
+                                progress = { if (progress.progress >= 0f) progress.progress else 0f },
+                                modifier = Modifier.size(32.dp),
+                                color = Color.White,
+                                strokeWidth = 3.dp,
+                            )
                             Spacer(modifier = Modifier.height(4.dp))
-                            val totalMB = progress.totalSize / (1024f * 1024f)
-                            if (totalMB > 0) {
-                                Text(
-                                    text = String.format(Locale.US, "%.1f MB", totalMB),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            } else if (progress.downloadedSize > 0) {
-                                Text(
-                                    text = formatSize(progress.downloadedSize),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            Text(
+                                text = formatSize(progress.downloadedSize),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -347,11 +325,14 @@ fun ModelCard(
             Text(
                 text = model.name,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(8.dp).align(Alignment.BottomCenter),
-                color = if (model.imageUrl != null) Color.White else contentColor,
-                lineHeight = 14.sp
+                modifier = Modifier
+                    .padding(12.dp)
+                    .align(Alignment.BottomCenter),
+                color = Color.White,
+                lineHeight = 14.sp,
+                maxLines = 2
             )
         }
     }

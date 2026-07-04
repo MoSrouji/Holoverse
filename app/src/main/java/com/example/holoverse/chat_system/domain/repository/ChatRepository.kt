@@ -41,4 +41,11 @@ interface ChatRepository {
         fileUrl: String? = null,
         fileName: String? = null
     )
+
+    suspend fun sendCallNotification(
+        chatId: String,
+        senderId: String,
+        senderName: String,
+        senderImageUrl: String?
+    )
 }

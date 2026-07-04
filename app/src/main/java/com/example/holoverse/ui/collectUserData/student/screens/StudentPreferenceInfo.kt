@@ -36,8 +36,9 @@ import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.ui.collectUserData.student.viewModels.StudentPreferenceViewModel
 import com.example.holoverse.ui.collectUserData.student.viewModels.StudentPreferenceTextField
+import com.example.holoverse.ui.collectUserData.student.viewModels.StudentPreferenceViewModel
+import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
 import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
 import com.example.holoverse.ui.commonPart.auth.widget.CheckBoxMenu
@@ -47,7 +48,6 @@ import com.example.holoverse.ui.commonPart.auth.widget.textfield.AuthenticationT
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
 import com.example.holoverse.ui.theme.IbarraNovaSemiBoldPlatinum17
-import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
 import com.example.holoverse.utils.Response
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -59,7 +59,14 @@ fun StudentPreferenceInfoInput(
     studentStates: MutableStateFlow<User.Student>,
     darkTheme: Boolean
 ) {
-    val gradeItems = listOf("Grade 10", "Grade 11", "Grade 12", "University 1st Year", "University 2nd Year", "Other")
+    val gradeItems = listOf(
+        "Grade 10",
+        "Grade 11",
+        "Grade 12",
+        "University 1st Year",
+        "University 2nd Year",
+        "Other"
+    )
     val learningTimeItems = listOf("Morning", "Afternoon", "Evening", "Night")
     val interestItems = AppCategory.entries.map { stringResource(it.titleRes) }
 
@@ -101,9 +108,11 @@ fun StudentPreferenceInfoInput(
                     navToHomeScreen()
                 }
             }
+
             is Response.Error -> {
                 Toast.makeText(context, signUpState.message, Toast.LENGTH_LONG).show()
             }
+
             is Response.Loading -> {}
         }
     }
@@ -215,7 +224,9 @@ fun StudentPreferenceInfoInput(
                     isLearningTimeExpanded = false
                     viewModel.onEvent(
                         ValidationEvent.TextFieldValueChange(
-                            viewModel.forms[StudentPreferenceTextField.PREFERRED_LEARNING_TIME]!!.copy(text = item)
+                            viewModel.forms[StudentPreferenceTextField.PREFERRED_LEARNING_TIME]!!.copy(
+                                text = item
+                            )
                         )
                     )
                 },

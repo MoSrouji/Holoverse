@@ -5,10 +5,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 import org.webrtc.IceCandidate
 import org.webrtc.SessionDescription
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class SignalingClient @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
@@ -17,10 +20,17 @@ class SignalingClient @Inject constructor(
     private val callsCollection = firestore.collection("calls")
     private val currentUserId: String get() = auth.currentUser?.uid ?: throw IllegalStateException("User must be logged in for signaling")
 
+    private val activeProcessedCalls = mutableSetOf<String>()
+
     fun sendOffer(callId: String, sdp: SessionDescription) {
         Log.d(TAG, "Sending offer for call: $callId")
+        val participants = callId.split("_")
+        val recipientId = participants.find { it != currentUserId } ?: "unknown"
+        
         val data = mapOf<String, Any>(
             "status" to "active",
+            "recipientId" to recipientId,
+            "callerId" to currentUserId,
             "offer" to mapOf(
                 "sdp" to sdp.description,
                 "type" to sdp.type.canonicalForm(),
@@ -65,53 +75,59 @@ class SignalingClient @Inject constructor(
                 close(e)
                 return@addSnapshotListener
             }
-            if (snapshot != null && snapshot.exists()) {
-                val status = snapshot.getString("status")
-                if (status == "ended") {
-                    trySend(SignalingEvent.CallEnded)
-                    return@addSnapshotListener
-                }
+            
+            if (snapshot == null || !snapshot.exists()) {
+                Log.d(TAG, "Call document deleted or doesn't exist")
+                trySend(SignalingEvent.CallEnded)
+                return@addSnapshotListener
+            }
 
-                val offerMap = snapshot.get("offer") as? Map<String, Any>
-                val answerMap = snapshot.get("answer") as? Map<String, Any>
+            val status = snapshot.getString("status")
+            if (status == "ended") {
+                Log.d(TAG, "Call status set to ended")
+                trySend(SignalingEvent.CallEnded)
+                return@addSnapshotListener
+            }
 
-                if (offerMap != null) {
-                    val senderId = offerMap["senderId"] as? String
-                    val sdp = offerMap["sdp"] as? String
-                    val type = offerMap["type"] as? String
-                    if (senderId != null && senderId != currentUserId && sdp != null && type != null && sdp != lastOfferSdp) {
-                        Log.d(TAG, "Offer received from Firestore (sender: $senderId)")
-                        lastOfferSdp = sdp
-                        trySend(
-                            SignalingEvent.OfferReceived(
-                                SessionDescription(
-                                    SessionDescription.Type.fromCanonicalForm(type),
-                                    sdp
-                                )
+            val offerMap = snapshot.get("offer") as? Map<String, Any>
+            val answerMap = snapshot.get("answer") as? Map<String, Any>
+
+            if (offerMap != null) {
+                val senderId = offerMap["senderId"] as? String
+                val sdp = offerMap["sdp"] as? String
+                val type = offerMap["type"] as? String
+                if (senderId != null && senderId != currentUserId && sdp != null && type != null && sdp != lastOfferSdp) {
+                    Log.d(TAG, "Offer received from Firestore (sender: $senderId)")
+                    lastOfferSdp = sdp
+                    trySend(
+                        SignalingEvent.OfferReceived(
+                            SessionDescription(
+                                SessionDescription.Type.fromCanonicalForm(type),
+                                sdp
                             )
                         )
-                    } else {
-                        Log.v(TAG, "Ignoring self-sent or duplicate offer")
-                    }
+                    )
+                } else {
+                    Log.v(TAG, "Ignoring self-sent or duplicate offer")
                 }
-                if (answerMap != null) {
-                    val senderId = answerMap["senderId"] as? String
-                    val sdp = answerMap["sdp"] as? String
-                    val type = answerMap["type"] as? String
-                    if (senderId != null && senderId != currentUserId && sdp != null && type != null && sdp != lastAnswerSdp) {
-                        Log.d(TAG, "Answer received from Firestore (sender: $senderId)")
-                        lastAnswerSdp = sdp
-                        trySend(
-                            SignalingEvent.AnswerReceived(
-                                SessionDescription(
-                                    SessionDescription.Type.fromCanonicalForm(type),
-                                    sdp
-                                )
+            }
+            if (answerMap != null) {
+                val senderId = answerMap["senderId"] as? String
+                val sdp = answerMap["sdp"] as? String
+                val type = answerMap["type"] as? String
+                if (senderId != null && senderId != currentUserId && sdp != null && type != null && sdp != lastAnswerSdp) {
+                    Log.d(TAG, "Answer received from Firestore (sender: $senderId)")
+                    lastAnswerSdp = sdp
+                    trySend(
+                        SignalingEvent.AnswerReceived(
+                            SessionDescription(
+                                SessionDescription.Type.fromCanonicalForm(type),
+                                sdp
                             )
                         )
-                    } else {
-                        Log.v(TAG, "Ignoring self-sent or duplicate answer")
-                    }
+                    )
+                } else {
+                    Log.v(TAG, "Ignoring self-sent or duplicate answer")
                 }
             }
         }
@@ -134,21 +150,21 @@ class SignalingClient @Inject constructor(
                         val senderId = data["senderId"] as? String
                         val sdp = data["sdp"] as? String
                         val sdpMid = data["sdpMid"] as? String
-                        val sdpMLineIndex = data["sdpMLineIndex"] as? Long
-                        if (senderId != null && senderId != currentUserId && sdp != null && sdpMid != null && sdpMLineIndex != null) {
-                            Log.d(
-                                TAG,
-                                "New ICE candidate received from Firestore ($type, sender: $senderId)"
-                            )
-                            trySend(
-                                IceCandidate(
-                                    sdpMid,
-                                    sdpMLineIndex.toInt(),
-                                    sdp
-                                )
-                            )
+                        val sdpMLineIndexObj = data["sdpMLineIndex"]
+                        
+                        val sdpMLineIndex = when (sdpMLineIndexObj) {
+                            is Long -> sdpMLineIndexObj.toInt()
+                            is Int -> sdpMLineIndexObj
+                            else -> -1
+                        }
+
+                        if (senderId != null && senderId != currentUserId && sdp != null && sdpMid != null && sdpMLineIndex != -1) {
+                            Log.d(TAG, "New ICE candidate received from Firestore ($type, sender: $senderId)")
+                            trySend(IceCandidate(sdpMid, sdpMLineIndex, sdp))
+                        } else if (senderId == currentUserId) {
+                            Log.v(TAG, "Ignoring self-sent ICE candidate")
                         } else {
-                            Log.v(TAG, "Ignoring self-sent or invalid ICE candidate")
+                            Log.w(TAG, "Received invalid ICE candidate: $data")
                         }
                     }
                 }
@@ -156,21 +172,91 @@ class SignalingClient @Inject constructor(
         awaitClose { subscription.remove() }
     }
 
-    fun clearCall(callId: String) {
-        val callDoc = callsCollection.document(callId)
-        // Set status to ended first so the other peer knows
-        callDoc.update("status", "ended")
+    fun observeGlobalCalls(userId: String) = callbackFlow {
+        Log.d(TAG, "observeGlobalCalls: Listening for calls to $userId")
+        val query = callsCollection
+            .whereEqualTo("recipientId", userId)
+            .whereEqualTo("status", "active")
 
-        // Note: Firestore doesn't support recursive delete from client easily.
-        // For production, a Cloud Function is better.
-        // Here we do a best effort for the two known subcollections.
-        callDoc.collection("offerCandidates").get().addOnSuccessListener { snapshot ->
-            snapshot.documents.forEach { it.reference.delete() }
+        val subscription = query.addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Log.e(TAG, "Error in global call listener: $e")
+                return@addSnapshotListener
+            }
+            
+            snapshot?.documentChanges?.forEach { change ->
+                if (change.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                    val doc = change.document
+                    val callId = doc.id
+                    val hasAnswer = doc.contains("answer")
+                    
+                    if (!hasAnswer && !activeProcessedCalls.contains(callId)) {
+                        Log.d(TAG, "Global observer: New unanswered call detected: $callId")
+                        activeProcessedCalls.add(callId)
+                        trySend(callId)
+                    } else {
+                        Log.d(TAG, "Global observer: Ignoring already processed or answered call: $callId")
+                    }
+                }
+            }
         }
-        callDoc.collection("answerCandidates").get().addOnSuccessListener { snapshot ->
-            snapshot.documents.forEach { it.reference.delete() }
+        awaitClose { subscription.remove() }
+    }
+
+    fun markCallAsProcessed(callId: String) {
+        activeProcessedCalls.add(callId)
+    }
+
+    suspend fun checkExistingOffer(callId: String): SessionDescription? {
+        return try {
+            val snapshot = callsCollection.document(callId).get().await()
+            val offerMap = snapshot.get("offer") as? Map<String, Any>
+            if (offerMap != null) {
+                val sdp = offerMap["sdp"] as? String
+                val type = offerMap["type"] as? String
+                if (sdp != null && type != null) {
+                    SessionDescription(
+                        SessionDescription.Type.fromCanonicalForm(type),
+                        sdp
+                    )
+                } else null
+            } else null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking existing offer: $e")
+            null
         }
-        callDoc.delete()
+    }
+
+    fun clearCall(callId: String) {
+        Log.d(TAG, "clearCall: Triggered for $callId")
+        val callDoc = callsCollection.document(callId)
+        activeProcessedCalls.remove(callId)
+        // Set status to ended first so the other peer knows
+        callDoc.update("status", "ended").addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d(TAG, "clearCall: Status updated to 'ended' for $callId")
+            } else {
+                Log.e(TAG, "clearCall: Failed to update status for $callId: ${task.exception}")
+            }
+            
+            // Delete subcollections best-effort
+            callDoc.collection("offerCandidates").get().addOnSuccessListener { snapshot ->
+                Log.d(TAG, "clearCall: Deleting ${snapshot.size()} offer candidates")
+                snapshot.documents.forEach { it.reference.delete() }
+            }
+            callDoc.collection("answerCandidates").get().addOnSuccessListener { snapshot ->
+                Log.d(TAG, "clearCall: Deleting ${snapshot.size()} answer candidates")
+                snapshot.documents.forEach { it.reference.delete() }
+            }
+            
+            callDoc.delete().addOnCompleteListener { deleteTask ->
+                if (deleteTask.isSuccessful) {
+                    Log.d(TAG, "clearCall: Call document $callId deleted successfully")
+                } else {
+                    Log.e(TAG, "clearCall: Failed to delete call document $callId: ${deleteTask.exception}")
+                }
+            }
+        }
     }
 }
 

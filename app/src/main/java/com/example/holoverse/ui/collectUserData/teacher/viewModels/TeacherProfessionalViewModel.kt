@@ -5,9 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
 import com.example.holoverse.ui.commonPart.auth.presentaiton.base.BaseValidationViewModel
 import com.example.holoverse.ui.commonPart.auth.util.TextFieldType

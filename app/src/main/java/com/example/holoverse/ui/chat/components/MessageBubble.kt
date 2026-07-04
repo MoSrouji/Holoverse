@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -34,8 +36,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.holoverse.chat_system.domain.model.Message
 import com.example.holoverse.chat_system.domain.model.MessageStatus
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Schedule
 
 @Composable
 fun MessageBubble(
@@ -131,7 +131,7 @@ fun MessageBubble(
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
-                
+
                 if (message.audioUrl != null) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -169,6 +169,7 @@ fun MessageBubble(
                                     tint = Color.White.copy(alpha = 0.7f)
                                 )
                             }
+
                             MessageStatus.FAILED -> {
                                 Icon(
                                     imageVector = Icons.Default.Error,
@@ -177,6 +178,7 @@ fun MessageBubble(
                                     tint = Color.Red
                                 )
                             }
+
                             MessageStatus.SENT -> {
                                 // Optional: Show a checkmark or nothing
                             }

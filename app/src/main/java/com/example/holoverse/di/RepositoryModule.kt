@@ -1,7 +1,12 @@
 package com.example.holoverse.di
 
+import android.content.Context
+import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.chat_system.data.remote.FcmApi
 import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.data.CourseRepoImpl
+import com.example.holoverse.notifications.data.repository.NotificationRepositoryImpl
+import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.example.holoverse.reviews.data.ReviewRepositoryImpl
 import com.example.holoverse.reviews.domain.ReviewRepository
 import com.example.holoverse.search.data.local.dao.RecentSearchDao
@@ -11,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -37,5 +43,16 @@ object RepositoryModule {
     @Singleton
     fun provideReviewRepository(firestore: FirebaseFirestore): ReviewRepository {
         return ReviewRepositoryImpl(firestore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationRepository(
+        firestore: FirebaseFirestore,
+        authRepository: AuthRepository,
+        fcmApi: FcmApi,
+        @ApplicationContext context: Context
+    ): NotificationRepository {
+        return NotificationRepositoryImpl(firestore, authRepository, fcmApi, context)
     }
 }

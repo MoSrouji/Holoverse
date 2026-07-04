@@ -28,8 +28,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.chat_system.domain.model.Chat
 import com.example.holoverse.ui.chat.components.ChatListItem
 import com.example.holoverse.ui.chat.components.ContactListItem
 import com.example.holoverse.ui.spatialTheme.Brush
@@ -73,8 +71,8 @@ fun ChatListScreen(
                             fontFamily = IbarraNovaFont
                         ),
 
-                    )
-                    
+                        )
+
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Connect with your mentors and peers",
@@ -83,18 +81,18 @@ fun ChatListScreen(
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     val searchQuery = uiState.searchQuery
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { viewModel.onSearchQueryChange(it) },
                         modifier = Modifier
                             .fillMaxWidth(),
-                        placeholder = { 
+                        placeholder = {
                             Text(
                                 "Search mentors...",
-                             //   color = Color.White.copy(alpha = 0.5f)
-                            ) 
+                                //   color = Color.White.copy(alpha = 0.5f)
+                            )
                         },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -130,17 +128,19 @@ fun ChatListScreen(
                         ) { chat ->
                             val currentUserId = uiState.currentUser?.userId ?: ""
                             val isGroup = chat.id.startsWith("group_")
-                            
-                            val partnerId = if (isGroup) null else chat.participants.find { it != currentUserId }
-                                ?: chat.participants.firstOrNull { it != "user1" }
-                            
+
+                            val partnerId =
+                                if (isGroup) null else chat.participants.find { it != currentUserId }
+                                    ?: chat.participants.firstOrNull { it != "user1" }
+
                             val chatName = if (isGroup) {
                                 chat.participantNames[chat.id] ?: chat.id.removePrefix("group_")
                             } else {
                                 chat.participantNames[partnerId] ?: "Chat"
                             }
-                            
-                            val chatImageUrl = if (isGroup) null else chat.participantProfileImages[partnerId]
+
+                            val chatImageUrl =
+                                if (isGroup) null else chat.participantProfileImages[partnerId]
 
                             ChatListItem(
                                 name = chatName,
@@ -177,6 +177,6 @@ fun ChatListScreen(
                     }
                 }
             }
+        }
     }
-}
 }

@@ -2,8 +2,10 @@ package com.example.holoverse.ui.three_D_Part.ar
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -11,17 +13,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.ViewInAr
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -29,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.holoverse.navigation.AppNavigator
@@ -137,6 +143,7 @@ fun ArScreen(
                 modelPath = cachedModelPath,
                 modifier = Modifier.fillMaxSize(),
                 rotation = uiState.modelRotation,
+                verticalRotation = uiState.modelVerticalRotation,
                 scale = uiState.modelScale,
                 isLoading = isDownloading
             )
@@ -163,13 +170,15 @@ fun ArScreen(
                 // Left-side control panel
                 ArControlPanel(
                     rotation = uiState.modelRotation,
+                    verticalRotation = uiState.modelVerticalRotation,
                     scale = uiState.modelScale,
                     onRotationChange = { viewModel.updateRotation(it) },
+                    onVerticalRotationChange = { viewModel.updateVerticalRotation(it) },
                     onScaleChange = { viewModel.updateScale(it) },
                     onReset = { viewModel.resetTransformations() },
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = 16.dp)
+                        .padding(start = 24.dp)
                 )
 
                 // Gallery overlay or toggle button
@@ -193,9 +202,9 @@ fun ArScreen(
                         onClick = { viewModel.setShowModelGallery(false) },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(bottom = 140.dp, end = 16.dp),
+                            .padding(bottom = 150.dp, end = 24.dp),
                         colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
@@ -203,40 +212,74 @@ fun ArScreen(
                     }
                 } else {
                     // Show gallery button
-                    Button(
+                    Surface(
                         onClick = { viewModel.setShowModelGallery(true) },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .padding(bottom = 100.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        )
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        shape = MaterialTheme.shapes.extraLarge,
+                        tonalElevation = 8.dp
                     ) {
-                        Icon(Icons.Default.GridView, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Show Models")
+                        Row(
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Rounded.GridView, contentDescription = null)
+                            Text(
+                                "Models",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             } else if (!isDownloading && arStatus == ArStatus.SUPPORTED) {
                 // Placeholder when no model is selected
-                Text(
-                    text = "No model selected",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ViewInAr,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = "Pick a model to start",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    Button(
+                        onClick = { viewModel.setShowModelGallery(true) },
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text("Open Gallery")
+                    }
+                }
             }
 
-            // Top back / switch button
-            ExtendedFloatingActionButton(
+            // Top back button - TopStart for standard navigation
+            IconButton(
                 onClick = { appNavigator.popBackStack() },
-                icon = { Icon(Icons.Rounded.ArrowBack, null) },
-                text = { Text("Back") },
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
+                    .align(Alignment.TopStart)
                     .padding(WindowInsets.statusBars.asPaddingValues())
-                    .padding(top = 16.dp, end = 16.dp)
-            )
+                    .padding(16.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+            }
         }
     }
 }

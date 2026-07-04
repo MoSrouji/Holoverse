@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,8 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.core.domain.model.AppCategory
+import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.collectUserData.teacher.viewModels.TeacherProfessionalViewModel
 import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFields
 import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
@@ -246,7 +246,8 @@ fun TeacherProfessionalInfoInput(
                     onToggle = { isSpecializationsExpanded = !isSpecializationsExpanded },
                     selectedItem = viewModel.selectSpecializations,
                     onItemSelected = { item ->
-                        val selectedCategory = categoryMap.entries.find { it.value == item }?.key ?: AppCategory.OTHER
+                        val selectedCategory =
+                            categoryMap.entries.find { it.value == item }?.key ?: AppCategory.OTHER
                         viewModel.selectSpecializations = item
                         viewModel.selectSubjects = "Select your Subjects"
                         isSpecializationsExpanded = false

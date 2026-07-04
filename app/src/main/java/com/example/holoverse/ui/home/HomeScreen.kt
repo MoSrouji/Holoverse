@@ -73,6 +73,7 @@ fun HomeScreen(
     onNavigateToCreateCourse: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
     onNavigateToStudentsList: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onNavigateToChat: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
@@ -100,6 +101,7 @@ fun HomeScreen(
         onNavigateToCreateCourse = onNavigateToCreateCourse,
         onNavigateToAnalytics = onNavigateToAnalytics,
         onNavigateToStudentsList = onNavigateToStudentsList,
+        onNavigateToNotifications = onNavigateToNotifications,
         onNavigateToChat = onNavigateToChat,
         onNavigateToSearch = onNavigateToSearch,
         onCourseClick = onCourseClick,
@@ -125,6 +127,7 @@ fun HomeScreenContent(
     onNavigateToCreateCourse: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
     onNavigateToStudentsList: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onNavigateToChat: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
@@ -235,7 +238,7 @@ fun HomeScreenContent(
                     allCourses = uiState.allCourses,
                     onCourseClick = onCourseClick,
                     onNavigateToSearch = onNavigateToSearch,
-                    onNavigateToNotifications = { /* Navigate to Notifications */ },
+                    onNavigateToNotifications = onNavigateToNotifications,
                     brush = { headerBrush }
                 )
 
@@ -340,6 +343,7 @@ fun HomeScreenPreview() {
             onNavigateToCreateCourse = {},
             onNavigateToAnalytics = {},
             onNavigateToStudentsList = {},
+            onNavigateToNotifications = {},
             onNavigateToChat = {},
             onNavigateToSearch = {},
             onCourseClick = {},

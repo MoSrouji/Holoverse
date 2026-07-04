@@ -46,12 +46,15 @@ import com.example.holoverse.ui.search.SearchScreen
 import com.example.holoverse.ui.spatialTheme.HoloIntroScreen
 import com.example.holoverse.ui.teacherPart.courses.CreateCourseScreen
 import com.example.holoverse.ui.teacherPart.students.StudentListScreen
+import com.example.holoverse.notifications.presentation.NotificationScreen
 import com.example.holoverse.ui.three_D_Part.ModelViewModel
 import com.example.holoverse.ui.three_D_Part.ar.ArScreen
 import com.example.holoverse.ui.three_D_Part.gallery.GalleryScreen
 import com.example.holoverse.ui.three_D_Part.viewer.ViewerScreen
 import com.example.holoverse.ui.transaction.TransactionScreen
 import com.example.holoverse.utils.HoloBottomDock
+import com.example.holoverse.webrtc.presentation.IncomingCallScreen
+import com.example.holoverse.webrtc.presentation.OutgoingCallScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 
@@ -83,14 +86,17 @@ fun AppNavHost(
     }
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
 
-    LaunchedEffect(Unit) {
+        LaunchedEffect(Unit) {
         navigator.navigationIntents.collectLatest { intent ->
             when (intent) {
                 is NavigationIntent.NavigateBack -> nav3Navigator.goBack()
                 is NavigationIntent.NavigateTo -> nav3Navigator.navigate(intent.route)
                 is NavigationIntent.NavigateAndPopUpTo -> {
-                    // Simple implementation for now, might need more logic for popUpTo
-                    nav3Navigator.navigate(intent.route)
+                    nav3Navigator.navigateAndPopUpTo(
+                        route = intent.route,
+                        popUpTo = intent.popUpToRoute,
+                        inclusive = intent.inclusive
+                    )
                 }
             }
         }
@@ -108,7 +114,7 @@ fun AppNavHost(
     val showBottomBar = when (currentRoute) {
         is AppDestination.HomeScreen, is AppDestination.Category, is AppDestination.ChatList, is AppDestination.GalleryScreen, is AppDestination.Profile -> true
 
-        is AppDestination.ChatScreen -> !isCompact
+        is AppDestination.ChatScreen, is AppDestination.OutgoingCall -> !isCompact
 
         else -> false
     }
@@ -201,7 +207,9 @@ fun AppNavHost(
                         )
                     )
                 },
-                onNavigateToStudentsList = { navigator.navigateTo(AppDestination.StudentsList) })
+                onNavigateToStudentsList = { navigator.navigateTo(AppDestination.StudentsList) },
+                onNavigateToNotifications = { navigator.navigateTo(AppDestination.Notifications) }
+            )
         }
         entry<AppDestination.Profile> {
             ProfileScreen(
@@ -254,20 +262,65 @@ fun AppNavHost(
         entry<AppDestination.ChatScreen>(
             metadata = ListDetailSceneStrategy.detailPane()
         ) { key: AppDestination.ChatScreen ->
+            val viewModel: com.example.holoverse.ui.chat.ChatViewModel = hiltViewModel()
             ChatScreen(
                 darkTheme = darkTheme,
                 mentorId = key.mentorId,
+                viewModel = viewModel,
                 onBackClick = { navigator.popBackStack() },
-                onNavigateToVideoCall = { callId ->
-                    navigator.navigateTo(AppDestination.VideoCall(callId, isOffer = true))
-                },
-                onIncomingCall = { chatId ->
+                onNavigateToVideoCall = { callId, partnerName, partnerImageUrl ->
+                    viewModel.startVideoCall(callId, partnerName, partnerImageUrl)
                     navigator.navigateTo(
-                        AppDestination.VideoCall(
-                            chatId, isOffer = false
+                        AppDestination.OutgoingCall(
+                            callId = callId,
+                            receiverName = partnerName,
+                            receiverImageUrl = partnerImageUrl
+                        )
+                    )
+                },
+                onIncomingCall = { chatId, partnerName, partnerImageUrl ->
+                    navigator.navigateTo(
+                        AppDestination.IncomingCall(
+                            callId = chatId,
+                            callerName = partnerName,
+                            callerImageUrl = partnerImageUrl
                         )
                     )
                 })
+        }
+        entry<AppDestination.OutgoingCall> { key: AppDestination.OutgoingCall ->
+            OutgoingCallScreen(
+                callId = key.callId,
+                receiverName = key.receiverName,
+                receiverImageUrl = key.receiverImageUrl,
+                onCallConnected = {
+                    navigator.navigateAndPopUpTo(
+                        destination = AppDestination.VideoCall(key.callId, isOffer = true),
+                        popUpTo = key,
+                        inclusive = true
+                    )
+                },
+                onEndCall = {
+                    navigator.popBackStack()
+                }
+            )
+        }
+        entry<AppDestination.IncomingCall> { key: AppDestination.IncomingCall ->
+            IncomingCallScreen(
+                callId = key.callId,
+                callerName = key.callerName,
+                callerImageUrl = key.callerImageUrl,
+                onAnswer = {
+                    navigator.navigateAndPopUpTo(
+                        destination = AppDestination.VideoCall(key.callId, isOffer = false),
+                        popUpTo = key,
+                        inclusive = true
+                    )
+                },
+                onDecline = {
+                    navigator.popBackStack()
+                }
+            )
         }
         entry<AppDestination.VideoCall> { key: AppDestination.VideoCall ->
             com.example.holoverse.webrtc.presentation.VideoCallScreen(
@@ -362,6 +415,17 @@ fun AppNavHost(
                 onStudentClick = { studentId ->
                     navigator.navigateTo(AppDestination.MentorProfile(studentId))
                 })
+        }
+        entry<AppDestination.Notifications> {
+            NotificationScreen(
+                onBackClick = { navigator.popBackStack() },
+                onNotificationClick = { notification ->
+                    if (notification.type == "course_created" && notification.courseId != null) {
+                        navigator.navigateTo(AppDestination.CourseDetail(notification.courseId))
+                    }
+                },
+                darkTheme = darkTheme
+            )
         }
 
         // ModelGraph

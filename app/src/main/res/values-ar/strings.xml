@@ -51,6 +51,9 @@
     <string name="edit_profile">تعديل الملف الشخصي</string>
     <string name="payment_option">خيار الدفع</string>
     <string name="notifications">التنبيهات</string>
+    <string name="no_notifications">لا توجد إشعارات بعد</string>
+    <string name="new_course_notification_title">دورة جديدة من %1$s</string>
+    <string name="new_course_notification_body">تم إنشاء دورة جديدة باسم \'%1$s\'.</string>
     <string name="security">الأمان</string>
     <string name="language">اللغة</string>
     <string name="dark_mode">الوضع الليلي</string>

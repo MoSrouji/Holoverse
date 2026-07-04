@@ -28,14 +28,11 @@ import com.google.firebase.firestore.SetOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -154,7 +151,8 @@ class ChatRepositoryImpl @Inject constructor(
 
         // 2. Try remote if not found locally
         try {
-            val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            val chatRef =
+                firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
             val snapshot = chatRef.get().await()
 
             if (!snapshot.exists()) {
@@ -211,15 +209,20 @@ class ChatRepositoryImpl @Inject constructor(
         val chatId = "group_$courseId"
 
         try {
-            val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            val chatRef =
+                firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
             val snapshot = chatRef.get().await()
 
             if (!snapshot.exists()) {
                 val chatData = Chat(
                     id = chatId,
                     participants = listOf(participantId),
-                    participantNames = mapOf(participantId to participantName, chatId to "$courseName Group"),
-                    participantProfileImages = participantImageUrl?.let { mapOf(participantId to it) } ?: emptyMap(),
+                    participantNames = mapOf(
+                        participantId to participantName,
+                        chatId to "$courseName Group"
+                    ),
+                    participantProfileImages = participantImageUrl?.let { mapOf(participantId to it) }
+                        ?: emptyMap(),
                     lastMessage = "Group created for $courseName",
                     lastMessageTimestamp = Timestamp.now()
                 )
@@ -236,10 +239,11 @@ class ChatRepositoryImpl @Inject constructor(
                 }
 
                 chatRef.update(updateData).await()
-                
+
                 // Refresh local chat
                 val updatedSnapshot = chatRef.get().await()
-                val remoteChat = updatedSnapshot.toObject(Chat::class.java)?.copy(id = updatedSnapshot.id)
+                val remoteChat =
+                    updatedSnapshot.toObject(Chat::class.java)?.copy(id = updatedSnapshot.id)
                 remoteChat?.let { chatDao.insertChats(listOf(it.toEntity())) }
             }
         } catch (e: Exception) {
@@ -262,7 +266,7 @@ class ChatRepositoryImpl @Inject constructor(
     ) {
         val messageId = UUID.randomUUID().toString()
         val currentTime = System.currentTimeMillis()
-        
+
         // 1. Create local message entity with SENDING status
         val localMessage = MessageEntity(
             id = messageId,
@@ -279,10 +283,10 @@ class ChatRepositoryImpl @Inject constructor(
             timestamp = currentTime / 1000,
             status = MessageStatus.SENDING
         )
-        
+
         // 2. Save to local DB immediately
         messageDao.insertMessages(listOf(localMessage))
-        
+
         // 3. Update local chat last message
         val lastMessageText = when {
             imageUrl != null -> "Image"
@@ -291,23 +295,29 @@ class ChatRepositoryImpl @Inject constructor(
             audioUrl != null && text.isEmpty() -> "Audio message"
             else -> text
         }
-        
+
         chatDao.getChatById(chatId)?.let { currentChat ->
-            chatDao.insertChats(listOf(currentChat.copy(
-                lastMessage = lastMessageText,
-                lastMessageTimestamp = currentTime / 1000,
-                lastSenderId = senderId,
-                lastSenderName = senderName
-            )))
+            chatDao.insertChats(
+                listOf(
+                    currentChat.copy(
+                        lastMessage = lastMessageText,
+                        lastMessageTimestamp = currentTime / 1000,
+                        lastSenderId = senderId,
+                        lastSenderName = senderName
+                    )
+                )
+            )
         }
 
         // 4. Attempt remote sync in background
         repositoryScope.launch {
             try {
-                val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
-                val messageRef = chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document(messageId)
+                val chatRef =
+                    firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+                val messageRef =
+                    chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document(messageId)
                 val serverTime = FieldValue.serverTimestamp()
-                
+
                 val messageMap = mutableMapOf(
                     "senderId" to senderId,
                     "senderName" to senderName,
@@ -334,17 +344,17 @@ class ChatRepositoryImpl @Inject constructor(
                     }
                     batch.set(chatRef, chatUpdate, SetOptions.merge())
                 }.await()
-                
+
                 // Update local status to SENT
                 messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.SENT)))
-                
+
                 // Trigger Notification
                 try {
                     val participants = chatId.split("_")
                     val recipientId = participants.find { it != senderId } ?: return@launch
-                    
+
                     val recipientToken = authRepository.getFcmToken(recipientId)
-                    
+
                     if (!recipientToken.isNullOrBlank()) {
                         try {
                             val authHeader = getAccessToken()
@@ -386,6 +396,58 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun sendCallNotification(
+        chatId: String,
+        senderId: String,
+        senderName: String,
+        senderImageUrl: String?
+    ) {
+        repositoryScope.launch {
+            try {
+                val participants = chatId.split("_")
+                val recipientId = participants.find { it != senderId } ?: return@launch
+
+                val recipientToken = authRepository.getFcmToken(recipientId)
+                Log.d("ChatRepository", "sendCallNotification: Recipient=$recipientId, Token=${recipientToken ?: "MISSING"}")
+
+                if (!recipientToken.isNullOrBlank()) {
+                    val authHeader = getAccessToken()
+                    val request = FcmV1Request(
+                        message = FcmMessage(
+                            token = recipientToken,
+                            notification = NotificationData(
+                                title = "Incoming Video Call",
+                                body = "$senderName is calling you..."
+                            ),
+                            data = mapOf(
+                                "type" to "call",
+                                "callId" to chatId,
+                                "callerName" to senderName,
+                                "callerImage" to (senderImageUrl ?: ""),
+                                "chatId" to chatId
+                            ),
+                            android = AndroidConfig(
+                                priority = "high",
+                                notification = AndroidNotification(
+                                    channel_id = "incoming_calls",
+                                    notification_priority = "PRIORITY_MAX",
+                                    visibility = "PUBLIC"
+                                )
+                            )
+                        )
+                    )
+                    Log.d("ChatRepository", "Sending FCM request to API...")
+                    fcmApi.sendNotification(authHeader, request)
+                    Log.d("ChatRepository", "Call notification sent successfully")
+                } else {
+                    Log.e("ChatRepository", "Cannot send call notification: Recipient token is null or blank")
+                }
+            } catch (e: Exception) {
+                Log.e("ChatRepository", "Failed to send call notification: ${e.message}")
+            }
+        }
+    }
+
     private suspend fun getAccessToken(): String {
         return withContext(Dispatchers.IO) {
             try {
@@ -395,8 +457,10 @@ class ChatRepositoryImpl @Inject constructor(
                 credentials.refreshIfExpired()
                 "Bearer ${credentials.accessToken.tokenValue}"
             } catch (e: Exception) {
-                Log.e("ChatRepository", "Error getting access token: ${e.message}. " +
-                        "Ensure 'service-account.json' is in assets folder.")
+                Log.e(
+                    "ChatRepository", "Error getting access token: ${e.message}. " +
+                            "Ensure 'service-account.json' is in assets folder."
+                )
                 throw e
             }
         }
@@ -456,7 +520,10 @@ class ChatRepositoryImpl @Inject constructor(
             id = this.id,
             participants = this.participants,
             lastMessage = this.lastMessage,
-            lastMessageTimestamp = if (this.lastMessageTimestamp != 0L) Timestamp(this.lastMessageTimestamp, 0) else null,
+            lastMessageTimestamp = if (this.lastMessageTimestamp != 0L) Timestamp(
+                this.lastMessageTimestamp,
+                0
+            ) else null,
             lastSenderName = this.lastSenderName,
             lastSenderId = this.lastSenderId,
             participantNames = this.participantNames,

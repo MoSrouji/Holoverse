@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,9 +57,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
-import androidx.compose.ui.res.stringResource
-import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.ui.home.HomeViewModel
 import com.example.holoverse.ui.reviews.ui.components.LiveMentorRating
 import com.example.holoverse.ui.theme.HoloverseTheme

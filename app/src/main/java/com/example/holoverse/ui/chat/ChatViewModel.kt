@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
@@ -328,6 +329,23 @@ class ChatViewModel @Inject constructor(
 
     fun backToChatList() {
         _uiState.update { it.copy(currentChatId = null) }
+    }
+
+    fun startVideoCall(callId: String, partnerName: String, partnerImageUrl: String?) {
+        Log.d("ChatViewModel", "startVideoCall: $callId, $partnerName")
+        viewModelScope.launch {
+            val user = _uiState.value.currentUser ?: return@launch
+            val senderName = user.fullName ?: "Unknown"
+            val senderImageUrl = (user as? User.Student)?.profileImageUrl
+                ?: (user as? User.Mentor)?.profileImageUrl
+            
+            chatRepository.sendCallNotification(
+                chatId = callId,
+                senderId = user.userId ?: "",
+                senderName = senderName,
+                senderImageUrl = senderImageUrl
+            )
+        }
     }
 
     fun startRecording() {

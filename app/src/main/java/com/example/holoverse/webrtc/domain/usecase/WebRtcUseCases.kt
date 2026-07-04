@@ -4,7 +4,7 @@ import com.example.holoverse.webrtc.domain.repository.WebRtcRepository
 import javax.inject.Inject
 
 class InitCallUseCase @Inject constructor(private val repository: WebRtcRepository) {
-    operator fun invoke(callId: String, isOffer: Boolean) = repository.init(callId, isOffer)
+    operator fun invoke(callId: String, isOffer: Boolean): Boolean = repository.init(callId, isOffer)
 }
 
 class StartCallUseCase @Inject constructor(private val repository: WebRtcRepository) {

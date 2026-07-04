@@ -1,7 +1,6 @@
 package com.example.holoverse.di
 
 import android.content.Context
-import com.cloudinary.android.MediaManager
 import com.example.holoverse.cloudinary_services.data.repository.CloudinaryRepositoryImpl
 import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
 import dagger.Module

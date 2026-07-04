@@ -1,7 +1,6 @@
 package com.example.holoverse.courses.data
 
 import android.util.Log
-import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.utils.Response
@@ -58,7 +57,9 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                 val categoryString = snapshot.getString("category")
                 val courseWithId = course.copy(
                     id = snapshot.id,
-                    category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(categoryString) else course.category
+                    category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(
+                        categoryString
+                    ) else course.category
                 )
                 emit(Response.Success(courseWithId))
             } else {
@@ -83,7 +84,9 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                         val categoryString = doc.getString("category")
                         course.copy(
                             id = doc.id,
-                            category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(categoryString) else course.category
+                            category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(
+                                categoryString
+                            ) else course.category
                         )
                     }
                 }
@@ -107,7 +110,9 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                         val categoryString = doc.getString("category")
                         course.copy(
                             id = doc.id,
-                            category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(categoryString) else course.category
+                            category = if (categoryString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(
+                                categoryString
+                            ) else course.category
                         )
                     }
                 }

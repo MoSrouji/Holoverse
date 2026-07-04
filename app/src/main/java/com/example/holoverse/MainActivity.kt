@@ -1,9 +1,11 @@
 package com.example.holoverse
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,24 +21,41 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.utils.Response
+import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.navigation.AppDestination
-import android.content.Intent
 import com.example.holoverse.ui.theme.HoloverseTheme
+import com.example.holoverse.webrtc.presentation.CallNotificationManager
 import com.example.holoverse.utils.LanguageManager
 import com.example.holoverse.utils.SplashViewModel
+import com.example.holoverse.webrtc.data.datasource.SignalingClient
+import com.example.holoverse.webrtc.data.datasource.SignalingEvent
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.compose.ui.graphics.Color as ComposeColor
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val TAG = "MainActivity"
+
+    @Inject
+    lateinit var signalingClient: SignalingClient
+
+    @Inject
+    lateinit var sessionManager: com.example.holoverse.webrtc.data.datasource.WebRtcSessionManager
+
+    @Inject
+    lateinit var callNotificationManager: CallNotificationManager
+    
+    private var callObservationJob: Job? = null
 
     @Inject
     lateinit var navigator: AppNavigator
@@ -48,7 +67,9 @@ class MainActivity : ComponentActivity() {
     lateinit var authRepository: AuthRepository
 
     @Inject
-    lateinit var firestore: FirebaseFirestore
+    lateinit var notificationRepo: com.example.holoverse.notifications.domain.repository.NotificationRepository
+
+    private var notificationObservationJob: Job? = null
 
     private val splashViewModel: SplashViewModel by viewModels()
 
@@ -61,6 +82,16 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
@@ -115,6 +146,42 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+
+            LaunchedEffect(currentUser) {
+                currentUser?.userId?.let { userId ->
+                    observeIncomingCalls(userId)
+                    observeNotifications(userId)
+                } ?: run {
+                    callObservationJob?.cancel()
+                    notificationObservationJob?.cancel()
+                }
+            }
+        }
+    }
+
+    private fun observeNotifications(userId: String) {
+        Log.d(TAG, "observeNotifications: Starting observer for $userId")
+        notificationObservationJob?.cancel()
+        notificationObservationJob = CoroutineScope(Dispatchers.Main).launch {
+            notificationRepo.getNotifications(userId).collectLatest { response ->
+                Log.d(TAG, "observeNotifications: Received response: $response")
+                // System notifications are now handled via FCM for consistency with messaging/calling.
+            }
+        }
+    }
+
+    private fun observeIncomingCalls(userId: String) {
+        callObservationJob?.cancel()
+        callObservationJob = CoroutineScope(Dispatchers.Main).launch {
+            Log.d(TAG, "observeIncomingCalls: Listening for calls for $userId")
+            signalingClient.observeGlobalCalls(userId).collectLatest { callId ->
+                Log.d(TAG, "In-app call detected: $callId")
+                callNotificationManager.showIncomingCallNotification(
+                    callId = callId,
+                    callerName = "Someone",
+                    callerImageUrl = null
+                )
+            }
         }
     }
 
@@ -125,18 +192,43 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         val chatId = intent?.getStringExtra("chatId")
-        if (chatId != null) {
+        val courseId = intent?.getStringExtra("courseId")
+        val callId = intent?.getStringExtra(CallNotificationManager.EXTRA_CALL_ID)
+        val callerName = intent?.getStringExtra(CallNotificationManager.EXTRA_CALLER_NAME)
+        val callerImage = intent?.getStringExtra(CallNotificationManager.EXTRA_CALLER_IMAGE)
+        val action = intent?.action
+
+        Log.d(TAG, "handleIntent: action=$action, callId=$callId, chatId=$chatId, courseId=$courseId")
+
+        if (action == CallNotificationManager.ACTION_ANSWER && callId != null) {
+            Log.d(TAG, "Navigating to VideoCall (Answering)")
+            navigator.navigateTo(AppDestination.VideoCall(callId, isOffer = false))
+        } else if (callId != null) {
+            Log.d(TAG, "Navigating to IncomingCall")
+            navigator.navigateTo(
+                AppDestination.IncomingCall(
+                    callId = callId,
+                    callerName = callerName ?: "Someone",
+                    callerImageUrl = callerImage
+                )
+            )
+        } else if (chatId != null) {
+            Log.d(TAG, "Navigating to ChatScreen")
             navigator.navigateTo(AppDestination.ChatScreen(mentorId = chatId))
+        } else if (courseId != null) {
+            Log.d(TAG, "Navigating to CourseDetail")
+            navigator.navigateTo(AppDestination.CourseDetail(courseId = courseId))
         }
     }
 
     private fun askNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
-                PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            val permission = Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "askNotificationPermission: Requesting permission")
+                requestPermissionLauncher.launch(permission)
             } else {
+                Log.d(TAG, "askNotificationPermission: Permission already granted")
                 fetchAndStoreFcmToken()
             }
         } else {
@@ -148,10 +240,19 @@ class MainActivity : ComponentActivity() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result
+                Log.d(TAG, "FCM Token: $token")
                 CoroutineScope(Dispatchers.IO).launch {
                     authRepository.updateFcmToken(token)
                 }
+            } else {
+                Log.e(TAG, "Failed to get FCM token", task.exception)
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        sessionManager.disconnect()
+        callObservationJob?.cancel()
     }
 }

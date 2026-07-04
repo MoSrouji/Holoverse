@@ -5,14 +5,14 @@ import com.example.holoverse.webrtc.data.datasource.SignalingClient
 import com.example.holoverse.webrtc.data.datasource.WebRtcSessionManager
 import com.example.holoverse.webrtc.data.repository.WebRtcRepositoryImpl
 import com.example.holoverse.webrtc.domain.repository.WebRtcRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import javax.inject.Singleton
 
 @Module

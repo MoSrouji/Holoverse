@@ -4,11 +4,19 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.MotionPhotosAuto
+import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.rememberLifecycleOwner
 import com.google.ar.core.Anchor
@@ -66,6 +75,7 @@ fun ArViewer(
     modelPath: String?,
     modifier: Modifier = Modifier,
     rotation: Float = 0f,
+    verticalRotation: Float = 0f,
     scale: Float = 1f,
     isLoading: Boolean = false,
     mirrorSurface: android.view.Surface? = null
@@ -111,11 +121,11 @@ fun ArViewer(
         }
     }
 
-    LaunchedEffect(modelNodeInstance, baseScale, scale, rotation) {
+    LaunchedEffect(modelNodeInstance, baseScale, scale, rotation, verticalRotation) {
         val node = modelNodeInstance ?: return@LaunchedEffect
         val base = baseScale ?: return@LaunchedEffect
         node.scale = Scale(base.x * scale, base.y * scale, base.z * scale)
-        node.rotation = Rotation(y = rotation)
+        node.rotation = Rotation(x = verticalRotation, y = rotation)
     }
 
     var modelInstance by remember { mutableStateOf<ModelInstance?>(null) }
@@ -226,7 +236,7 @@ fun ArViewer(
                 }
             )
         ) {
-            // Placement indicator
+            // Placement indicator (Reticle)
             if (anchor == null && trackingState == TrackingState.TRACKING) {
                 HitResultNode(
                     xPx = widthPx / 2f,
@@ -234,7 +244,12 @@ fun ArViewer(
                     planeTypes = setOf(Plane.Type.HORIZONTAL_UPWARD_FACING),
                     instantPlacementPoint = true
                 ) {
-                    CubeNode(engine = engine, size = Scale(0.01f), center = Position(0f, 0f, 0f))
+                    // Circular reticle instead of a cube
+                    CubeNode(
+                        engine = engine,
+                        size = Scale(0.05f, 0.001f, 0.05f), // Flattened disk
+                        center = Position(0f, 0f, 0f)
+                    )
                 }
             }
 
@@ -282,11 +297,12 @@ fun ArViewer(
         }
 
         Surface(
-            color = Color.Black.copy(alpha = 0.6f),
-            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.4f),
+            shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 32.dp),
+            tonalElevation = 4.dp
         ) {
             AnimatedContent(
                 targetState = surfaceDetectionQuality,
@@ -295,17 +311,29 @@ fun ArViewer(
                 },
                 label = "StatusText"
             ) { quality ->
-                val statusText = when (quality) {
-                    SurfaceDetectionQuality.EXCELLENT -> "✓ Ready to place"
-                    SurfaceDetectionQuality.DETECTING -> "Detecting floor..."
-                    SurfaceDetectionQuality.SCANNING -> "Move phone slowly"
+                val (statusText, icon) = when (quality) {
+                    SurfaceDetectionQuality.EXCELLENT -> "Ready to place" to Icons.Rounded.CheckCircle
+                    SurfaceDetectionQuality.DETECTING -> "Detecting floor..." to Icons.Rounded.MotionPhotosAuto
+                    SurfaceDetectionQuality.SCANNING -> "Move phone slowly" to Icons.Rounded.ScreenRotation
                 }
-                Text(
-                    text = statusText,
-                    color = Color.White,
+                Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelMedium
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = if (quality == SurfaceDetectionQuality.EXCELLENT) Color.Green else Color.White
+                    )
+                    Text(
+                        text = statusText,
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

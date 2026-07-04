@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +19,7 @@ class PdfManager(private val context: Context) {
 
     var currentPageIndex by mutableIntStateOf(0)
     var pageCount by mutableIntStateOf(0)
-    
+
     private val _currentBitmap = MutableStateFlow<Bitmap?>(null)
     val currentBitmap: StateFlow<Bitmap?> = _currentBitmap
 
@@ -46,7 +45,7 @@ class PdfManager(private val context: Context) {
 
     fun renderPage(index: Int) {
         if (index < 0 || index >= pageCount) return
-        
+
         pdfRenderer?.let { renderer ->
             val page = renderer.openPage(index)
             val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)

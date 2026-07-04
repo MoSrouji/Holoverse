@@ -52,6 +52,9 @@
     <string name="edit_profile">Editar perfil</string>
     <string name="payment_option">Opción de pago</string>
     <string name="notifications">Notificaciones</string>
+    <string name="no_notifications">Aún no hay notificaciones</string>
+    <string name="new_course_notification_title">Nuevo curso de %1$s</string>
+    <string name="new_course_notification_body">Se ha creado un nuevo curso \'%1$s\'.</string>
     <string name="security">Seguridad</string>
     <string name="language">Idioma</string>
     <string name="dark_mode">Modo oscuro</string>

@@ -18,7 +18,7 @@ interface WebRtcRepository {
     val arMirrorSurface: StateFlow<Surface?>
     val pdfBitmap: StateFlow<android.graphics.Bitmap?>
 
-    fun init(callId: String, isOffer: Boolean)
+    fun init(callId: String, isOffer: Boolean): Boolean
     fun startCall(callId: String)
     fun disconnect()
     fun getEglContext(): EglBase.Context

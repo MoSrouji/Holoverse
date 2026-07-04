@@ -13,6 +13,7 @@ import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.CourseSession
 import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -25,6 +26,7 @@ class CreateCourseViewModel @Inject constructor(
     private val courseRepo: CourseRepo,
     private val authRepo: AuthRepository,
     private val uploadPhotoUseCase: UploadPhotoUseCase,
+    private val notificationRepo: NotificationRepository
 ) : ViewModel() {
 
     private val _createCourseState = mutableStateOf<Response<Boolean>?>(null)
@@ -104,6 +106,13 @@ class CreateCourseViewModel @Inject constructor(
                     _lastCreatedCourse.value = course
                     // Link course to mentor
                     authRepo.addCourseToMentor(instructorId, course.id)
+                    // Send notification to followers
+                    notificationRepo.sendCourseNotificationToFollowers(
+                        mentorId = instructorId,
+                        mentorName = instructorName,
+                        courseId = course.id,
+                        courseName = course.name
+                    )
                 }
                 _createCourseState.value = response
             }

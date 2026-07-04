@@ -27,8 +27,8 @@ class WebRtcRepositoryImpl @Inject constructor(
     override val arMirrorSurface: StateFlow<Surface?> = sessionManager.arMirrorSurface
     override val pdfBitmap: StateFlow<android.graphics.Bitmap?> = sessionManager.pdfBitmap
 
-    override fun init(callId: String, isOffer: Boolean) {
-        sessionManager.init(callId, isOffer)
+    override fun init(callId: String, isOffer: Boolean): Boolean {
+        return sessionManager.init(callId, isOffer)
     }
 
     override fun startCall(callId: String) {

@@ -1,9 +1,9 @@
 package com.example.holoverse.webrtc.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,17 +67,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.ui.three_D_Part.ModelViewModel
@@ -204,7 +200,12 @@ fun VideoCallContent(
     }
 
     LaunchedEffect(callId) {
-        viewModel.initCall(callId, isOffer)
+        viewModel.initCall(callId, isOffer = if (isOffer) true else false) // Explicit boolean to be sure
+    }
+
+    BackHandler {
+        viewModel.endCall()
+        onCallEnded()
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -386,7 +387,7 @@ fun VideoCallContent(
                         .fillMaxSize()
                         .clickable { modelViewModel.setShowModelGallery(false) }
                 )
-                
+
                 ModelGalleryOverlay(
                     models = modelUiState.models,
                     selectedModel = modelUiState.selectedModel,
@@ -404,7 +405,11 @@ fun VideoCallContent(
                         .padding(16.dp)
                         .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Close Gallery", tint = Color.White)
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Close Gallery",
+                        tint = Color.White
+                    )
                 }
             }
         }

@@ -24,8 +24,21 @@ class Navigator(val state: NavigationState) {
         }
     }
 
+    fun navigateAndPopUpTo(route: NavKey, popUpTo: NavKey, inclusive: Boolean) {
+        val stack = state.backStacks[state.topLevelRoute] ?: return
+        val index = stack.indexOfLast { it == popUpTo }
+        if (index != -1) {
+            val removeCount = stack.size - index - if (inclusive) 0 else 1
+            repeat(removeCount) {
+                stack.removeLastOrNull()
+            }
+        }
+        stack.add(route)
+    }
+
     fun goBack() {
-        val currentStack = state.backStacks[state.topLevelRoute] ?: error("Stack for ${state.topLevelRoute} not found")
+        val currentStack = state.backStacks[state.topLevelRoute]
+            ?: error("Stack for ${state.topLevelRoute} not found")
         val currentRoute = currentStack.last()
 
         // If we're at the base of the current route, go back to the start route stack.

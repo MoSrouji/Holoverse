@@ -5,9 +5,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
@@ -117,8 +117,12 @@ class HomeViewModel @Inject constructor(
 
                             course.category.specializations.any { specRes ->
                                 val spec = application.getString(specRes)
-                                spec.replace("_", " ").uppercase().contains(nFav, ignoreCase = true) ||
-                                        nFav.contains(spec.replace("_", " ").uppercase(), ignoreCase = true)
+                                spec.replace("_", " ").uppercase()
+                                    .contains(nFav, ignoreCase = true) ||
+                                        nFav.contains(
+                                            spec.replace("_", " ").uppercase(),
+                                            ignoreCase = true
+                                        )
                             } == true
                         }
                     }
@@ -132,7 +136,8 @@ class HomeViewModel @Inject constructor(
                                     nFav.contains(nSpecName, ignoreCase = true) ||
                                     mentor.specialization.specializations.any { specRes ->
                                         val spec = application.getString(specRes)
-                                        spec.replace("_", " ").uppercase().contains(nFav, ignoreCase = true) ||
+                                        spec.replace("_", " ").uppercase()
+                                            .contains(nFav, ignoreCase = true) ||
                                                 nFav.contains(
                                                     spec.replace("_", " ").uppercase(),
                                                     ignoreCase = true

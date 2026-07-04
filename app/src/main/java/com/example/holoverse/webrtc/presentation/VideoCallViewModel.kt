@@ -76,8 +76,8 @@ class VideoCallViewModel @Inject constructor(
     val arMirrorSurface = observeArMirrorSurfaceUseCase()
 
     fun initCall(callId: String, isOffer: Boolean) {
-        initCallUseCase(callId, isOffer)
-        if (isOffer) {
+        val initialized = initCallUseCase(callId, isOffer)
+        if (initialized && isOffer) {
             startCallUseCase(callId)
         }
     }
@@ -138,6 +138,7 @@ class VideoCallViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        endCallUseCase()
+        // Removed endCallUseCase() to prevent automatic disconnection during screen transitions.
+        // Cleanup is now handled explicitly by user actions or in MainActivity.onDestroy().
     }
 }

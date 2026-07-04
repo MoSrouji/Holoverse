@@ -1,8 +1,8 @@
 package com.example.holoverse.courses.data
 
-import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.BoostedCourse
+import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.utils.Response
 import kotlinx.coroutines.flow.Flow
 

@@ -27,12 +27,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -68,7 +68,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
-import com.example.holoverse.R
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.AdCardStyle
 import com.example.holoverse.courses.domain.BoostedCourse
@@ -131,9 +130,15 @@ fun CreateCourseScreen(
                 imageUrl = (uploadImageState as Response.Success<String>).data
                 Toast.makeText(context, "Image uploaded successfully!", Toast.LENGTH_SHORT).show()
             }
+
             is Response.Error -> {
-                Toast.makeText(context, (uploadImageState as Response.Error).message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    (uploadImageState as Response.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
+
             else -> {}
         }
     }
@@ -144,9 +149,15 @@ fun CreateCourseScreen(
                 Toast.makeText(context, "Course created successfully!", Toast.LENGTH_SHORT).show()
                 showBoostConfirmation = true
             }
+
             is Response.Error -> {
-                Toast.makeText(context, (createCourseState as Response.Error).message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    (createCourseState as Response.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
+
             else -> {}
         }
     }
@@ -244,8 +255,9 @@ fun CreateCourseScreen(
                             "3 Months" -> 90
                             else -> 7
                         }
-                        val endTimestamp = System.currentTimeMillis() + (durationDays * 24 * 60 * 60 * 1000L)
-                        
+                        val endTimestamp =
+                            System.currentTimeMillis() + (durationDays * 24 * 60 * 60 * 1000L)
+
                         viewModel.boostCourse(
                             BoostedCourse(
                                 courseId = course.id,
@@ -336,7 +348,10 @@ fun CreateCourseScreen(
                                 tint = HoloCyan
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Tap to upload course image", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "Tap to upload course image",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
 
@@ -349,12 +364,24 @@ fun CreateCourseScreen(
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                            alpha = 0.2f
+                        )
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text("Basic Information", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = HoloCyan)
-                        
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            "Basic Information",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = HoloCyan
+                        )
+
                         OutlinedTextField(
                             value = name,
                             onValueChange = { name = it },
@@ -366,16 +393,21 @@ fun CreateCourseScreen(
                         RadioButtonMenu(
                             isExpanded = isCategoryExpanded,
                             onToggle = { isCategoryExpanded = !isCategoryExpanded },
-                            selectedItem = category?.let { stringResource(it.titleRes) } ?: "Select Category",
+                            selectedItem = category?.let { stringResource(it.titleRes) }
+                                ?: "Select Category",
                             onItemSelected = { item ->
-                                category = categories.find { context.getString(it.titleRes) == item }
+                                category =
+                                    categories.find { context.getString(it.titleRes) == item }
                                 isCategoryExpanded = false
                             },
                             menuItems = categories.map { stringResource(it.titleRes) },
                             showIcon = false
                         )
 
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             OutlinedTextField(
                                 value = price,
                                 onValueChange = { price = it },
@@ -412,11 +444,20 @@ fun CreateCourseScreen(
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                            alpha = 0.2f
+                        )
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Description", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = HoloCyan)
+                        Text(
+                            "Description",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = HoloCyan
+                        )
                         Spacer(modifier = Modifier.height(12.dp))
                         OutlinedTextField(
                             value = description,
@@ -436,7 +477,11 @@ fun CreateCourseScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Course Syllabus", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Course Syllabus",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                     IconButton(
                         onClick = {
                             editingSessionIndex = null
@@ -446,7 +491,11 @@ fun CreateCourseScreen(
                             .clip(CircleShape)
                             .background(HoloPurple)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Session", tint = Color.White)
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add Session",
+                            tint = Color.White
+                        )
                     }
                 }
             }
@@ -458,10 +507,17 @@ fun CreateCourseScreen(
                             .fillMaxWidth()
                             .height(100.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outlineVariant,
+                                RoundedCornerShape(16.dp)
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No sessions added yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "No sessions added yet",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
@@ -528,8 +584,15 @@ fun SessionItem(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                alpha = 0.3f
+            )
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -545,20 +608,40 @@ fun SessionItem(
                 )
                 Row {
                     IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = HoloCyan, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit",
+                            tint = HoloCyan,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.Red.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(14.dp), tint = HoloCyan)
+                Icon(
+                    Icons.Default.CalendarMonth,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = HoloCyan
+                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(text = session.date, style = MaterialTheme.typography.bodySmall)
                 Spacer(modifier = Modifier.width(16.dp))
-                Icon(Icons.Default.AccessTime, contentDescription = null, modifier = Modifier.size(14.dp), tint = HoloCyan)
+                Icon(
+                    Icons.Default.AccessTime,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = HoloCyan
+                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(text = session.time, style = MaterialTheme.typography.bodySmall)
             }
@@ -606,7 +689,10 @@ fun SessionDialog(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     OutlinedTextField(
                         value = date,
                         onValueChange = { date = it },

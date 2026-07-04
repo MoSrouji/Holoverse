@@ -72,6 +72,10 @@ class WebRtcSessionManager @Inject constructor(
     private var localAudioTrack: AudioTrack? = null
     private var localSurfaceTextureHelper: SurfaceTextureHelper? = null
 
+    private var currentCallId: String? = null
+    private var offerHandled = false
+    private var isDisconnecting = false
+
     private val audioManager by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
     private val _localVideoTrack = MutableStateFlow<VideoTrack?>(null)
@@ -113,16 +117,21 @@ class WebRtcSessionManager @Inject constructor(
         whiteboardManager = manager
     }
 
-    fun init(callId: String, isOffer: Boolean) {
+    fun init(callId: String, isOffer: Boolean): Boolean {
         if (peerConnection != null) {
             Log.d(TAG, "Already initialized for a call, ignoring init")
-            return
+            return false
         }
+        isDisconnecting = false
+        currentCallId = callId
+        offerHandled = false
+        signalingClient.markCallAsProcessed(callId)
         scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
         setupPeerConnection(callId, isOffer)
         setupLocalAudio()
         setupLocalVideo()
         observeSignaling(callId, isOffer)
+        return true
     }
 
     private fun setupLocalAudio() {
@@ -167,24 +176,35 @@ class WebRtcSessionManager @Inject constructor(
         peerConnection = peerConnectionFactory.createPeerConnection(
             rtcConfig,
             object : PeerConnection.Observer {
-                override fun onSignalingChange(p0: PeerConnection.SignalingState?) {}
+                override fun onSignalingChange(p0: PeerConnection.SignalingState?) {
+                    Log.d(TAG, "onSignalingChange: $p0")
+                }
                 override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) {
-                    Log.d(TAG, "onConnectionChange: $newState")
+                    Log.i(TAG, "onConnectionChange: $newState")
                     _connectionState.value = newState
-                    if (newState == PeerConnection.PeerConnectionState.FAILED) {
-                        // In a real app, you might want to attempt ICE restart here
-                        // attemptIceRestart(callId)
+                    if (newState == PeerConnection.PeerConnectionState.FAILED ||
+                        newState == PeerConnection.PeerConnectionState.DISCONNECTED ||
+                        newState == PeerConnection.PeerConnectionState.CLOSED
+                    ) {
+                        _remoteVideoTrack.value = null
                     }
                 }
 
                 override fun onIceConnectionChange(newState: PeerConnection.IceConnectionState?) {
-                    Log.d(TAG, "onIceConnectionChange: $newState")
+                    Log.i(TAG, "onIceConnectionChange: $newState")
                 }
 
-                override fun onIceConnectionReceivingChange(p0: Boolean) {}
-                override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {}
+                override fun onIceConnectionReceivingChange(p0: Boolean) {
+                    Log.d(TAG, "onIceConnectionReceivingChange: $p0")
+                }
+                override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {
+                    Log.d(TAG, "onIceGatheringChange: $p0")
+                }
 
                 override fun onIceCandidate(candidate: IceCandidate) {
+                    Log.i(TAG, "onIceCandidate generated: ${candidate.sdpMid} - ${candidate.sdp}")
+                    // Callers (isOffer=true) send to offerCandidates. 
+                    // Receivers (isOffer=false) send to answerCandidates.
                     signalingClient.sendIceCandidate(callId, candidate, isOffer)
                 }
 
@@ -320,6 +340,10 @@ class WebRtcSessionManager @Inject constructor(
     }
 
     private fun handleOffer(callId: String, offer: SessionDescription) {
+        if (offerHandled) {
+            Log.v(TAG, "Offer already handled, ignoring duplicate")
+            return
+        }
         if (peerConnection?.signalingState() != PeerConnection.SignalingState.STABLE) {
             Log.w(
                 TAG,
@@ -327,6 +351,7 @@ class WebRtcSessionManager @Inject constructor(
             )
             return
         }
+        offerHandled = true
         Log.d(TAG, "Handling offer for call: $callId")
         peerConnection?.setRemoteDescription(object : SdpObserver {
             override fun onCreateSuccess(p0: SessionDescription?) {}
@@ -418,7 +443,18 @@ class WebRtcSessionManager @Inject constructor(
     }
 
     fun disconnect() {
-        Log.d(TAG, "Disconnecting")
+        if (isDisconnecting) {
+            Log.d(TAG, "disconnect: Already disconnecting, ignoring")
+            return
+        }
+        isDisconnecting = true
+        Log.d(TAG, "disconnect: Starting session teardown for call $currentCallId")
+        
+        currentCallId?.let { id ->
+            Log.d(TAG, "disconnect: Requesting Firestore cleanup for $id")
+            signalingClient.clearCall(id)
+        }
+        
         stopSyntheticMode()
         videoCapturer?.stopCapture()
         videoCapturer?.dispose()
@@ -430,6 +466,8 @@ class WebRtcSessionManager @Inject constructor(
         _connectionState.value = null
         _isCallEnded.value = false
         isRemoteDescriptionSet = false
+        offerHandled = false
+        currentCallId = null
         synchronized(pendingIceCandidates) {
             pendingIceCandidates.clear()
         }

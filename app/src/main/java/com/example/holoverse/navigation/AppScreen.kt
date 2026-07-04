@@ -91,6 +91,12 @@ sealed interface AppDestination : NavKey {
     data class ChatScreen(val mentorId: String? = null) : AppDestination
 
     @Serializable
+    data class OutgoingCall(val callId: String, val receiverName: String, val receiverImageUrl: String?) : AppDestination
+
+    @Serializable
+    data class IncomingCall(val callId: String, val callerName: String, val callerImageUrl: String?) : AppDestination
+
+    @Serializable
     data class VideoCall(val callId: String, val isOffer: Boolean) : AppDestination
 
     @Serializable
@@ -113,4 +119,7 @@ sealed interface AppDestination : NavKey {
 
     @Serializable
     data object ModelGraph : AppDestination
+
+    @Serializable
+    data object Notifications : AppDestination
 }

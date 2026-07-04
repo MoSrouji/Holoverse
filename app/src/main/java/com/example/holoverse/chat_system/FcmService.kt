@@ -12,6 +12,9 @@ import com.example.holoverse.R
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import android.util.Log
+import com.example.holoverse.webrtc.presentation.CallNotificationManager
+import com.example.holoverse.notifications.presentation.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,9 +24,13 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class FcmService : FirebaseMessagingService() {
+    private val TAG = "FcmService"
 
     @Inject
     lateinit var authRepository: AuthRepository
+
+    @Inject
+    lateinit var callNotificationManager: CallNotificationManager
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -37,55 +44,32 @@ class FcmService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
+        Log.e(TAG, "!!! FCM MESSAGE RECEIVED !!!")
+        Log.e(TAG, "Data: ${message.data}")
+        Log.e(TAG, "Notification: ${message.notification?.title} / ${message.notification?.body}")
         
-        val title = message.notification?.title ?: message.data["title"]
-        val body = message.notification?.body ?: message.data["body"]
+        val type = message.data["type"]
+        val title = message.data["title"] ?: message.notification?.title
+        val body = message.data["body"] ?: message.notification?.body
         val chatId = message.data["chatId"]
+        val courseId = message.data["courseId"]
         
-        if (title != null && body != null) {
-            sendNotification(title, body, chatId)
+        Log.d(TAG, "onMessageReceived: type=$type, title=$title, chatId=$chatId, courseId=$courseId")
+
+        if (type == "call") {
+            val callId = message.data["callId"] ?: chatId ?: return
+            val callerName = message.data["callerName"] ?: "Someone"
+            val callerImage = message.data["callerImage"]
+            Log.d(TAG, "Triggering call notification: callId=$callId, caller=$callerName")
+            callNotificationManager.showIncomingCallNotification(callId, callerName, callerImage)
+        } else if (type == "course_created") {
+            NotificationHelper.showNotification(this, title ?: "New Course", body ?: "A new course is available", courseId)
+        } else if (title != null || body != null) {
+            Log.d(TAG, "Triggering chat notification")
+            NotificationHelper.showNotification(this, title ?: "New Message", body ?: "", null, chatId)
+        } else {
+            Log.w(TAG, "Received message with no type, title or body")
         }
-    }
-
-    private fun sendNotification(title: String, body: String, chatId: String?) {
-        val channelId = "chat_notifications"
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Chat Notifications",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifications for new messages"
-                enableLights(true)
-                enableVibration(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-            if (chatId != null) {
-                putExtra("chatId", chatId)
-            }
-        }
-        
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setContentIntent(pendingIntent)
-
-        notificationManager.notify(0, notificationBuilder.build())
     }
 
     override fun onDestroy() {

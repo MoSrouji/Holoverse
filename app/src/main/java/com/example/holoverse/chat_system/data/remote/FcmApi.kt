@@ -21,7 +21,7 @@ data class FcmV1Request(
 @Serializable
 data class FcmMessage(
     val token: String,
-    val notification: NotificationData,
+    val notification: NotificationData? = null,
     val data: Map<String, String>? = null,
     val android: AndroidConfig? = null
 )
@@ -38,7 +38,8 @@ data class AndroidNotification(
     val notification_priority: String = "PRIORITY_HIGH",
     val sound: String = "default",
     val default_vibrate_timings: Boolean = true,
-    val default_sound: Boolean = true
+    val default_sound: Boolean = true,
+    val visibility: String = "PUBLIC"
 )
 
 @Serializable

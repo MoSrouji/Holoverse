@@ -63,8 +63,8 @@ fun ConversationScreen(
     uiState: ChatUiState,
     viewModel: ChatViewModel,
     onBackClick: (() -> Unit)? = null,
-    onVideoCallClick: ((String) -> Unit)? = null,
-    onIncomingCall: ((String) -> Unit)? = null,
+    onVideoCallClick: ((String, String, String?) -> Unit)? = null,
+    onIncomingCall: ((String, String, String?) -> Unit)? = null,
     darkTheme: Boolean = true
 ) {
     var showEmojiPicker by remember { mutableStateOf(false) }
@@ -107,7 +107,11 @@ fun ConversationScreen(
 
     LaunchedEffect(uiState.incomingCallId) {
         uiState.incomingCallId?.let { callId ->
-            onIncomingCall?.invoke(callId)
+            onIncomingCall?.invoke(
+                callId,
+                uiState.selectedChatPartnerName,
+                uiState.selectedChatPartnerImageUrl
+            )
             viewModel.onIncomingCallHandled()
         }
     }
@@ -178,7 +182,11 @@ fun ConversationScreen(
                     actions = {
                         if (uiState.currentChatId != null) {
                             IconButton(onClick = {
-                                onVideoCallClick?.invoke(uiState.currentChatId)
+                                onVideoCallClick?.invoke(
+                                    uiState.currentChatId,
+                                    uiState.selectedChatPartnerName,
+                                    uiState.selectedChatPartnerImageUrl
+                                )
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Videocam,

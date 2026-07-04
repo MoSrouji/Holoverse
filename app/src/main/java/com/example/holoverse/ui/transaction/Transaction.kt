@@ -39,7 +39,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.ui.spatialTheme.SpatialBackground
 import com.example.holoverse.ui.theme.BorderWhite
 import com.example.holoverse.ui.theme.ColorPlatinum
 import com.example.holoverse.ui.theme.GlassWhite
@@ -176,7 +175,7 @@ fun TransactionCard(transaction: TransactionItem) {
                     fontSize = 14.sp
                 )
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // Status Badge
@@ -206,7 +205,7 @@ fun TransactionCard(transaction: TransactionItem) {
 @Preview(showBackground = true)
 @Composable
 fun TransactionScreenPreview() {
-    HoloverseTheme(darkTheme = true ) {
+    HoloverseTheme(darkTheme = true) {
         TransactionScreen(appNavigator = AppNavigator(), darkTheme = true)
 
     }
