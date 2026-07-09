@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.courseDetail
+package com.example.holoverse.ui.coursedetail
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -170,7 +170,7 @@ fun CourseDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                    .background(com.example.holoverse.ui.spatialTheme.Brush(darkTheme))
+                    .background(com.example.holoverse.ui.spatialtheme.Brush(darkTheme))
 
             ) {
                 TopAppBar(

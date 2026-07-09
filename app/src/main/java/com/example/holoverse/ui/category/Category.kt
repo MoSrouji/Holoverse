@@ -60,7 +60,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.R
 import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
 

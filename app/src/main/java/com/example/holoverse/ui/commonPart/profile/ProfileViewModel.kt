@@ -1,12 +1,12 @@
-package com.example.holoverse.ui.commonPart.profile
+package com.example.holoverse.ui.commonpart.profile
 
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.cloudinaryservices.domain.repository.CloudinaryRepository
 import com.example.holoverse.utils.LanguageManager
 import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response

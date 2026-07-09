@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.auth.widget.textfield
+package com.example.holoverse.ui.commonpart.auth.widget.textfield
 
 
 import androidx.annotation.StringRes
@@ -29,8 +29,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.R
-import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
+import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonpart.auth.validation.state.ValidationState
 import com.example.holoverse.ui.theme.ColorPlatinum
 import com.example.holoverse.ui.theme.IbarraNovaNormalError13
 

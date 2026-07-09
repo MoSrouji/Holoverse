@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.auth.widget
+package com.example.holoverse.ui.commonpart.auth.widget
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -57,8 +57,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpTextFieldId
-import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
+import com.example.holoverse.ui.commonpart.auth.presentation.authentication.signup.SignUpTextFieldId
+import com.example.holoverse.ui.commonpart.auth.validation.state.ValidationState
 import com.example.holoverse.ui.theme.IbarraNovaNormalError13
 import com.example.holoverse.ui.theme.IbarraNovaNormalGray14
 import com.example.holoverse.ui.theme.IbarraNovaSemiBoldPlatinum16

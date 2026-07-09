@@ -2,13 +2,13 @@ package com.example.holoverse.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.chat_system.data.local.ChatDatabase
-import com.example.holoverse.chat_system.data.local.dao.ChatDao
-import com.example.holoverse.chat_system.data.local.dao.MessageDao
-import com.example.holoverse.chat_system.data.remote.FcmApi
-import com.example.holoverse.chat_system.data.repository.ChatRepositoryImpl
-import com.example.holoverse.chat_system.domain.repository.ChatRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.chatsystem.data.local.ChatDatabase
+import com.example.holoverse.chatsystem.data.local.dao.ChatDao
+import com.example.holoverse.chatsystem.data.local.dao.MessageDao
+import com.example.holoverse.chatsystem.data.remote.FcmApi
+import com.example.holoverse.chatsystem.data.repository.ChatRepositoryImpl
+import com.example.holoverse.chatsystem.domain.repository.ChatRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module

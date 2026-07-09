@@ -55,7 +55,7 @@ import com.example.holoverse.ui.home.component.FloatingActionButtonMenu
 import com.example.holoverse.ui.home.component.HomeContentSections
 import com.example.holoverse.ui.home.component.HomeScreenHeader
 import com.example.holoverse.ui.home.component.HomeTabRow
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.HoloverseTheme
 
 private const val SCROLL_THRESHOLD = 10

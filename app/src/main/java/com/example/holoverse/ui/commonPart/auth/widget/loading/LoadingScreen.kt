@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.auth.widget.loading
+package com.example.holoverse.ui.commonpart.auth.widget.loading
 
 
 import android.annotation.SuppressLint

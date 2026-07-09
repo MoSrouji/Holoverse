@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.auth.validation.interfaces
+package com.example.holoverse.ui.commonpart.auth.validation.interfaces
 
 interface TextFieldId {
 }

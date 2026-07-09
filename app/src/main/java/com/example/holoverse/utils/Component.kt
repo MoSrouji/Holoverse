@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.navigation.NavigationState
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.BorderWhite
 import com.example.holoverse.ui.theme.GlassWhite
 

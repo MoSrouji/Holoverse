@@ -31,7 +31,7 @@ import com.example.holoverse.R
 import com.example.holoverse.courses.domain.AdCardStyle
 import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses
-import com.example.holoverse.ui.teacherPart.courses.*
+import com.example.holoverse.ui.teacherpart.courses.*
 import com.example.holoverse.ui.theme.HoloCyan
 import com.example.holoverse.ui.theme.HoloPurple
 import com.example.holoverse.ui.theme.IbarraNovaFont

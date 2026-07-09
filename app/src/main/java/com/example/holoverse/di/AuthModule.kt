@@ -1,7 +1,7 @@
 package com.example.holoverse.di
 
 import com.example.holoverse.auth.data.repository.AuthRepositoryImpl
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.auth.domain.use_cases.AuthUseCases
 import com.example.holoverse.auth.domain.use_cases.FirebaseSignIn
 import com.example.holoverse.auth.domain.use_cases.FirebaseSignUp

@@ -1,9 +1,9 @@
-package com.example.holoverse.ui.teacherPart.students
+package com.example.holoverse.ui.teacherpart.students
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.teacherPart.courses
+package com.example.holoverse.ui.teacherpart.courses
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -72,8 +72,8 @@ import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.AdCardStyle
 import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.CourseSession
-import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.commonpart.auth.widget.RadioButtonMenu
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.HoloCyan
 import com.example.holoverse.ui.theme.HoloPurple
 import com.example.holoverse.ui.theme.IbarraNovaFont

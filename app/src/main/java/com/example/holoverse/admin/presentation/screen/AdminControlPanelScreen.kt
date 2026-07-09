@@ -25,7 +25,21 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,7 +63,7 @@ import com.example.holoverse.R
 import com.example.holoverse.admin.domain.repository.Timeframe
 import com.example.holoverse.admin.presentation.viewmodel.AdminUiState
 import com.example.holoverse.admin.presentation.viewmodel.AdminViewModel
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.HoloverseTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,11 +95,11 @@ fun AdminControlPanelContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        stringResource(R.string.admin_control_panel), 
+                        stringResource(R.string.admin_control_panel),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
@@ -251,31 +265,44 @@ fun UserGrowthSection(uiState: AdminUiState, onTimeframeSelected: (Timeframe) ->
                     fontWeight = FontWeight.SemiBold
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 Timeframe.entries.forEachIndexed { index, timeframe ->
                     SegmentedButton(
                         selected = uiState.selectedTimeframe == timeframe,
                         onClick = { onTimeframeSelected(timeframe) },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = Timeframe.entries.size)
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = Timeframe.entries.size
+                        )
                     ) {
                         Text(timeframe.name.lowercase().replaceFirstChar { it.uppercase() })
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             if (uiState.userGrowthData.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
-                    Text("No growth data for this period", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "No growth data for this period",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             } else {
                 UserGrowthLinearChart(
                     data = uiState.userGrowthData,
-                    modifier = Modifier.fillMaxWidth().height(180.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
                 )
             }
         }
@@ -287,13 +314,15 @@ fun UserGrowthLinearChart(data: List<Pair<String, Int>>, modifier: Modifier = Mo
     val maxVal = remember(data) { data.maxOfOrNull { it.second }?.toFloat() ?: 1f }
     val lineColor = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-    
+
     Column(modifier = modifier) {
-        Canvas(modifier = Modifier.weight(1f).fillMaxWidth()) {
+        Canvas(modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()) {
             val width = size.width
             val height = size.height
             val spacingX = width / (data.size - 1).coerceAtLeast(1)
-            
+
             // Draw Grid Lines (Horizontal)
             val gridLines = 4
             for (i in 0..gridLines) {
@@ -305,7 +334,7 @@ fun UserGrowthLinearChart(data: List<Pair<String, Int>>, modifier: Modifier = Mo
                     strokeWidth = 1.dp.toPx()
                 )
             }
-            
+
             // Draw Line
             val path = Path()
             data.forEachIndexed { index, pair ->
@@ -313,13 +342,13 @@ fun UserGrowthLinearChart(data: List<Pair<String, Int>>, modifier: Modifier = Mo
                 val y = height - (pair.second / maxVal * height)
                 if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
-            
+
             drawPath(
                 path = path,
                 color = lineColor,
                 style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
             )
-            
+
             // Draw Points
             data.forEachIndexed { index, pair ->
                 val x = index * spacingX
@@ -336,9 +365,9 @@ fun UserGrowthLinearChart(data: List<Pair<String, Int>>, modifier: Modifier = Mo
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         // Labels
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             data.forEachIndexed { index, pair ->
@@ -371,7 +400,7 @@ fun ChartSection(uiState: AdminUiState) {
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -381,12 +410,18 @@ fun ChartSection(uiState: AdminUiState) {
                     data = uiState.categoryDistribution,
                     modifier = Modifier.size(150.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.width(24.dp))
-                
+
                 // Legend
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val colors = listOf(Color(0xFF2196F3), Color(0xFF9C27B0), Color(0xFF4CAF50), Color(0xFFFF9800), Color(0xFFE91E63))
+                    val colors = listOf(
+                        Color(0xFF2196F3),
+                        Color(0xFF9C27B0),
+                        Color(0xFF4CAF50),
+                        Color(0xFFFF9800),
+                        Color(0xFFE91E63)
+                    )
                     uiState.categoryDistribution.entries.take(5).forEachIndexed { index, entry ->
                         LegendItem(
                             label = entry.key,
@@ -403,8 +438,14 @@ fun ChartSection(uiState: AdminUiState) {
 @Composable
 fun DonutChart(data: Map<String, Int>, modifier: Modifier = Modifier) {
     val total = data.values.sum().toFloat()
-    val colors = listOf(Color(0xFF2196F3), Color(0xFF9C27B0), Color(0xFF4CAF50), Color(0xFFFF9800), Color(0xFFE91E63))
-    
+    val colors = listOf(
+        Color(0xFF2196F3),
+        Color(0xFF9C27B0),
+        Color(0xFF4CAF50),
+        Color(0xFFFF9800),
+        Color(0xFFE91E63)
+    )
+
     Canvas(modifier = modifier) {
         var startAngle = -90f
         data.entries.forEachIndexed { index, entry ->
@@ -424,7 +465,10 @@ fun DonutChart(data: Map<String, Int>, modifier: Modifier = Modifier) {
 @Composable
 fun LegendItem(label: String, value: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
+        Box(modifier = Modifier
+            .size(10.dp)
+            .clip(CircleShape)
+            .background(color))
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = "$label ($value)",
@@ -442,7 +486,7 @@ fun ActivitySection(uiState: AdminUiState) {
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
-        
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
@@ -454,7 +498,9 @@ fun ActivitySection(uiState: AdminUiState) {
                 ActivityItem(
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
                     title = stringResource(R.string.weekly_user_growth),
-                    subtitle = stringResource(R.string.new_signups_this_week, uiState.userGrowthData.sumOf { it.second }),
+                    subtitle = stringResource(
+                        R.string.new_signups_this_week,
+                        uiState.userGrowthData.sumOf { it.second }),
                     color = Color(0xFF4CAF50)
                 )
                 HorizontalDivider(

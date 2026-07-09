@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.profile
+package com.example.holoverse.ui.commonpart.profile
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -60,14 +60,14 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonPart.auth.widget.DatePickerInput
-import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
-import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
-import com.example.holoverse.ui.commonPart.auth.widget.textfield.AuthenticationTextField
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationEvent
+import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationResultEvent
+import com.example.holoverse.ui.commonpart.auth.widget.DatePickerInput
+import com.example.holoverse.ui.commonpart.auth.widget.RadioButtonMenu
+import com.example.holoverse.ui.commonpart.auth.widget.button.AuthenticationButton
+import com.example.holoverse.ui.commonpart.auth.widget.textfield.AuthenticationTextField
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.utils.Response

@@ -1,10 +1,10 @@
 package com.example.holoverse.di
 
 import android.content.Context
-import com.example.holoverse.three_d_model.data.local.ModelCacheManager
-import com.example.holoverse.three_d_model.data.remote.ApiService
-import com.example.holoverse.three_d_model.data.repository.ModelRepositoryImpl
-import com.example.holoverse.three_d_model.domain.repository.ModelRepository
+import com.example.holoverse.threedmodel.data.local.ModelCacheManager
+import com.example.holoverse.threedmodel.data.remote.ApiService
+import com.example.holoverse.threedmodel.data.repository.ModelRepositoryImpl
+import com.example.holoverse.threedmodel.domain.repository.ModelRepository
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides

@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideocamOff
 import androidx.compose.material.icons.rounded.Gesture
 import androidx.compose.material.icons.rounded.ViewInAr
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,7 +55,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -80,10 +80,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.holoverse.ui.three_D_Part.ModelViewModel
+import com.example.holoverse.threedmodel.presentation.ModelViewModel
+import com.example.holoverse.threedmodel.presentation.ar.rememberArStatus
 import com.example.holoverse.ui.three_D_Part.ar.ArStatus
 import com.example.holoverse.ui.three_D_Part.ar.ArViewer
-import com.example.holoverse.ui.three_D_Part.ar.rememberArStatus
 import com.example.holoverse.ui.three_D_Part.gallery.ModelGalleryOverlay
 import com.example.holoverse.ui.whiteboard.WhiteboardManager
 import com.example.holoverse.ui.whiteboard.WhiteboardToolbar
@@ -203,7 +203,10 @@ fun VideoCallContent(
     }
 
     LaunchedEffect(callId) {
-        viewModel.initCall(callId, isOffer = if (isOffer) true else false) // Explicit boolean to be sure
+        viewModel.initCall(
+            callId,
+            isOffer = isOffer
+        ) // Explicit boolean to be sure
     }
 
     BackHandler {
@@ -730,7 +733,7 @@ fun WhiteboardView(whiteboardManager: WhiteboardManager, modifier: Modifier = Mo
 
     if (pendingPosition != null) {
         AlertDialog(
-            onDismissRequest = { 
+            onDismissRequest = {
                 whiteboardManager.pendingTextPosition = null
                 textInput = ""
             },

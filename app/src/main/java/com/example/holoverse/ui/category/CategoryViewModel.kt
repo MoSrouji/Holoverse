@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.domain.Courses

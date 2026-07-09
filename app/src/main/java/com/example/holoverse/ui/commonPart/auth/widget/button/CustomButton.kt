@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.auth.widget.button
+package com.example.holoverse.ui.commonpart.auth.widget.button
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke

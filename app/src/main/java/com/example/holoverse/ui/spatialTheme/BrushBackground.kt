@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.spatialTheme
+package com.example.holoverse.ui.spatialtheme
 
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color

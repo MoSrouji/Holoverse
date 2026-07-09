@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.home.coursesList
+package com.example.holoverse.ui.home.courseslist
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

@@ -2,7 +2,7 @@ package com.example.holoverse.ui.mentor.announcements
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses

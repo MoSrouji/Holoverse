@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.auth.util
+package com.example.holoverse.ui.commonpart.auth.util
 
 enum class TextFieldType {
     Email,Password,Text,AccountType,PhoneNumber

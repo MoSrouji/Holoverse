@@ -2,7 +2,7 @@ package com.example.holoverse.notifications.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.notifications.domain.models.Notification
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.example.holoverse.utils.Response

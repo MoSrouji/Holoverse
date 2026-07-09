@@ -1,6 +1,6 @@
-package com.example.holoverse.ui.commonPart.auth.validation.event
+package com.example.holoverse.ui.commonpart.auth.validation.event
 
-import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
+import com.example.holoverse.ui.commonpart.auth.validation.state.ValidationState
 
 
 sealed class ValidationEvent{

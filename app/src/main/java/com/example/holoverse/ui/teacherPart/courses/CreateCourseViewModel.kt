@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.teacherPart.courses
+package com.example.holoverse.ui.teacherpart.courses
 
 import android.net.Uri
 import androidx.compose.runtime.State
@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.cloudinary_services.domain.use_case.UploadPhotoUseCase
+import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.cloudinaryservices.domain.use_case.UploadPhotoUseCase
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.domain.BoostedCourse

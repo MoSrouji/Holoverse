@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.profile
+package com.example.holoverse.ui.commonpart.profile
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.profile
+package com.example.holoverse.ui.commonpart.profile
 
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -79,7 +79,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
 

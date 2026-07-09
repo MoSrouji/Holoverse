@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.teacherPart.students
+package com.example.holoverse.ui.teacherpart.students
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

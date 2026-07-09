@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.auth.validation.event
+package com.example.holoverse.ui.commonpart.auth.validation.event
 
 sealed class ValidationResultEvent{
 

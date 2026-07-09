@@ -1,8 +1,8 @@
 package com.example.holoverse.di
 
 import android.content.Context
-import com.example.holoverse.cloudinary_services.data.repository.CloudinaryRepositoryImpl
-import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
+import com.example.holoverse.cloudinaryservices.data.repository.CloudinaryRepositoryImpl
+import com.example.holoverse.cloudinaryservices.domain.repository.CloudinaryRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,8 +1,8 @@
-package com.example.holoverse.ui.commonPart.auth.validation.use_case
+package com.example.holoverse.ui.commonpart.auth.validation.use_case
 
 import com.example.holoverse.R
-import com.example.holoverse.ui.commonPart.auth.validation.interfaces.Validate
-import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationResultState
+import com.example.holoverse.ui.commonpart.auth.validation.interfaces.Validate
+import com.example.holoverse.ui.commonpart.auth.validation.state.ValidationResultState
 
 class ValidateText : Validate {
     override fun execute(text: String): ValidationResultState {

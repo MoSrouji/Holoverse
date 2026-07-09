@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.auth.validation.state
+package com.example.holoverse.ui.commonpart.auth.validation.state
 
 import androidx.annotation.StringRes
 

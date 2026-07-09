@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.cloudinaryservices.domain.repository.CloudinaryRepository
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses

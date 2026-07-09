@@ -48,42 +48,42 @@ import androidx.navigation3.ui.NavDisplay
 import com.example.holoverse.R
 import com.example.holoverse.admin.presentation.screen.AdminControlPanelScreen
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.chatsystem.presentation.ChatScreen
+import com.example.holoverse.chatsystem.presentation.ChatViewModel
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.notifications.presentation.NotificationScreen
+import com.example.holoverse.threedmodel.presentation.ModelViewModel
 import com.example.holoverse.ui.category.CategoryCoursesScreen
 import com.example.holoverse.ui.category.CategoryScreen
-import com.example.holoverse.ui.chat.ChatScreen
-import com.example.holoverse.ui.collectUserData.student.screens.StudentPreferenceInfoInput
-import com.example.holoverse.ui.collectUserData.student.screens.StudentProfileInput
-import com.example.holoverse.ui.collectUserData.teacher.screens.TeacherProfessionalInfoInput
-import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signin.SignInScreen
-import com.example.holoverse.ui.commonPart.auth.presentaiton.authentication.signup.SignUpScreen
-import com.example.holoverse.ui.commonPart.profile.ChangePasswordScreen
-import com.example.holoverse.ui.commonPart.profile.EditProfileScreen
-import com.example.holoverse.ui.commonPart.profile.ProfileScreen
-import com.example.holoverse.ui.commonPart.profile.TermsAndConditionsScreen
-import com.example.holoverse.ui.courseDetail.CourseDetailScreen
+import com.example.holoverse.ui.collectuserdata.student.screens.StudentPreferenceInfoInput
+import com.example.holoverse.ui.collectuserdata.student.screens.StudentProfileInput
+import com.example.holoverse.ui.collectuserdata.teacher.screens.TeacherProfessionalInfoInput
+import com.example.holoverse.ui.commonpart.auth.presentation.authentication.signin.SignInScreen
+import com.example.holoverse.ui.commonpart.auth.presentation.authentication.signup.SignUpScreen
+import com.example.holoverse.ui.commonpart.profile.ChangePasswordScreen
+import com.example.holoverse.ui.commonpart.profile.EditProfileScreen
+import com.example.holoverse.ui.commonpart.profile.ProfileScreen
+import com.example.holoverse.ui.commonpart.profile.TermsAndConditionsScreen
+import com.example.holoverse.ui.coursedetail.CourseDetailScreen
 import com.example.holoverse.ui.home.HomeScreen
-import com.example.holoverse.ui.home.coursesList.PopularCoursesScreen
-import com.example.holoverse.ui.home.coursesList.RecommendationScreen
-import com.example.holoverse.ui.home.mentorsList.RecommendedMentorsScreen
-import com.example.holoverse.ui.home.mentorsList.TopMentorsScreen
+import com.example.holoverse.ui.home.courseslist.PopularCoursesScreen
+import com.example.holoverse.ui.home.courseslist.RecommendationScreen
+import com.example.holoverse.ui.home.mentorslist.RecommendedMentorsScreen
+import com.example.holoverse.ui.home.mentorslist.TopMentorsScreen
 import com.example.holoverse.ui.mentor.MentorProfileScreen
 import com.example.holoverse.ui.mentor.analysis.MentorAnalysisScreen
 import com.example.holoverse.ui.mentor.announcements.AnnouncementsScreen
 import com.example.holoverse.ui.search.SearchScreen
-import com.example.holoverse.ui.spatialTheme.Brush
-import com.example.holoverse.ui.spatialTheme.HoloIntroScreen
-import com.example.holoverse.ui.teacherPart.courses.CreateCourseScreen
-import com.example.holoverse.ui.teacherPart.students.StudentListScreen
-import com.example.holoverse.ui.three_D_Part.ModelViewModel
+import com.example.holoverse.ui.spatialtheme.Brush
+import com.example.holoverse.ui.spatialtheme.HoloIntroScreen
+import com.example.holoverse.ui.teacherpart.courses.CreateCourseScreen
+import com.example.holoverse.ui.teacherpart.students.StudentListScreen
 import com.example.holoverse.ui.three_D_Part.ar.ArScreen
 import com.example.holoverse.ui.three_D_Part.gallery.GalleryScreen
 import com.example.holoverse.ui.three_D_Part.viewer.ViewerScreen
 import com.example.holoverse.ui.transaction.TransactionScreen
 import com.example.holoverse.webrtc.presentation.IncomingCallScreen
 import com.example.holoverse.webrtc.presentation.OutgoingCallScreen
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -341,7 +341,7 @@ fun AppNavHost(
         entry<AppDestination.ChatScreen>(
             metadata = ListDetailSceneStrategy.detailPane()
         ) { key: AppDestination.ChatScreen ->
-            val viewModel: com.example.holoverse.ui.chat.ChatViewModel = hiltViewModel()
+            val viewModel: ChatViewModel = hiltViewModel()
             ChatScreen(
                 darkTheme = darkTheme,
                 mentorId = key.mentorId,

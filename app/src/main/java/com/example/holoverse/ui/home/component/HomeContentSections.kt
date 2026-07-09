@@ -37,7 +37,7 @@ import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.ui.home.HomeTab
 import com.example.holoverse.ui.home.HomeUiState
-import com.example.holoverse.ui.teacherPart.courses.BoostedCourseCard
+import com.example.holoverse.ui.teacherpart.courses.BoostedCourseCard
 import kotlinx.coroutines.delay
 
 @Composable

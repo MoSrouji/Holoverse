@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.collectUserData.student.screens
+package com.example.holoverse.ui.collectuserdata.student.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -51,15 +51,15 @@ import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.ui.collectUserData.student.viewModels.StudentProfileViewModel
-import com.example.holoverse.ui.collectUserData.student.viewModels.StudentSignUpTextField
-import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonPart.auth.widget.DatePickerInput
-import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
-import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
-import com.example.holoverse.ui.commonPart.auth.widget.textfield.AuthenticationTextField
+import com.example.holoverse.ui.collectuserdata.student.viewModels.StudentProfileViewModel
+import com.example.holoverse.ui.collectuserdata.student.viewModels.StudentSignUpTextField
+import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationEvent
+import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationResultEvent
+import com.example.holoverse.ui.commonpart.auth.widget.DatePickerInput
+import com.example.holoverse.ui.commonpart.auth.widget.RadioButtonMenu
+import com.example.holoverse.ui.commonpart.auth.widget.button.AuthenticationButton
+import com.example.holoverse.ui.commonpart.auth.widget.textfield.AuthenticationTextField
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum25
 import com.example.holoverse.ui.theme.IbarraNovaSemiBoldPlatinum17

@@ -37,8 +37,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.Courses
-import com.example.holoverse.ui.home.coursesList.CourseItem
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.home.courseslist.CourseItem
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.utils.Response
 

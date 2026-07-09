@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.teacherPart.courses
+package com.example.holoverse.ui.teacherpart.courses
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

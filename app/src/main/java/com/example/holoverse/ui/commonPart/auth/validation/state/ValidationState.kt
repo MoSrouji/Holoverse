@@ -1,8 +1,8 @@
-package com.example.holoverse.ui.commonPart.auth.validation.state
+package com.example.holoverse.ui.commonpart.auth.validation.state
 
 import androidx.annotation.StringRes
-import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonPart.auth.validation.interfaces.TextFieldId
+import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonpart.auth.validation.interfaces.TextFieldId
 
 data class ValidationState(
     var text:String = "",

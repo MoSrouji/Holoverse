@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.holoverse.R
-import com.example.holoverse.ui.spatialTheme.SpatialBackground
+import com.example.holoverse.ui.spatialtheme.SpatialBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

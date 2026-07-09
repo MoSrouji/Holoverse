@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.profile
+package com.example.holoverse.ui.commonpart.profile
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -35,12 +35,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
-import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
-import com.example.holoverse.ui.commonPart.auth.widget.textfield.AuthenticationTextField
-import com.example.holoverse.ui.spatialTheme.Brush
+import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationEvent
+import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationResultEvent
+import com.example.holoverse.ui.commonpart.auth.widget.button.AuthenticationButton
+import com.example.holoverse.ui.commonpart.auth.widget.textfield.AuthenticationTextField
+import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.utils.Response
 

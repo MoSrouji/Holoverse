@@ -1,4 +1,4 @@
-package com.example.holoverse.ui.commonPart.profile
+package com.example.holoverse.ui.commonpart.profile
 
 import android.net.Uri
 import android.util.Log
@@ -7,14 +7,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.cloudinary_services.domain.repository.CloudinaryRepository
-import com.example.holoverse.ui.commonPart.auth.presentaiton.base.BaseValidationViewModel
-import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonPart.auth.validation.interfaces.TextFieldId
-import com.example.holoverse.ui.commonPart.auth.validation.state.ValidationState
+import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.cloudinaryservices.domain.repository.CloudinaryRepository
+import com.example.holoverse.ui.commonpart.auth.presentation.base.BaseValidationViewModel
+import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationEvent
+import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationResultEvent
+import com.example.holoverse.ui.commonpart.auth.validation.interfaces.TextFieldId
+import com.example.holoverse.ui.commonpart.auth.validation.state.ValidationState
 import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel

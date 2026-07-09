@@ -3,7 +3,7 @@ package com.example.holoverse.auth.data.repository
 import android.util.Log
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.UserType
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
 import com.example.holoverse.utils.PreferenceManager

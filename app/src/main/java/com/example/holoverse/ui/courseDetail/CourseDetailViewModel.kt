@@ -1,12 +1,12 @@
-package com.example.holoverse.ui.courseDetail
+package com.example.holoverse.ui.coursedetail
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.chat_system.domain.repository.ChatRepository
+import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.chatsystem.domain.repository.ChatRepository
 import com.example.holoverse.courses.data.CourseRepo
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
