@@ -16,8 +16,8 @@ class DummyDataPopulator(private val firestore: FirebaseFirestore) {
         try {
             Log.d("DummyDataPopulator", "Starting data population...")
             // 1. Delete existing data (Clear collections)
-            deleteCollection("courses")
-            deleteCollection(COLLECTION_NAME_MENTORS)
+//            deleteCollection("courses")
+//            deleteCollection(COLLECTION_NAME_MENTORS)
             Log.d("DummyDataPopulator", "Cleared existing courses and mentors.")
 
             // 2. Create new dummy data
@@ -83,8 +83,9 @@ class DummyDataPopulator(private val firestore: FirebaseFirestore) {
                 hourlyRate = 25.0 + (index * 5),
                 followersCount = 100 * (index + 1),
                 totalStudentsTaught = 50 * (index + 1),
-                successRate = 0.85 + (index % 15) * 0.01
-            )
+                successRate = 0.85 + (index % 15) * 0.01,
+
+                )
         }
     }
 

@@ -26,13 +26,15 @@ object AuthModule {
     fun provideAuthenticationRepository(
         firebaseAuth: FirebaseAuth,
         firebaseFirestore: FirebaseFirestore,
-        preferenceManager: PreferenceManager
+        preferenceManager: PreferenceManager,
+        fetchDataRepository: com.example.holoverse.fetch.domain.FetchDataRepository
     ): AuthRepository {
 
         return AuthRepositoryImpl(
             firebaseAuth = firebaseAuth,
             firestore = firebaseFirestore,
-            preferenceManager = preferenceManager
+            preferenceManager = preferenceManager,
+            fetchDataRepository = fetchDataRepository
         )
     }
 

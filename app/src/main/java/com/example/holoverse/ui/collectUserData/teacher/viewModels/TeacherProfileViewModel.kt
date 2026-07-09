@@ -16,7 +16,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
-class TeacherProfileViewModel @Inject constructor() : BaseValidationViewModel() {
+class TeacherProfileViewModel @Inject constructor(
+    private val preferenceManager: com.example.holoverse.utils.PreferenceManager
+) : BaseValidationViewModel() {
+
+    fun setProfileComplete(isComplete: Boolean) {
+        preferenceManager.setProfileComplete(isComplete)
+    }
 
     private val _teacherScreenState = MutableStateFlow(TeacherState())
     val teacherScreenState: StateFlow<TeacherState> = _teacherScreenState.asStateFlow()

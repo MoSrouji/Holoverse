@@ -10,13 +10,15 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.holoverse.MainActivity
 import com.example.holoverse.R
+import com.example.holoverse.utils.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class CallNotificationManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val preferenceManager: PreferenceManager
 ) {
     private val TAG = "CallNotificationManager"
     private val notificationManager =
@@ -32,14 +34,15 @@ class CallNotificationManager @Inject constructor(
         const val EXTRA_CALLER_IMAGE = "caller_image"
     }
 
-    init {
-        createNotificationChannel()
-    }
-
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Delete old channel to ensure new settings (like Importance) take effect
-            notificationManager.deleteNotificationChannel(CHANNEL_ID)
+            val ringtoneUri = preferenceManager.getRingtone(PreferenceManager.KEY_CALL_RINGTONE)
+            
+            // Check if user disabled in system
+            val existingChannel = notificationManager.getNotificationChannel(CHANNEL_ID)
+            if (existingChannel != null && existingChannel.importance == NotificationManager.IMPORTANCE_NONE) {
+                return
+            }
 
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -51,13 +54,37 @@ class CallNotificationManager @Inject constructor(
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 500, 500, 500)
                 lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+
+                if (ringtoneUri != null) {
+                    setSound(
+                        android.net.Uri.parse(ringtoneUri),
+                        android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                }
             }
             notificationManager.createNotificationChannel(channel)
         }
     }
 
     fun showIncomingCallNotification(callId: String, callerName: String, callerImageUrl: String?) {
-        Log.d(TAG, "showIncomingCallNotification: callId=$callId, caller=$callerName")
+        if (!preferenceManager.getNotificationSetting(PreferenceManager.KEY_CALL_NOTIFICATIONS)) {
+            Log.d(TAG, "Call notifications disabled by user in-app")
+            return
+        }
+
+        createNotificationChannel()
+        
+        // Final check: if system channel is disabled, return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = notificationManager.getNotificationChannel(CHANNEL_ID)
+            if (channel != null && channel.importance == NotificationManager.IMPORTANCE_NONE) {
+                Log.d(TAG, "Call notification channel is disabled in system settings")
+                return
+            }
+        }
         
         // Use a unique intent action for the full screen intent to avoid collisions
         val fullScreenIntent = Intent(context, MainActivity::class.java).apply {

@@ -104,7 +104,6 @@ fun StudentPreferenceInfoInput(
         when (signUpState) {
             is Response.Success -> {
                 if (signUpState.data) {
-                    Toast.makeText(context, R.string.fill_the_form, Toast.LENGTH_LONG).show()
                     navToHomeScreen()
                 }
             }
@@ -145,6 +144,7 @@ fun StudentPreferenceInfoInput(
 
                 TextButton(
                     onClick = {
+                        viewModel.setProfileComplete(true)
                         navToHomeScreen()
                     },
                     modifier = Modifier.padding(end = 10.dp),

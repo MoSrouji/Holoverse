@@ -69,6 +69,7 @@ class WebRtcSessionManager @Inject constructor(
     private var peerConnection: PeerConnection? = null
     private var videoCapturer: VideoCapturer? = null
     private var localVideoTrackInternal: VideoTrack? = null
+    private var videoSender: org.webrtc.RtpSender? = null
     private var localAudioTrack: AudioTrack? = null
     private var localSurfaceTextureHelper: SurfaceTextureHelper? = null
 
@@ -244,7 +245,7 @@ class WebRtcSessionManager @Inject constructor(
         )
         _localVideoTrack.value = localVideoTrackInternal
 
-        peerConnection?.addTrack(localVideoTrackInternal)
+        videoSender = peerConnection?.addTrack(localVideoTrackInternal)
     }
 
     private fun createVideoCapturer(): VideoCapturer? {
@@ -464,6 +465,7 @@ class WebRtcSessionManager @Inject constructor(
         _localVideoTrack.value = null
         _remoteVideoTrack.value = null
         _connectionState.value = null
+        videoSender = null
         _isCallEnded.value = false
         isRemoteDescriptionSet = false
         offerHandled = false
@@ -554,10 +556,37 @@ class WebRtcSessionManager @Inject constructor(
         _isPdfEnabled.value = mode == com.example.holoverse.webrtc.domain.model.CallMode.PDF
     }
 
+    private fun applyTextOptimizations(enabled: Boolean) {
+        Log.d(TAG, "applyTextOptimizations: enabled=$enabled")
+
+        // Set degradation preference to MAINTAIN_RESOLUTION
+        // This prevents the encoder from dropping resolution (blurring) when bandwidth is low,
+        // instead it will drop frame rate which is better for static content like PDFs.
+        videoSender?.let { sender ->
+            try {
+                val parameters = sender.parameters
+                parameters.degradationPreference = if (enabled) {
+                    org.webrtc.RtpParameters.DegradationPreference.MAINTAIN_RESOLUTION
+                } else {
+                    org.webrtc.RtpParameters.DegradationPreference.BALANCED
+                }
+                sender.parameters = parameters
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to set RtpParameters", e)
+            }
+        }
+    }
+
     private fun startSyntheticMode() {
         if (syntheticSurfaceTextureHelper != null) return
 
         Log.d(TAG, "Starting synthetic mode capture")
+        
+        // Apply optimizations for PDF/Whiteboard content
+        val isTextMode = _callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.PDF || 
+                         _callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.WHITEBOARD
+        applyTextOptimizations(isTextMode)
+
         syntheticSurfaceTextureHelper =
             SurfaceTextureHelper.create("SyntheticThread", eglBaseContext)
         
@@ -570,6 +599,8 @@ class WebRtcSessionManager @Inject constructor(
         }
 
         syntheticLoopJob = scope.launch(Dispatchers.Default) {
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.FILTER_BITMAP_FLAG)
+            
             while (_callMode.value != com.example.holoverse.webrtc.domain.model.CallMode.VIDEO) {
                 when (_callMode.value) {
                     com.example.holoverse.webrtc.domain.model.CallMode.WHITEBOARD,
@@ -602,10 +633,10 @@ class WebRtcSessionManager @Inject constructor(
                                         // Clear background
                                         canvas.drawColor(Color.WHITE)
 
-                                        // Draw scaled bitmap
+                                        // Draw scaled bitmap with high quality filter
                                         val destRect =
                                             Rect(left, top, left + dstWidth, top + dstHeight)
-                                        canvas.drawBitmap(bitmap, null, destRect, null)
+                                        canvas.drawBitmap(bitmap, null, destRect, paint)
                                     } ?: canvas.drawColor(Color.WHITE)
                                     whiteboardManager?.drawToNativeCanvas(
                                         canvas,
@@ -625,13 +656,20 @@ class WebRtcSessionManager @Inject constructor(
 
                     else -> {}
                 }
-                delay(33.milliseconds) // ~30 FPS
+                
+                // For PDF and Whiteboard, lower FPS is acceptable and helps maintain quality
+                val frameDelay = if (_callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.AR) 33 else 100
+                delay(frameDelay.milliseconds)
             }
         }
     }
 
     private fun stopSyntheticMode() {
         Log.d(TAG, "Stopping synthetic mode capture")
+        
+        // Reset optimizations back to default
+        applyTextOptimizations(false)
+
         syntheticLoopJob?.cancel()
         syntheticLoopJob = null
 

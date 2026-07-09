@@ -11,6 +11,7 @@ import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.courses.domain.BoostedCourse
 import com.example.holoverse.courses.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
+import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,7 @@ class HomeViewModel @Inject constructor(
     private val fetchDataRepository: FetchDataRepository,
     private val authRepository: AuthRepository,
     private val cloudinaryRepository: CloudinaryRepository,
+    private val preferenceManager: PreferenceManager,
     private val application: Application
 ) : ViewModel() {
 
@@ -61,7 +63,26 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        observeUserChanges()
         fetchHomeData()
+    }
+
+    private fun observeUserChanges() {
+        viewModelScope.launch {
+            preferenceManager.userFlow.collect { user ->
+                val currentUser = _uiState.value.currentUser
+                if (user?.userId != currentUser?.userId) {
+                    _uiState.update { it.copy(currentUser = user) }
+                    // If user changed, we should probably re-fetch data to get new recommendations
+                    if (currentUser != null && user != null) {
+                        fetchHomeData(forceRefresh = false)
+                    }
+                } else if (user != currentUser) {
+                    // Same user but fields updated (e.g. name, profile image)
+                    _uiState.update { it.copy(currentUser = user) }
+                }
+            }
+        }
     }
 
     private fun fetchHomeData(forceRefresh: Boolean = false, showLoading: Boolean = true) {

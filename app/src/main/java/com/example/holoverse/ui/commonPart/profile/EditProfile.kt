@@ -1,5 +1,9 @@
 package com.example.holoverse.ui.commonPart.profile
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,27 +17,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,30 +46,76 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
+import com.example.holoverse.R
+import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.ui.commonPart.auth.util.TextFieldType
+import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationEvent
+import com.example.holoverse.ui.commonPart.auth.validation.event.ValidationResultEvent
+import com.example.holoverse.ui.commonPart.auth.widget.DatePickerInput
+import com.example.holoverse.ui.commonPart.auth.widget.RadioButtonMenu
+import com.example.holoverse.ui.commonPart.auth.widget.button.AuthenticationButton
+import com.example.holoverse.ui.commonPart.auth.widget.textfield.AuthenticationTextField
 import com.example.holoverse.ui.spatialTheme.Brush
-import com.example.holoverse.ui.spatialTheme.ProfileTextField
+import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaFont
+import com.example.holoverse.utils.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     onBackClick: () -> Unit,
+    onChangePasswordClick: () -> Unit,
     onUpdateSuccess: () -> Unit,
-    darkTheme: Boolean = true
+    darkTheme: Boolean = true,
+    viewModel: EditProfileViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val editProfileState by viewModel.editProfileState.collectAsState()
+    val currentUser by viewModel.currentUser.collectAsState()
+    val genderItems = listOf("Male", "Female")
+    var isGenderMenuExpanded by remember { mutableStateOf(false) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        viewModel.selectedImageUri = uri
+    }
+
+    LaunchedEffect(editProfileState) {
+        when (editProfileState) {
+            is Response.Success -> {
+                if ((editProfileState as Response.Success<Boolean>).data) {
+                    Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                    onUpdateSuccess()
+                }
+            }
+            is Response.Error -> {
+                Toast.makeText(context, (editProfileState as Response.Error).message, Toast.LENGTH_LONG).show()
+            }
+            else -> {}
+        }
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))                        .background(Brush(darkTheme))
-
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                    .background(Brush(darkTheme))
             ) {
                 TopAppBar(
                     title = {
@@ -73,7 +123,7 @@ fun EditProfileScreen(
                             "Edit Profile",
                             fontWeight = FontWeight.Bold,
                             fontFamily = IbarraNovaFont,
-
+                            color = Color.White
                         )
                     },
                     navigationIcon = {
@@ -81,269 +131,253 @@ fun EditProfileScreen(
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-
+                                tint = Color.White
                             )
                         }
                     },
-
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    )
                 )
             }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 24.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Profile Picture
+                // Profile Photo Section
                 Box(
-                    modifier = Modifier.size(120.dp),
-                    contentAlignment = Alignment.BottomEnd
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .background(Color.Gray.copy(alpha = 0.2f))
+                        .border(3.dp, Color(0xFF009688), CircleShape)
+                        .clickable { imagePickerLauncher.launch("image/*") },
+                    contentAlignment = Alignment.Center
                 ) {
+                    val displayImage = viewModel.selectedImageUri
+                        ?: when (val user = currentUser) {
+                            is User.Student -> user.profileImageUrl
+                            is User.Mentor -> user.profileImageUrl
+                            else -> null
+                        }
+
+                    if (displayImage != null) {
+                        AsyncImage(
+                            model = displayImage,
+                            contentDescription = "Profile Photo",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(R.drawable.istockphoto_1934800957_612x612),
+                            error = painterResource(R.drawable.istockphoto_1934800957_612x612)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "No Photo",
+                            tint = Color.White,
+                            modifier = Modifier.size(64.dp)
+                        )
+                    }
+                    
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(CircleShape)
-                            .border(3.dp, Color(0xFF009688), CircleShape),
+                            .background(Color.Black.copy(alpha = 0.3f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        // This would be an Image composable in a real app
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.White)
-                            .padding(4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF009688)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Outlined.Image,
-                                contentDescription = "Change Picture",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.AddAPhoto,
+                            contentDescription = "Change Photo",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                var fullName by remember { mutableStateOf("") }
-                var nickName by remember { mutableStateOf("") }
-                var dob by remember { mutableStateOf("") }
-                var email by remember { mutableStateOf("") }
-                var phone by remember { mutableStateOf("(+1) 724-848-1225") }
-                var gender by remember { mutableStateOf("") }
-                var studentStatus by remember { mutableStateOf("Student") }
-
-                ProfileTextField(
-                    value = fullName,
-                    onValueChange = { fullName = it },
-                    error = "",
-                    label = "Full Name"
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileTextField(
-                    value = nickName,
-                    onValueChange = { nickName = it },
-                    label = "Nick Name",
-                    error = " "
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileTextField(
-                    value = dob,
-                    onValueChange = { dob = it },
-                    label = "Date of Birth",
-                    //  leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color.Gray) },
-                    error = ""
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = "Email",
-                    //  leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color.Gray) },
-                    error = ""
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                // PhoneTextField(value = phone, onValueChange = { phone = it })
-                Spacer(modifier = Modifier.height(16.dp))
-                //   GenderSpinner(selectedGender = gender, onGenderSelected = { gender = it })
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileTextField(
-                    value = studentStatus,
-                    onValueChange = { studentStatus = it },
-                    error = "",
-                    label = "Student"
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Button(
-                    onClick = onUpdateSuccess,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D69FF))
-                ) {
-                    Box(
+                // Form Fields
+                viewModel.forms[EditProfileTextFieldId.FULL_NAME]?.let { state ->
+                    AuthenticationTextField(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Update", fontSize = 18.sp, color = Color.White)
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.align(Alignment.CenterEnd)
-                        )
-                    }
+                        state = state,
+                        hint = R.string.full_name,
+                        onValueChange = {
+                            viewModel.onEvent(ValidationEvent.TextFieldValueChange(state.copy(text = it)))
+                        },
+                        type = TextFieldType.Text
+                    )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
-    }
 
-    @Composable
-    fun ProfileTextField(
-        value: String,
-        onValueChange: (String) -> Unit,
-        placeholder: String,
-        leadingIcon: @Composable (() -> Unit)? = null,
-        trailingIcon: @Composable (() -> Unit)? = null,
-        readOnly: Boolean = false,
-        onClick: (() -> Unit)? = null
-    ) {
-        val modifier = if (onClick != null) Modifier.clickable { onClick() } else Modifier
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            readOnly = readOnly,
-            modifier = modifier.fillMaxWidth(),
-            decorationBox = { innerTextField ->
+                Spacer(modifier = Modifier.height(16.dp))
+
+                viewModel.forms[EditProfileTextFieldId.EMAIL]?.let { state ->
+                    AuthenticationTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = state,
+                        hint = R.string.email,
+                        onValueChange = {
+                            viewModel.onEvent(ValidationEvent.TextFieldValueChange(state.copy(text = it)))
+                        },
+                        type = TextFieldType.Email
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Change Password Section
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Gray.copy(alpha = 0.1f))
+                        .clickable { onChangePasswordClick() }
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (leadingIcon != null) {
-                        leadingIcon()
-                        Spacer(modifier = Modifier.width(16.dp))
-                    }
-                    Box(modifier = Modifier.weight(1f)) {
-                        if (value.isEmpty()) {
-                            Text(placeholder, color = Color.Gray)
-                        }
-                        innerTextField()
-                    }
-                    if (trailingIcon != null) {
-                        Spacer(modifier = Modifier.width(16.dp))
-                        trailingIcon()
-                    }
-                }
-            }
-        )
-    }
-
-
-    @Composable
-    fun PhoneTextField(value: String, onValueChange: (String) -> Unit) {
-        var countryDialog by remember { mutableStateOf(false) }
-
-        if (countryDialog) {
-            Dialog(onDismissRequest = { countryDialog = false }) {
-                Surface(shape = RoundedCornerShape(16.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Select Country", style = MaterialTheme.typography.titleLarge)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "🇺🇸 United States (+1)",
-                            modifier = Modifier.clickable { countryDialog = false })
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "🇬🇧 United Kingdom (+44)",
-                            modifier = Modifier.clickable { countryDialog = false })
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "🇮🇳 India (+91)",
-                            modifier = Modifier.clickable { countryDialog = false })
-                    }
-                }
-            }
-        }
-
-        ProfileTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = "Phone number",
-            leadingIcon = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { countryDialog = true }
-                ) {
-                    Text("🇺🇸", fontSize = 24.sp)
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.Gray)
-                }
-            }
-        )
-    }
-
-    @Composable
-    fun GenderSpinner(selectedGender: String, onGenderSelected: (String) -> Unit) {
-        var expanded by remember { mutableStateOf(false) }
-        val genders = listOf("Male", "Female", "Other")
-
-        Box {
-            ProfileTextField(
-                value = selectedGender,
-                onValueChange = {},
-                readOnly = true,
-                placeholder = "Gender",
-                onClick = { expanded = true },
-                trailingIcon = {
                     Icon(
-                        Icons.Default.ArrowDropDown,
-                        contentDescription = "Dropdown",
-                        tint = Color.Gray
+                        painter = painterResource(id = R.drawable.ic_visibility_on),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = stringResource(id = R.string.change_password),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White
                     )
                 }
-            )
 
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.fillMaxWidth().background(Color.White)
-            ) {
-                genders.forEach { gender ->
-                    DropdownMenuItem(
-                        text = { Text(gender) },
-                        onClick = {
-                            onGenderSelected(gender)
-                            expanded = false
-                        }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (currentUser is User.Mentor) {
+                    viewModel.forms[EditProfileTextFieldId.BIO]?.let { state ->
+                        AuthenticationTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = state,
+                            hint = R.string.bio,
+                            onValueChange = {
+                                viewModel.onEvent(ValidationEvent.TextFieldValueChange(state.copy(text = it)))
+                            },
+                            type = TextFieldType.Text
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                viewModel.forms[EditProfileTextFieldId.PHONE_NUMBER]?.let { state ->
+                    AuthenticationTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = state,
+                        hint = R.string.phoneNumber,
+                        onValueChange = {
+                            viewModel.onEvent(ValidationEvent.TextFieldValueChange(state.copy(text = it)))
+                        },
+                        type = TextFieldType.PhoneNumber,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                viewModel.forms[EditProfileTextFieldId.ADDRESS]?.let { state ->
+                    AuthenticationTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = state,
+                        hint = R.string.address,
+                        onValueChange = {
+                            viewModel.onEvent(ValidationEvent.TextFieldValueChange(state.copy(text = it)))
+                        },
+                        type = TextFieldType.Text
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                viewModel.forms[EditProfileTextFieldId.DATE_OF_BIRTH]?.let { state ->
+                    val locale = androidx.compose.ui.text.intl.Locale.current.platformLocale
+                    val selectedMillis = try {
+                        val sdf = java.text.SimpleDateFormat("MMM dd, yyyy", locale)
+                        sdf.parse(state.text)?.time
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    DatePickerInput(
+                        selectedDateMillis = selectedMillis,
+                        onDateSelected = { millis ->
+                            millis?.let { viewModel.onDateSelected(it) }
+                        },
+                        state = state,
+                        label = "Date of Birth",
+                        showIcon = true
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                viewModel.forms[EditProfileTextFieldId.GENDER]?.let { state ->
+                    RadioButtonMenu(
+                        isExpanded = isGenderMenuExpanded,
+                        onToggle = { isGenderMenuExpanded = !isGenderMenuExpanded },
+                        selectedItem = viewModel.selectedGender,
+                        onItemSelected = { item ->
+                            viewModel.selectedGender = item
+                            isGenderMenuExpanded = false
+                            viewModel.onEvent(ValidationEvent.TextFieldValueChange(state.copy(text = item)))
+                        },
+                        state = state,
+                        menuItems = genderItems,
+                        labelText = "Gender :"
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(40.dp))
+
+                AuthenticationButton(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(50.dp),
+                    textId = R.string.update,
+                    onClick = {
+                        viewModel.onEvent(ValidationEvent.Submit)
+                    }
+                )
+                
+                // Note: The ValidationResultEvent.Success collection in ViewModel or here should trigger updateProfile()
+            }
+
+            if (editProfileState is Response.Loading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clickable(enabled = false) {},
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
                 }
             }
         }
     }
-}
-@Preview(showBackground = true, backgroundColor = 0xFFF7F8FC)
-@Composable
-fun EditProfileScreenPreview() {
-    EditProfileScreen(onBackClick = {}, onUpdateSuccess = {})
+    
+    // Listen for validation success to trigger update
+    LaunchedEffect(Unit) {
+        viewModel.validationEvent.collect { event ->
+            if (event is ValidationResultEvent.Success) {
+                viewModel.updateProfile()
+            }
+        }
+    }
 }

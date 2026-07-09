@@ -20,7 +20,13 @@ import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
-class StudentProfileViewModel @Inject constructor() : BaseValidationViewModel() {
+class StudentProfileViewModel @Inject constructor(
+    private val preferenceManager: com.example.holoverse.utils.PreferenceManager
+) : BaseValidationViewModel() {
+
+    fun setProfileComplete(isComplete: Boolean) {
+        preferenceManager.setProfileComplete(isComplete)
+    }
 
     private val _studentScreenState = MutableStateFlow(StudentState())
     val studentScreenState: StateFlow<StudentState> = _studentScreenState.asStateFlow()

@@ -32,7 +32,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.holoverse.R
 
 @Composable
 fun ChatInput(
@@ -62,7 +64,7 @@ fun ChatInput(
             if (isRecording) {
                 // ... (existing recording UI)
                 Text(
-                    text = "Recording...",
+                    text = stringResource(R.string.recording),
                     color = Color.Red,
                     modifier = Modifier.weight(1f).padding(start = 12.dp),
                     style = MaterialTheme.typography.bodyLarge
@@ -70,14 +72,14 @@ fun ChatInput(
                 IconButton(onClick = onCancelRecording) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel recording",
+                        contentDescription = stringResource(R.string.cancel_recording),
                         tint = Color.Gray
                     )
                 }
                 IconButton(onClick = onStopRecording) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Stop and send",
+                        contentDescription = stringResource(R.string.stop_and_send),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -85,7 +87,7 @@ fun ChatInput(
                 IconButton(onClick = onEmojiClick) {
                     Icon(
                         imageVector = Icons.Default.SentimentSatisfiedAlt,
-                        contentDescription = "Emoji picker",
+                        contentDescription = stringResource(R.string.emoji_picker),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -93,7 +95,7 @@ fun ChatInput(
                     value = text,
                     onValueChange = onTextChange,
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Type a message") },
+                    placeholder = { Text(stringResource(R.string.type_a_message)) },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -107,7 +109,7 @@ fun ChatInput(
                     IconButton(onClick = { showAttachmentMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Send multimedia",
+                            contentDescription = stringResource(R.string.send_multimedia),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -116,7 +118,7 @@ fun ChatInput(
                         onDismissRequest = { showAttachmentMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Photo") },
+                            text = { Text(stringResource(R.string.photo)) },
                             onClick = {
                                 showAttachmentMenu = false
                                 onMediaClick("image")
@@ -124,7 +126,7 @@ fun ChatInput(
                             leadingIcon = { Icon(Icons.Default.Image, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("Video") },
+                            text = { Text(stringResource(R.string.video)) },
                             onClick = {
                                 showAttachmentMenu = false
                                 onMediaClick("video")
@@ -132,7 +134,7 @@ fun ChatInput(
                             leadingIcon = { Icon(Icons.Default.Movie, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("PDF") },
+                            text = { Text(stringResource(R.string.pdf)) },
                             onClick = {
                                 showAttachmentMenu = false
                                 onMediaClick("pdf")
@@ -140,7 +142,7 @@ fun ChatInput(
                             leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("Voice") },
+                            text = { Text(stringResource(R.string.voice)) },
                             onClick = {
                                 showAttachmentMenu = false
                                 onStartRecording()
@@ -157,7 +159,7 @@ fun ChatInput(
                 ) {
                     Icon(
                         imageVector = if (text.isNotBlank()) Icons.AutoMirrored.Filled.Send else Icons.Default.Mic,
-                        contentDescription = if (text.isNotBlank()) "Send" else "Voice recorder",
+                        contentDescription = if (text.isNotBlank()) stringResource(R.string.send) else stringResource(R.string.voice_recorder),
                         tint = if (text.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Gray
                     )
                 }

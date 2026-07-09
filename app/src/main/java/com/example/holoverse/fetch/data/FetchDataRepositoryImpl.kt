@@ -163,4 +163,9 @@ class FetchDataRepositoryImpl(
             emptyList()
         }
     }
+
+    override fun clearCache() {
+        cachedCourses = null
+        cachedMentors = null
+    }
 }

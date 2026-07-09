@@ -2,6 +2,7 @@ package com.example.holoverse.ui.whiteboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoFixNormal
@@ -19,6 +21,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.Rectangle
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.TrendingFlat
 import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.Icon
@@ -50,8 +54,10 @@ fun WhiteboardToolbar(
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ToolButton(Icons.Default.Edit, "Pen", manager.currentTool == WhiteboardTool.PEN) {
@@ -91,6 +97,13 @@ fun WhiteboardToolbar(
                     manager.currentTool == WhiteboardTool.ARROW
                 ) {
                     manager.currentTool = WhiteboardTool.ARROW
+                }
+                ToolButton(
+                    Icons.Default.Title,
+                    "Text",
+                    manager.currentTool == WhiteboardTool.TEXT
+                ) {
+                    manager.currentTool = WhiteboardTool.TEXT
                 }
                 VerticalDivider(modifier = Modifier.height(32.dp))
                 IconButton(onClick = { manager.undo() }) {

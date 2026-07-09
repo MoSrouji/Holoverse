@@ -25,6 +25,15 @@ class Navigator(val state: NavigationState) {
     }
 
     fun navigateAndPopUpTo(route: NavKey, popUpTo: NavKey, inclusive: Boolean) {
+        if (route in state.backStacks.keys) {
+            state.topLevelRoute = route
+            val stack = state.backStacks[route] ?: return
+            while (stack.size > 0) {
+                stack.removeLastOrNull()
+            }
+            stack.add(route)
+            return
+        }
         val stack = state.backStacks[state.topLevelRoute] ?: return
         val index = stack.indexOfLast { it == popUpTo }
         if (index != -1) {

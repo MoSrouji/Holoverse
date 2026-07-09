@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import com.example.holoverse.MainActivity
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
+import com.example.holoverse.utils.PreferenceManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import android.util.Log
@@ -31,6 +32,9 @@ class FcmService : FirebaseMessagingService() {
 
     @Inject
     lateinit var callNotificationManager: CallNotificationManager
+
+    @Inject
+    lateinit var preferenceManager: PreferenceManager
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -63,10 +67,10 @@ class FcmService : FirebaseMessagingService() {
             Log.d(TAG, "Triggering call notification: callId=$callId, caller=$callerName")
             callNotificationManager.showIncomingCallNotification(callId, callerName, callerImage)
         } else if (type == "course_created") {
-            NotificationHelper.showNotification(this, title ?: "New Course", body ?: "A new course is available", courseId)
+            NotificationHelper.showNotification(this, title ?: "New Course", body ?: "A new course is available", courseId, preferenceManager = preferenceManager)
         } else if (title != null || body != null) {
             Log.d(TAG, "Triggering chat notification")
-            NotificationHelper.showNotification(this, title ?: "New Message", body ?: "", null, chatId)
+            NotificationHelper.showNotification(this, title ?: "New Message", body ?: "", null, chatId, preferenceManager = preferenceManager)
         } else {
             Log.w(TAG, "Received message with no type, title or body")
         }

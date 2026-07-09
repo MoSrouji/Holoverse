@@ -2,6 +2,7 @@ package com.example.holoverse.ui.pdf
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
@@ -48,8 +49,18 @@ class PdfManager(private val context: Context) {
 
         pdfRenderer?.let { renderer ->
             val page = renderer.openPage(index)
-            val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
-            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+
+            // Increase the scale for high-quality rendering
+            val scale = 2.5f
+            val width = (page.width * scale).toInt()
+            val height = (page.height * scale).toInt()
+
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+            val matrix = Matrix()
+            matrix.postScale(scale, scale)
+
+            page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             _currentBitmap.value = bitmap
             currentPageIndex = index
             page.close()

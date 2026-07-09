@@ -20,6 +20,8 @@ interface AuthRepository {
     suspend fun firebaseSignOut(): Flow<Response<Boolean>>
     suspend fun updateMentorProfile(mentor: User.Mentor): Flow<Response<Boolean>>
     suspend fun updateStudentProfile(student: User.Student): Flow<Response<Boolean>>
+    suspend fun updateEmail(newEmail: String): Flow<Response<Boolean>>
+    suspend fun changePassword(oldPassword: String, newPassword: String): Flow<Response<Boolean>>
     suspend fun getCurrentUser(): User?
     fun getCachedUser(): User?
     suspend fun updateUser(user: User?, newEmail: String? = null): Boolean

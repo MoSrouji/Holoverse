@@ -28,6 +28,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.holoverse.R
 import com.example.holoverse.ui.chat.components.ChatListItem
 import com.example.holoverse.ui.chat.components.ContactListItem
 import com.example.holoverse.ui.spatialTheme.Brush
@@ -65,7 +67,7 @@ fun ChatListScreen(
                         .padding(24.dp)
                 ) {
                     Text(
-                        text = "Messages",
+                        text = stringResource(R.string.messages),
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
                             fontFamily = IbarraNovaFont
@@ -75,7 +77,7 @@ fun ChatListScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Connect with your mentors and peers",
+                        text = stringResource(R.string.chat_connect_message),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.7f)
                     )
@@ -90,7 +92,7 @@ fun ChatListScreen(
                             .fillMaxWidth(),
                         placeholder = {
                             Text(
-                                "Search mentors...",
+                                stringResource(R.string.search_mentors),
                                 //   color = Color.White.copy(alpha = 0.5f)
                             )
                         },
@@ -98,7 +100,7 @@ fun ChatListScreen(
                         trailingIcon = if (searchQuery.isNotEmpty()) {
                             {
                                 IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear")
+                                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
                                 }
                             }
                         } else null,
@@ -115,7 +117,7 @@ fun ChatListScreen(
                     if (uiState.chats.isNotEmpty()) {
                         item {
                             Text(
-                                "Recent Chats",
+                                stringResource(R.string.recent_chats),
                                 modifier = Modifier.padding(16.dp),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.primary
@@ -136,7 +138,7 @@ fun ChatListScreen(
                             val chatName = if (isGroup) {
                                 chat.participantNames[chat.id] ?: chat.id.removePrefix("group_")
                             } else {
-                                chat.participantNames[partnerId] ?: "Chat"
+                                chat.participantNames[partnerId] ?: stringResource(R.string.chat_fallback)
                             }
 
                             val chatImageUrl =
@@ -156,7 +158,9 @@ fun ChatListScreen(
                     if (uiState.filteredContacts.isNotEmpty()) {
                         item {
                             Text(
-                                if (uiState.searchQuery.isEmpty()) "Suggested Contacts" else "Search Results",
+                                if (uiState.searchQuery.isEmpty()) stringResource(R.string.suggested_contacts) else stringResource(
+                                    R.string.search_results_title
+                                ),
                                 modifier = Modifier.padding(16.dp),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.primary

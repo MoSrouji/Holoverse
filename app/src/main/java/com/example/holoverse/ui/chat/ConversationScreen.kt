@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
@@ -161,7 +162,7 @@ fun ConversationScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = uiState.selectedChatPartnerName.ifEmpty { "Chat" },
+                                text = uiState.selectedChatPartnerName.ifEmpty { stringResource(R.string.chat_fallback) },
                             )
                         }
                     },
@@ -175,7 +176,7 @@ fun ConversationScreen(
                         }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(R.string.back),
                             )
                         }
                     },
@@ -190,7 +191,7 @@ fun ConversationScreen(
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Videocam,
-                                    contentDescription = "Video Call"
+                                    contentDescription = stringResource(R.string.video_call)
                                 )
                             }
                         }

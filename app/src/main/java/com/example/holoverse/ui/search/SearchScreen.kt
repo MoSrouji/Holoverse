@@ -90,6 +90,7 @@ fun SearchScreen(
     val uiState by viewModel.uiState.collectAsState()
     val sheetState = rememberModalBottomSheetState()
     var showFilters by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val voiceLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -109,7 +110,7 @@ fun SearchScreen(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now to search")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak ")
         }
         voiceLauncher.launch(intent)
     }
@@ -151,7 +152,7 @@ fun SearchScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            "Search",
+                            stringResource(R.string.search),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontFamily = IbarraNovaFont,
                                 fontWeight = FontWeight.Bold,
@@ -162,7 +163,7 @@ fun SearchScreen(
                         IconButton(onClick = { onBackClick() }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(R.string.back),
                             )
                         }
                     },
@@ -224,11 +225,14 @@ fun SearchInputSection(
         TextField(
             value = query,
             onValueChange = onQueryChange,
-            placeholder = { Text("Search") },
+            placeholder = { Text(stringResource(R.string.search)) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
                 IconButton(onClick = onFilterClick) {
-                    Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                    Icon(
+                        Icons.Default.FilterList,
+                        contentDescription = stringResource(R.string.filter)
+                    )
                 }
             },
             modifier = Modifier
@@ -248,7 +252,11 @@ fun SearchInputSection(
                 .clickable { onVoiceClick() },
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Mic, contentDescription = "Voice Search", tint = Color.White)
+            Icon(
+                Icons.Default.Mic,
+                contentDescription = stringResource(R.string.voice_search),
+                tint = Color.White
+            )
         }
     }
 }
@@ -263,12 +271,12 @@ fun SearchTypeTabs(
         FilterChip(
             selected = selectedType == SearchType.COURSES,
             onClick = { onTypeChange(SearchType.COURSES) },
-            label = { Text("Courses") }
+            label = { Text(stringResource(R.string.courses_tab)) }
         )
         FilterChip(
             selected = selectedType == SearchType.MENTORS,
             onClick = { onTypeChange(SearchType.MENTORS) },
-            label = { Text("Mentors") }
+            label = { Text(stringResource(R.string.mentors_tab)) }
         )
     }
 }
@@ -286,11 +294,11 @@ fun RecentSearchesSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Recent Searches",
+                text = stringResource(R.string.recent_searches),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             )
             Text(
-                text = "SEE ALL >",
+                text = stringResource(R.string.see_all),
                 color = ColorBlue,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
@@ -312,7 +320,7 @@ fun RecentSearchesSection(
                     Text(text = item, fontSize = 16.sp)
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "Remove",
+                        contentDescription = stringResource(R.string.remove),
                         modifier = Modifier
                             .size(20.dp)
                             .clickable { onRemoveClick(item) }
@@ -347,7 +355,7 @@ fun SearchResultsSection(
 
             if (isEmpty && !uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "No results found for \"${uiState.query}\"")
+                    Text(text = stringResource(R.string.no_results_found, uiState.query))
                 }
             } else {
                 LazyColumn(
@@ -360,7 +368,7 @@ fun SearchResultsSection(
                                 List(5) {
                                     com.example.holoverse.courses.domain.Courses(
                                         id = "shimmer_$it",
-                                        name = "Loading Course..."
+                                        name = "loading mentor"
                                     )
                                 }
                             } else uiState.searchResults.courses
@@ -382,7 +390,7 @@ fun SearchResultsSection(
                                 List(5) {
                                     User.Mentor(
                                         userId = "shimmer_$it",
-                                        fullName = "Loading Mentor..."
+                                        fullName = "loading mentor"
                                     )
                                 }
                             } else uiState.searchResults.mentors
@@ -429,12 +437,12 @@ fun MentorSearchResultItem(mentor: User.Mentor, onClick: () -> Unit) {
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = mentor.fullName ?: "Unknown Mentor",
+                text = mentor.fullName ?: stringResource(R.string.unknown_mentor),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = mentor.specialization.name,
+                text = stringResource(mentor.specialization.titleRes),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )
@@ -446,13 +454,20 @@ fun MentorSearchResultItem(mentor: User.Mentor, onClick: () -> Unit) {
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = " ${"%.2f".format(mentor.averageRating ?: 0.0)} (${mentor.reviewsCount ?: 0} reviews)",
+                    text = " ${"%.1f".format(mentor.averageRating ?: 0.0)} ${
+                        stringResource(
+                            R.string.reviews_count,
+                            mentor.reviewsCount ?: 0
+                        )
+                    }",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
         }
         Text(
-            text = "$${"%.2f".format(mentor.hourlyRate ?: 0.0)}/hr",
+            text = stringResource(R.string.price_format, mentor.hourlyRate ?: 0.0) + stringResource(
+                R.string.hourly_rate_suffix
+            ),
             fontWeight = FontWeight.Bold,
             color = ColorBlue
         )
@@ -485,11 +500,11 @@ fun FilterBottomSheetContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Filter",
+                stringResource(R.string.filter),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             Text(
-                "Clear All",
+                stringResource(R.string.clear_all),
                 color = ColorBlue,
                 modifier = Modifier.clickable { onClear() },
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
@@ -525,7 +540,11 @@ fun FilterBottomSheetContent(
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ColorBlue)
         ) {
-            Text("Apply Filters", color = Color.White, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.apply_filters),
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -539,7 +558,11 @@ fun CourseFilterSection(
     onUpdatePrice: (Double?, Double?) -> Unit
 ) {
     val categories = AppCategory.entries.filter { it != AppCategory.OTHER }
-    val levels = listOf("Beginner", "Intermediate", "Advanced")
+    val levels = listOf(
+        stringResource(R.string.beginner),
+        stringResource(R.string.intermediate),
+        stringResource(R.string.advanced)
+    )
 
     Text(
         stringResource(R.string.categories_title),
@@ -559,7 +582,11 @@ fun CourseFilterSection(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    Text("Level", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(
+        stringResource(R.string.level),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
     Spacer(modifier = Modifier.height(12.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         levels.forEach { level ->
@@ -573,7 +600,11 @@ fun CourseFilterSection(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    Text("Price Range", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(
+        stringResource(R.string.price_range),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
     Spacer(modifier = Modifier.height(12.dp))
     var sliderPosition by remember {
         mutableStateOf((filters.minPrice?.toFloat() ?: 0f)..(filters.maxPrice?.toFloat() ?: 500f))
@@ -587,8 +618,8 @@ fun CourseFilterSection(
         }
     )
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text("$${sliderPosition.start.toInt()}")
-        Text("$${sliderPosition.endInclusive.toInt()}")
+        Text(stringResource(R.string.price_format, sliderPosition.start.toDouble()))
+        Text(stringResource(R.string.price_format, sliderPosition.endInclusive.toDouble()))
     }
 }
 
@@ -603,7 +634,7 @@ fun MentorFilterSection(
     val categories = AppCategory.entries.filter { it != AppCategory.OTHER }
 
     Text(
-        "Specialization",
+        stringResource(R.string.specialization_label),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold
     )
@@ -620,7 +651,11 @@ fun MentorFilterSection(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    Text("Hourly Rate", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(
+        stringResource(R.string.hourly_rate_label),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
     Spacer(modifier = Modifier.height(12.dp))
     var sliderPosition by remember {
         mutableStateOf(
@@ -636,14 +671,24 @@ fun MentorFilterSection(
         }
     )
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text("$${sliderPosition.start.toInt()}/hr")
-        Text("$${sliderPosition.endInclusive.toInt()}/hr")
+        Text(
+            stringResource(
+                R.string.price_format,
+                sliderPosition.start.toDouble()
+            ) + stringResource(R.string.hourly_rate_suffix)
+        )
+        Text(
+            stringResource(
+                R.string.price_format,
+                sliderPosition.endInclusive.toDouble()
+            ) + stringResource(R.string.hourly_rate_suffix)
+        )
     }
 
     Spacer(modifier = Modifier.height(24.dp))
 
     Text(
-        "Minimum Rating",
+        stringResource(R.string.min_rating),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold
     )
@@ -661,7 +706,7 @@ fun MentorFilterSection(
                             tint = Color(0xFFFFB400),
                             modifier = Modifier.size(16.dp)
                         )
-                        Text("$rating+")
+                        Text(stringResource(R.string.rating_plus, rating))
                     }
                 }
             )

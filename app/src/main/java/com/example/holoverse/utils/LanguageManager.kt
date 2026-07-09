@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.LocaleList
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.example.holoverse.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -41,14 +42,14 @@ class LanguageManager @Inject constructor(
         }
     }
 
-    fun getSelectedLanguageName(context: Context): String {
+    fun getSelectedLanguageName(): String {
         val code = preferenceManager.getLanguage()
         return when (code) {
-            "ar" -> context.getString(com.example.holoverse.R.string.arabic)
-            "en" -> context.getString(com.example.holoverse.R.string.english)
-            "es" -> context.getString(com.example.holoverse.R.string.spanish)
-            "it" -> context.getString(com.example.holoverse.R.string.italian)
-            else -> context.getString(com.example.holoverse.R.string.device_language)
+            "ar" -> context.getString(R.string.arabic)
+            "en" -> context.getString(R.string.english)
+            "es" -> context.getString(R.string.spanish)
+            "it" -> context.getString(R.string.italian)
+            else -> context.getString(R.string.device_language)
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.example.holoverse.di
 
 import android.content.Context
+import com.example.holoverse.admin.data.repository.AdminRepositoryImpl
+import com.example.holoverse.admin.domain.repository.AdminRepository
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
 import com.example.holoverse.chat_system.data.remote.FcmApi
 import com.example.holoverse.courses.data.CourseRepo
@@ -54,5 +56,11 @@ object RepositoryModule {
         @ApplicationContext context: Context
     ): NotificationRepository {
         return NotificationRepositoryImpl(firestore, authRepository, fcmApi, context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAdminRepository(firestore: FirebaseFirestore): AdminRepository {
+        return AdminRepositoryImpl(firestore)
     }
 }

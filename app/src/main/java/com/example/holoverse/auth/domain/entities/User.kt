@@ -57,7 +57,8 @@ sealed interface User {
         val followingCount: Int? = 0,
         val studyGroups: List<String>? = null,
         val peerConnections: List<String>? = null,
-        val mentoringStatus: String? = null
+        val mentoringStatus: String? = null,
+        val createdAt: Long? = null
     ) : User
 
     @Serializable
@@ -115,7 +116,8 @@ sealed interface User {
         val enrolledCourses: List<String>? = null,
         val completedCourses: List<String>? = null,
         val currentCourses: List<String>? = null,
-        val savedCourses: List<String>? = null
+        val savedCourses: List<String>? = null,
+        val createdAt: Long? = null
     ) : User
 }
 

@@ -54,6 +54,9 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -722,6 +725,46 @@ fun DraggableVideoOverlay(
 
 @Composable
 fun WhiteboardView(whiteboardManager: WhiteboardManager, modifier: Modifier = Modifier) {
+    var textInput by remember { mutableStateOf("") }
+    val pendingPosition = whiteboardManager.pendingTextPosition
+
+    if (pendingPosition != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                whiteboardManager.pendingTextPosition = null
+                textInput = ""
+            },
+            title = { Text("Add Text") },
+            text = {
+                TextField(
+                    value = textInput,
+                    onValueChange = { textInput = it },
+                    placeholder = { Text("Type something...") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (textInput.isNotBlank()) {
+                        whiteboardManager.addText(textInput)
+                    }
+                    whiteboardManager.pendingTextPosition = null
+                    textInput = ""
+                }) {
+                    Text("Add")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    whiteboardManager.pendingTextPosition = null
+                    textInput = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -729,7 +772,9 @@ fun WhiteboardView(whiteboardManager: WhiteboardManager, modifier: Modifier = Mo
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = { offset -> whiteboardManager.onTouchStart(offset) },
-                    onDrag = { change, _ -> whiteboardManager.onTouchMove(change.position) }
+                    onDrag = { change, _ -> whiteboardManager.onTouchMove(change.position) },
+                    onDragEnd = { whiteboardManager.onTouchEnd() },
+                    onDragCancel = { whiteboardManager.onTouchEnd() }
                 )
             }
     ) {

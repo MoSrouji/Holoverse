@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 
@@ -23,8 +24,20 @@ class SplashViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser = _currentUser.asStateFlow()
+    val currentUser: StateFlow<User?> = preferenceManager.userFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = preferenceManager.getUser()
+        )
+
+    val isProfileComplete: StateFlow<Boolean> = preferenceManager.userFlow
+        .map { preferenceManager.isProfileComplete() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = preferenceManager.isProfileComplete()
+        )
 
     val themeMode: StateFlow<String> = preferenceManager.themeModeFlow
         .stateIn(
@@ -35,10 +48,7 @@ class SplashViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val user = withContext(Dispatchers.IO) {
-                preferenceManager.getUser()
-            }
-            _currentUser.value = user
+            // Wait for first non-null or null emission to be sure we have the latest state
             _isLoading.value = false
         }
     }

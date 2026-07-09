@@ -1,6 +1,5 @@
 package com.example.holoverse.ui.commonPart.profile
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -27,6 +26,7 @@ data class ProfileUiState(
     val accountType: String = "",
     val error: String? = null,
     val selectedLanguageName: String = "",
+    val selectedLanguageCode: String? = null,
     val selectedThemeMode: String = "system",
     val isSignedOut: Boolean = false
 )
@@ -43,21 +43,29 @@ class ProfileViewModel @Inject constructor(
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
-        loadUserProfile()
+        observeUserChanges()
         loadThemeMode()
+        updateLanguageName()
     }
 
-    fun updateLanguageName(context: Context) {
+    fun updateLanguageName() {
         _uiState.update {
-            it.copy(selectedLanguageName = languageManager.getSelectedLanguageName(context))
+            it.copy(
+                selectedLanguageName = languageManager.getSelectedLanguageName(),
+                selectedLanguageCode = preferenceManager.getLanguage()
+            )
         }
     }
 
-    private fun loadUserProfile() {
-        _uiState.update { it.copy(isLoading = true, error = null) }
+    private fun observeUserChanges() {
+        viewModelScope.launch {
+            preferenceManager.userFlow.collect { user ->
+                updateUiWithUser(user)
+            }
+        }
+    }
 
-        val user = preferenceManager.getUser()
-
+    private fun updateUiWithUser(user: User?) {
         if (user != null) {
             val rawImageUrl = when (user) {
                 is User.Student -> user.profileImageUrl
@@ -96,6 +104,7 @@ class ProfileViewModel @Inject constructor(
 
     fun onLanguageSelected(languageCode: String?) {
         languageManager.setLocale(languageCode)
+        updateLanguageName()
     }
 
     fun onThemeSelected(themeMode: String) {
@@ -113,6 +122,8 @@ class ProfileViewModel @Inject constructor(
 
                     is Response.Success -> {
                         _uiState.update { it.copy(isLoading = false, isSignedOut = true) }
+                        // Explicitly clear profile complete flag in case repository didn't or for redundancy
+                        preferenceManager.setProfileComplete(false)
                     }
 
                     is Response.Error -> {
@@ -124,7 +135,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onRefresh() {
-        loadUserProfile()
+        updateUiWithUser(preferenceManager.getUser())
     }
 
     fun uploadProfileImage(uri: Uri) {
@@ -157,9 +168,9 @@ class ProfileViewModel @Inject constructor(
                             is Response.Success -> {
                                 Log.d(
                                     "ProfileViewModel",
-                                    "Profile update success. Reloading user profile."
+                                    "Profile update success. UI will update via flow."
                                 )
-                                loadUserProfile()
+                                _uiState.update { it.copy(isLoading = false) }
                             }
 
                             is Response.Error -> {

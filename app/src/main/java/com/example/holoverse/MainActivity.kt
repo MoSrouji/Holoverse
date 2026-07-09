@@ -7,43 +7,42 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.example.holoverse.auth.domain.repositiory.AuthRepository
-import com.example.holoverse.utils.Response
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.ui.theme.HoloverseTheme
-import com.example.holoverse.webrtc.presentation.CallNotificationManager
 import com.example.holoverse.utils.LanguageManager
 import com.example.holoverse.utils.SplashViewModel
 import com.example.holoverse.webrtc.data.datasource.SignalingClient
-import com.example.holoverse.webrtc.data.datasource.SignalingEvent
+import com.example.holoverse.webrtc.presentation.CallNotificationManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import androidx.compose.ui.graphics.Color as ComposeColor
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
 
     @Inject
@@ -54,7 +53,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var callNotificationManager: CallNotificationManager
-    
+
     private var callObservationJob: Job? = null
 
     @Inject
@@ -65,6 +64,10 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var authRepository: AuthRepository
+
+    @Inject
+    lateinit var firestore: FirebaseFirestore
+
 
     @Inject
     lateinit var notificationRepo: com.example.holoverse.notifications.domain.repository.NotificationRepository
@@ -97,9 +100,11 @@ class MainActivity : ComponentActivity() {
             WindowManager.LayoutParams.FLAG_SECURE
         )
 //
+
         super.onCreate(savedInstanceState)
 
         handleIntent(intent)
+
 
         languageManager.applyLanguage()
         askNotificationPermission()
@@ -124,25 +129,30 @@ class MainActivity : ComponentActivity() {
             }
 
             val currentUser by splashViewModel.currentUser.collectAsStateWithLifecycle()
+            val isProfileComplete by splashViewModel.isProfileComplete.collectAsStateWithLifecycle()
             val isLoading by splashViewModel.isLoading.collectAsStateWithLifecycle()
 
-            LaunchedEffect(currentUser) {
-                if (currentUser != null) {
-                    fetchAndStoreFcmToken()
-                }
+            val isLoggedIn = currentUser != null && isProfileComplete
+
+            // Debug log to trace identity changes
+            LaunchedEffect(isLoggedIn) {
+                Log.d("MainActivity", "Identity change detected: isLoggedIn=$isLoggedIn")
             }
 
-            HoloverseTheme(darkTheme = darkTheme) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = ComposeColor.Transparent
-                ) {
-                    if (!isLoading) {
-                        AppNavHost(
-                            navigator = navigator,
-                            isLoggedIn = currentUser != null,
-                            darkTheme = darkTheme
-                        )
+            // Use a stable key for the entire App content to force a full reset on auth change
+            key(isLoggedIn) {
+                HoloverseTheme(darkTheme = darkTheme) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = ComposeColor.Transparent
+                    ) {
+                        if (!isLoading) {
+                            AppNavHost(
+                                navigator = navigator,
+                                isLoggedIn = isLoggedIn,
+                                darkTheme = darkTheme
+                            )
+                        }
                     }
                 }
             }
@@ -162,7 +172,7 @@ class MainActivity : ComponentActivity() {
     private fun observeNotifications(userId: String) {
         Log.d(TAG, "observeNotifications: Starting observer for $userId")
         notificationObservationJob?.cancel()
-        notificationObservationJob = CoroutineScope(Dispatchers.Main).launch {
+        notificationObservationJob = lifecycleScope.launch {
             notificationRepo.getNotifications(userId).collectLatest { response ->
                 Log.d(TAG, "observeNotifications: Received response: $response")
                 // System notifications are now handled via FCM for consistency with messaging/calling.
@@ -172,7 +182,7 @@ class MainActivity : ComponentActivity() {
 
     private fun observeIncomingCalls(userId: String) {
         callObservationJob?.cancel()
-        callObservationJob = CoroutineScope(Dispatchers.Main).launch {
+        callObservationJob = lifecycleScope.launch {
             Log.d(TAG, "observeIncomingCalls: Listening for calls for $userId")
             signalingClient.observeGlobalCalls(userId).collectLatest { callId ->
                 Log.d(TAG, "In-app call detected: $callId")
@@ -198,7 +208,10 @@ class MainActivity : ComponentActivity() {
         val callerImage = intent?.getStringExtra(CallNotificationManager.EXTRA_CALLER_IMAGE)
         val action = intent?.action
 
-        Log.d(TAG, "handleIntent: action=$action, callId=$callId, chatId=$chatId, courseId=$courseId")
+        Log.d(
+            TAG,
+            "handleIntent: action=$action, callId=$callId, chatId=$chatId, courseId=$courseId"
+        )
 
         if (action == CallNotificationManager.ACTION_ANSWER && callId != null) {
             Log.d(TAG, "Navigating to VideoCall (Answering)")
@@ -224,7 +237,11 @@ class MainActivity : ComponentActivity() {
     private fun askNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permission = Manifest.permission.POST_NOTIFICATIONS
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    permission
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 Log.d(TAG, "askNotificationPermission: Requesting permission")
                 requestPermissionLauncher.launch(permission)
             } else {
@@ -237,15 +254,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun fetchAndStoreFcmToken() {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result
+        lifecycleScope.launch {
+            try {
+                val token = FirebaseMessaging.getInstance().token.await()
                 Log.d(TAG, "FCM Token: $token")
-                CoroutineScope(Dispatchers.IO).launch {
-                    authRepository.updateFcmToken(token)
-                }
-            } else {
-                Log.e(TAG, "Failed to get FCM token", task.exception)
+                authRepository.updateFcmToken(token)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to get FCM token", e)
             }
         }
     }
@@ -254,5 +269,6 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         sessionManager.disconnect()
         callObservationJob?.cancel()
+        notificationObservationJob?.cancel()
     }
 }

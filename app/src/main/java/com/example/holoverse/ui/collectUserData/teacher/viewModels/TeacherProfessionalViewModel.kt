@@ -23,6 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TeacherProfessionalViewModel @Inject constructor(
     private val authenticatingRepo: AuthRepository,
+    private val preferenceManager: com.example.holoverse.utils.PreferenceManager
 ) : BaseValidationViewModel() {
 
     private val _mentorScreenState = MutableStateFlow(User.Mentor())
@@ -104,6 +105,10 @@ class TeacherProfessionalViewModel @Inject constructor(
         forms[SignUpTextFields.HOURLY_RATE] = hourlyRateValidationState
     }
 
+    fun setProfileComplete(isComplete: Boolean) {
+        preferenceManager.setProfileComplete(isComplete)
+    }
+
     fun firebaseSingUp(
         userDto: User.Mentor,
     ) {
@@ -113,6 +118,9 @@ class TeacherProfessionalViewModel @Inject constructor(
                 mentor = userDto
 
             ).collect {
+                if (it is Response.Success && it.data) {
+                    preferenceManager.setProfileComplete(true)
+                }
                 _signUpState.value = it
             }
         }

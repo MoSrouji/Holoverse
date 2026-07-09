@@ -127,7 +127,7 @@ fun CourseTypeWithButton(
         } else {
             Icon(
                 imageVector = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkAdd,
-                contentDescription = "Save For Later",
+                contentDescription = stringResource(R.string.bookmark_desc),
                 modifier = Modifier.clickable { onSaveClick() },
                 tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -142,11 +142,11 @@ fun CourseBottomDivider(price: Double, rating: Double, numEnrolled: Int) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "$${"%.2f".format(price)}", fontWeight = FontWeight.Bold)
+        Text(text = stringResource(R.string.price_format, price), fontWeight = FontWeight.Bold)
         VerticalDivider(modifier = Modifier.height(16.dp), thickness = 1.dp)
-        Text(text = "%.2f".format(rating))
+        Text(text = "%.1f".format(rating))
         VerticalDivider(modifier = Modifier.height(16.dp), thickness = 1.dp)
-        Text(text = "$numEnrolled Std")
+        Text(text = stringResource(R.string.enrolled_count, numEnrolled.toString()))
     }
 }
 

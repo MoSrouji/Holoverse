@@ -22,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class StudentPreferenceViewModel @Inject constructor(
     private val authenticatingRepo: AuthRepository,
+    private val preferenceManager: com.example.holoverse.utils.PreferenceManager
 ) : BaseValidationViewModel() {
 
     private val _studentScreenState = MutableStateFlow(User.Student())
@@ -62,9 +63,16 @@ class StudentPreferenceViewModel @Inject constructor(
         forms[StudentPreferenceTextField.PREFERRED_LEARNING_TIME] = learningTimeValidationState
     }
 
+    fun setProfileComplete(isComplete: Boolean) {
+        preferenceManager.setProfileComplete(isComplete)
+    }
+
     fun firebaseSignUp(userDto: User.Student) {
         viewModelScope.launch {
             authenticatingRepo.updateStudentProfile(student = userDto).collect {
+                if (it is Response.Success && it.data) {
+                    preferenceManager.setProfileComplete(true)
+                }
                 _signUpState.value = it
             }
         }

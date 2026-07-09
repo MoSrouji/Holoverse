@@ -145,7 +145,8 @@ fun TeacherProfileInput(
 
                 TextButton(
                     onClick = {
-                        showAlert = true
+                        viewModel.setProfileComplete(true)
+                        navToHomeScreen()
                     },
                     modifier = Modifier.padding(end = 10.dp),
                 ) {

@@ -15,4 +15,5 @@ interface FetchDataRepository {
     suspend fun cleanupExpiredBoosts()
 
     suspend fun fetchStudentsByIds(studentIds: List<String>): List<User.Student>
+    fun clearCache()
 }

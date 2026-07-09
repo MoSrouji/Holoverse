@@ -17,6 +17,13 @@
     <string name="sign_up">Sign up</string>
     <string name="next">Next</string>
     <string name="full_name">Full Name</string>
+    <string name="update">Update</string>
+    <string name="change_password">Change Password</string>
+    <string name="current_password">Current Password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
+    <string name="password_changed_successfully">Password changed successfully</string>
 
     <!-- Validation -->
     <string name="the_field_can_not_be_blank">The field can\'t be blank</string>
@@ -75,6 +82,16 @@
     <string name="invite_friends">Invite Friends</string>
     <string name="invite_message">Join me on Holoverse! Download the app now and start learning. https://holoverse.example.com</string>
     <string name="logout">Logout</string>
+
+    <!-- Notification Settings -->
+    <string name="notification_settings">Notification Settings</string>
+    <string name="message_notifications">Message Notifications</string>
+    <string name="call_notifications">Call Notifications</string>
+    <string name="teacher_notifications">Teacher Notifications</string>
+    <string name="message_ringtone">Message Ringtone</string>
+    <string name="call_ringtone">Call Ringtone</string>
+    <string name="default_ringtone">Default</string>
+    <string name="select_ringtone">Select Ringtone</string>
 
     <!-- Languages -->
     <string name="english">English</string>
@@ -215,5 +232,79 @@
     <string name="see_all">"SEE ALL "</string>
     <string name="more_discover_movies">More discover movies</string>
     <string name="search_mentors">Search mentors...</string>
+    <string name="chat_connect_message">Connect with your mentors and peers</string>
+    <string name="recent_chats">Recent Chats</string>
+    <string name="chat_fallback">Chat</string>
+    <string name="suggested_contacts">Suggested Contacts</string>
+    <string name="search_results_title">Search Results</string>
+    <string name="video_call">Video Call</string>
+    <string name="select_chat_placeholder">Select a chat to start messaging</string>
+
+    <string name="recording">Recording...</string>
+    <string name="cancel_recording">Cancel recording</string>
+    <string name="stop_and_send">Stop and send</string>
+    <string name="emoji_picker">Emoji picker</string>
+    <string name="type_a_message">Type a message</string>
+    <string name="send_multimedia">Send multimedia</string>
+    <string name="photo">Photo</string>
+    <string name="video">Video</string>
+    <string name="pdf">PDF</string>
+    <string name="voice">Voice</string>
+    <string name="send">Send</string>
+    <string name="voice_recorder">Voice recorder</string>
+    <string name="mentor_label">Mentor</string>
+    <string name="unknown">Unknown</string>
+
+    <string name="image_message">Image message</string>
+    <string name="video_message">Video message</string>
+    <string name="file">File</string>
+    <string name="document">Document</string>
+    <string name="pause_audio">Pause Audio</string>
+    <string name="play_audio">Play Audio</string>
+    <string name="playing">Playing...</string>
+    <string name="voice_message">Voice message</string>
+    <string name="sending">Sending</string>
+    <string name="failed">Failed</string>
+    <string name="sending_voice_message">Sending voice message...</string>
+    <string name="select_emoji">Select Emoji</string>
+
+    <string name="speak_to_search">Speak now to search</string>
+    <string name="search">Search</string>
+    <string name="filter">Filter</string>
+    <string name="voice_search">Voice Search</string>
+    <string name="courses_tab">Courses</string>
+    <string name="mentors_tab">Mentors</string>
+    <string name="recent_searches">Recent Searches</string>
+    <string name="remove">Remove</string>
+    <string name="no_results_found">No results found for \"%1$s\"</string>
+    <string name="loading_course">Loading Course...</string>
+    <string name="loading_mentor">Loading Mentor...</string>
+    <string name="unknown_mentor">Unknown Mentor</string>
+    <string name="hourly_rate_suffix">/hr</string>
+    <string name="clear_all">Clear All</string>
+    <string name="apply_filters">Apply Filters</string>
+    <string name="level">Level</string>
+    <string name="price_range">Price Range</string>
+    <string name="beginner">Beginner</string>
+    <string name="intermediate">Intermediate</string>
+    <string name="advanced">Advanced</string>
+    <string name="specialization_label">Specialization</string>
+    <string name="hourly_rate_label">Hourly Rate</string>
+    <string name="min_rating">Minimum Rating</string>
+    <string name="rating_plus">%1$.1f+</string>
+
+    <!-- Admin Control Panel -->
+    <string name="admin_control_panel" translatable="false">Admin Control Panel</string>
+    <string name="platform_overview" translatable="false">Platform Overview</string>
+    <string name="total_students" translatable="false">Total Students</string>
+    <string name="total_mentors" translatable="false">Total Mentors</string>
+    <string name="active_courses" translatable="false">Active Courses</string>
+    <string name="total_revenue" translatable="false">Total Revenue</string>
+    <string name="course_categories_distribution" translatable="false">Course Categories Distribution</string>
+    <string name="recent_activity_highlights" translatable="false">Recent Activity Highlights</string>
+    <string name="weekly_user_growth" translatable="false">Weekly User Growth</string>
+    <string name="new_signups_this_week" translatable="false">+%1$d new signups this week</string>
+    <string name="platform_engagement" translatable="false">Platform Engagement</string>
+    <string name="high_activity_message" translatable="false">High activity in %1$s category</string>
 
 </resources>

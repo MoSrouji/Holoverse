@@ -28,6 +28,7 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.GppGood
@@ -95,6 +96,7 @@ data class ProfileItemData(
 @Composable
 fun ProfileScreen(
     onEditProfileClick: () -> Unit,
+    onAdminClick: () -> Unit,
     onTermsAndConditionsClick: () -> Unit,
     onSignOutSuccess: () -> Unit,
     darkTheme: Boolean,
@@ -104,7 +106,7 @@ fun ProfileScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.updateLanguageName(context)
+        viewModel.updateLanguageName()
     }
 
     LaunchedEffect(uiState.isSignedOut) {
@@ -125,13 +127,33 @@ fun ProfileScreen(
             stringResource(R.string.edit_profile),
             onClick = { onEditProfileClick() }),
         ProfileItemData(Icons.Default.Payment, stringResource(R.string.payment_option)),
-        ProfileItemData(Icons.Default.Notifications, stringResource(R.string.notifications)),
+        ProfileItemData(
+            Icons.Default.Notifications,
+            stringResource(R.string.notifications),
+            onClick = {
+                val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                        putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    }
+                } else {
+                    android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = android.net.Uri.fromParts("package", context.packageName, null)
+                    }
+                }
+                context.startActivity(intent)
+            }
+        ),
         ProfileItemData(Icons.Default.GppGood, stringResource(R.string.security)),
         ProfileItemData(
             Icons.Default.Language,
             stringResource(R.string.language),
             uiState.selectedLanguageName,
             onClick = { showLanguageSheet = true }
+        ),
+        ProfileItemData(
+            Icons.Default.Analytics,
+            stringResource(R.string.admin_control_panel),
+            onClick = { onAdminClick() }
         ),
         ProfileItemData(
             Icons.Default.DarkMode,
@@ -200,7 +222,8 @@ fun ProfileScreen(
             onLanguageSelected = { code ->
                 viewModel.onLanguageSelected(code)
                 showLanguageSheet = false
-            }
+            },
+            selectedLanguageCode = uiState.selectedLanguageCode
         )
     }
 
@@ -459,7 +482,8 @@ fun ThemeBottomSheet(
 @Composable
 fun LanguageBottomSheet(
     onDismissRequest: () -> Unit,
-    onLanguageSelected: (String?) -> Unit
+    onLanguageSelected: (String?) -> Unit,
+    selectedLanguageCode: String?
 ) {
     val sheetState = rememberModalBottomSheetState()
     val languages = listOf(
@@ -496,7 +520,10 @@ fun LanguageBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(text = name, modifier = Modifier.weight(1f), fontSize = 16.sp)
-                        // Note: To show which one is selected, we'd need current language from VM
+                        RadioButton(
+                            selected = (selectedLanguageCode == code),
+                            onClick = { onLanguageSelected(code) }
+                        )
                     }
                 }
             }
@@ -596,6 +623,7 @@ fun ProfileScreenPreview() {
     HoloverseTheme(darkTheme = true) {
         ProfileScreen(
             onEditProfileClick = {},
+            onAdminClick = {},
             onTermsAndConditionsClick = {},
             onSignOutSuccess = {},
             darkTheme = true,

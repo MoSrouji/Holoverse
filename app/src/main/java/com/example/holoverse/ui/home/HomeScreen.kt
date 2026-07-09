@@ -74,6 +74,7 @@ fun HomeScreen(
     onNavigateToAnalytics: () -> Unit,
     onNavigateToStudentsList: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToAnnouncements: () -> Unit,
     onNavigateToChat: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
@@ -102,6 +103,7 @@ fun HomeScreen(
         onNavigateToAnalytics = onNavigateToAnalytics,
         onNavigateToStudentsList = onNavigateToStudentsList,
         onNavigateToNotifications = onNavigateToNotifications,
+        onNavigateToAnnouncements = onNavigateToAnnouncements,
         onNavigateToChat = onNavigateToChat,
         onNavigateToSearch = onNavigateToSearch,
         onCourseClick = onCourseClick,
@@ -128,6 +130,7 @@ fun HomeScreenContent(
     onNavigateToAnalytics: () -> Unit,
     onNavigateToStudentsList: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToAnnouncements: () -> Unit,
     onNavigateToChat: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
@@ -181,7 +184,7 @@ fun HomeScreenContent(
                 onNavigateToChat()
             },
             FabMenuItem(announcementsLabel, Icons.Default.Campaign) {
-                /* Open Announcement Dialog */
+                onNavigateToAnnouncements()
             }
         )
     }
@@ -344,6 +347,7 @@ fun HomeScreenPreview() {
             onNavigateToAnalytics = {},
             onNavigateToStudentsList = {},
             onNavigateToNotifications = {},
+            onNavigateToAnnouncements = {},
             onNavigateToChat = {},
             onNavigateToSearch = {},
             onCourseClick = {},

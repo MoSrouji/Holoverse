@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Path
 sealed class WhiteboardElement {
     data class Freehand(
         val path: Path,
+        val points: List<Offset>,
         val color: Color,
         val strokeWidth: Float
     ) : WhiteboardElement()
@@ -41,10 +42,17 @@ sealed class WhiteboardElement {
         val color: Color,
         val strokeWidth: Float
     ) : WhiteboardElement()
+
+    data class Text(
+        val text: String,
+        val position: Offset,
+        val color: Color,
+        val fontSize: Float
+    ) : WhiteboardElement()
 }
 
 enum class WhiteboardTool {
-    PEN, ERASER, RECTANGLE, CIRCLE, LINE, ARROW
+    PEN, ERASER, RECTANGLE, CIRCLE, LINE, ARROW, TEXT
 }
 
 data class WhiteboardStyle(

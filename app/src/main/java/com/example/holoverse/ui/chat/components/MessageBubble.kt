@@ -32,8 +32,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.example.holoverse.R
 import com.example.holoverse.chat_system.domain.model.Message
 import com.example.holoverse.chat_system.domain.model.MessageStatus
 
@@ -63,7 +65,7 @@ fun MessageBubble(
                 if (message.imageUrl != null) {
                     AsyncImage(
                         model = message.imageUrl,
-                        contentDescription = "Image message",
+                        contentDescription = stringResource(R.string.image_message),
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(max = 200.dp)
@@ -85,12 +87,12 @@ fun MessageBubble(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
                                 imageVector = Icons.Default.VideoLibrary,
-                                contentDescription = "Video message",
+                                contentDescription = stringResource(R.string.video_message),
                                 tint = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(48.dp)
                             )
                             Text(
-                                text = "Video message",
+                                text = stringResource(R.string.video_message),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.onSecondaryContainer
                             )
@@ -110,12 +112,12 @@ fun MessageBubble(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Description,
-                            contentDescription = "File",
+                            contentDescription = stringResource(R.string.file),
                             tint = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = message.fileName ?: "Document",
+                            text = message.fileName ?: stringResource(R.string.document),
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
                             maxLines = 1
@@ -141,12 +143,12 @@ fun MessageBubble(
                     ) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause Audio" else "Play Audio",
+                            contentDescription = if (isPlaying) stringResource(R.string.pause_audio) else stringResource(R.string.play_audio),
                             tint = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (isPlaying) "Playing..." else "Voice message",
+                            text = if (isPlaying) stringResource(R.string.playing) else stringResource(R.string.voice_message),
                             color = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -164,7 +166,7 @@ fun MessageBubble(
                             MessageStatus.SENDING -> {
                                 Icon(
                                     imageVector = Icons.Default.Schedule,
-                                    contentDescription = "Sending",
+                                    contentDescription = stringResource(R.string.sending),
                                     modifier = Modifier.size(12.dp),
                                     tint = Color.White.copy(alpha = 0.7f)
                                 )
@@ -173,7 +175,7 @@ fun MessageBubble(
                             MessageStatus.FAILED -> {
                                 Icon(
                                     imageVector = Icons.Default.Error,
-                                    contentDescription = "Failed",
+                                    contentDescription = stringResource(R.string.failed),
                                     modifier = Modifier.size(12.dp),
                                     tint = Color.Red
                                 )
@@ -216,7 +218,7 @@ fun SendingVoiceBubble() {
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Sending voice message...",
+                    text = stringResource(R.string.sending_voice_message),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )

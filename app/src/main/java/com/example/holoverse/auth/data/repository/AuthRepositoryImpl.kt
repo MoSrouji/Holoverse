@@ -8,6 +8,7 @@ import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
 import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,7 +20,8 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
-    private val preferenceManager: PreferenceManager
+    private val preferenceManager: PreferenceManager,
+    private val fetchDataRepository: com.example.holoverse.fetch.domain.FetchDataRepository
 ) : AuthRepository {
     override suspend fun firebaseSignUp(
         userDto: User,
@@ -46,7 +48,8 @@ class AuthRepositoryImpl @Inject constructor(
                     val student = User.Student(
                         fullName = userDto.fullName,
                         email = userDto.email,
-                        userId = userId
+                        userId = userId,
+                        createdAt = System.currentTimeMillis()
                     )
                     userDoc.set(student).await()
                     student
@@ -64,14 +67,15 @@ class AuthRepositoryImpl @Inject constructor(
                     val mentor = User.Mentor(
                         fullName = userDto.fullName,
                         email = userDto.email,
-                        userId = userId
+                        userId = userId,
+                        createdAt = System.currentTimeMillis()
                     )
                     userDoc.set(mentor).await()
                     mentor
                 }
             }
 
-            preferenceManager.saveUser(savedUser)
+            preferenceManager.saveUser(savedUser, isProfileComplete = false)
             emit(Response.Success(true))
 
         } catch (e: Exception) {
@@ -108,6 +112,7 @@ class AuthRepositoryImpl @Inject constructor(
         try {
             firebaseAuth.signOut()
             preferenceManager.clearData()
+            fetchDataRepository.clearCache()
             emit(Response.Success(true))
         } catch (e: Exception) {
             emit(Response.Error(e.localizedMessage ?: "Sign out failed"))
@@ -218,6 +223,52 @@ class AuthRepositoryImpl @Inject constructor(
             }
 
         }
+
+    override suspend fun updateEmail(newEmail: String): Flow<Response<Boolean>> = flow {
+        emit(Response.Loading)
+        try {
+            val user = firebaseAuth.currentUser ?: throw Exception("User not authenticated")
+            user.updateEmail(newEmail).await()
+            
+            // Also update in Firestore based on user type
+            val userId = user.uid
+            val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId)
+            val mentorDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(userId)
+            
+            if (studentDoc.get().await().exists()) {
+                studentDoc.update("email", newEmail).await()
+            } else if (mentorDoc.get().await().exists()) {
+                mentorDoc.update("email", newEmail).await()
+            }
+            
+            // Refresh local cache
+            val updatedUser = getCurrentUser()
+            updatedUser?.let { preferenceManager.saveUser(it) }
+            
+            emit(Response.Success(true))
+        } catch (e: Exception) {
+            emit(Response.Error(e.message ?: "Failed to update email"))
+        }
+    }
+
+    override suspend fun changePassword(oldPassword: String, newPassword: String): Flow<Response<Boolean>> = flow {
+        emit(Response.Loading)
+        try {
+            val user = firebaseAuth.currentUser ?: throw Exception("User not authenticated")
+            val email = user.email ?: throw Exception("User email not found")
+            
+            // Re-authenticate
+            val credential = EmailAuthProvider.getCredential(email, oldPassword)
+            user.reauthenticate(credential).await()
+            
+            // Update password
+            user.updatePassword(newPassword).await()
+            
+            emit(Response.Success(true))
+        } catch (e: Exception) {
+            emit(Response.Error(e.message ?: "Failed to change password"))
+        }
+    }
 
     override suspend fun getCurrentUser(): User? {
         val currentUser = firebaseAuth.currentUser ?: return null

@@ -110,7 +110,6 @@ fun TeacherProfessionalInfoInput(
         when (signUpState) {
             is Response.Success -> {
                 if (signUpState.data) {
-                    Toast.makeText(context, R.string.fill_the_form, Toast.LENGTH_LONG).show()
                     navToHomeScreen()
                 }
             }
@@ -150,6 +149,7 @@ fun TeacherProfessionalInfoInput(
 
                 TextButton(
                     onClick = {
+                        viewModel.setProfileComplete(true)
                         navToHomeScreen()
                     },
                 ) {

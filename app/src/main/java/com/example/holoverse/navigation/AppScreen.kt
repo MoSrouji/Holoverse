@@ -46,6 +46,9 @@ sealed interface AppDestination : NavKey {
     data object EditProfile : AppDestination
 
     @Serializable
+    data object ChangePassword : AppDestination
+
+    @Serializable
     data object Category : AppDestination
 
     @Serializable
@@ -122,4 +125,10 @@ sealed interface AppDestination : NavKey {
 
     @Serializable
     data object Notifications : AppDestination
+
+    @Serializable
+    data object Announcements : AppDestination
+
+    @Serializable
+    data object AdminControlPanel : AppDestination
 }

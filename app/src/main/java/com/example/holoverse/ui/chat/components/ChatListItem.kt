@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -55,8 +56,8 @@ fun ChatListItem(name: String, lastMessage: String, imageUrl: String? = null, on
 fun ContactListItem(mentor: User.Mentor, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable { onClick() },
-        headlineContent = { Text(mentor.fullName ?: "Unknown", fontWeight = FontWeight.Medium) },
-        supportingContent = { Text("Mentor")},
+        headlineContent = { Text(mentor.fullName ?: stringResource(R.string.unknown), fontWeight = FontWeight.Medium) },
+        supportingContent = { Text(stringResource(R.string.mentor_label))},
         leadingContent = {
             Surface(
                 modifier = Modifier.size(40.dp),
@@ -74,7 +75,7 @@ fun ContactListItem(mentor: User.Mentor, onClick: () -> Unit) {
                             error = painterResource(R.drawable.istockphoto_1934800957_612x612)
                         )
                     } else {
-                        Text((mentor.fullName ?: "U").take(1).uppercase())
+                        Text((mentor.fullName ?: stringResource(R.string.unknown)).take(1).uppercase())
                     }
                 }
             }
