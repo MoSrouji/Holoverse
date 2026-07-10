@@ -7,7 +7,7 @@ import com.example.holoverse.search.data.local.entities.RecentSearchEntity
 import com.example.holoverse.search.domain.model.CourseFilters
 import com.example.holoverse.search.domain.model.MentorFilters
 import com.example.holoverse.search.domain.repository.SearchRepository
-import com.example.holoverse.ui.search.SearchType
+import com.example.holoverse.search.presentation.SearchType
 import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.utils.Response
 import com.google.firebase.firestore.FieldValue
@@ -184,3 +184,4 @@ class SearchRepositoryImpl @Inject constructor(
         }
     }
 }
+

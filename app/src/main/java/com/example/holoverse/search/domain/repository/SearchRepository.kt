@@ -4,7 +4,7 @@ import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.search.domain.model.CourseFilters
 import com.example.holoverse.search.domain.model.MentorFilters
-import com.example.holoverse.ui.search.SearchType
+import com.example.holoverse.search.presentation.SearchType
 import com.example.holoverse.utils.Response
 import kotlinx.coroutines.flow.Flow
 
@@ -16,3 +16,4 @@ interface SearchRepository {
     suspend fun saveRecentSearch(user: User, query: String, type: SearchType)
     suspend fun removeRecentSearch(user: User, query: String, type: SearchType)
 }
+

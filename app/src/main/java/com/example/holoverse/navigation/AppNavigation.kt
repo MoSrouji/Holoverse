@@ -60,20 +60,20 @@ import com.example.holoverse.auth.presentation.profile_setup.student.StudentProf
 import com.example.holoverse.auth.presentation.profile_setup.teacher.TeacherProfessionalInfoInput
 import com.example.holoverse.auth.presentation.login.SignInScreen
 import com.example.holoverse.auth.presentation.signup.SignUpScreen
-import com.example.holoverse.ui.commonpart.profile.ChangePasswordScreen
-import com.example.holoverse.ui.commonpart.profile.EditProfileScreen
-import com.example.holoverse.ui.commonpart.profile.ProfileScreen
-import com.example.holoverse.ui.commonpart.profile.TermsAndConditionsScreen
+import com.example.holoverse.user.presentation.edit_profile.ChangePasswordScreen
+import com.example.holoverse.user.presentation.edit_profile.EditProfileScreen
+import com.example.holoverse.user.presentation.profile.ProfileScreen
+import com.example.holoverse.user.presentation.profile.TermsAndConditionsScreen
 import com.example.holoverse.course.presentation.detail.CourseDetailScreen
 import com.example.holoverse.ui.home.HomeScreen
 import com.example.holoverse.ui.home.courseslist.PopularCoursesScreen
 import com.example.holoverse.ui.home.courseslist.RecommendationScreen
 import com.example.holoverse.ui.home.mentorslist.RecommendedMentorsScreen
 import com.example.holoverse.ui.home.mentorslist.TopMentorsScreen
-import com.example.holoverse.ui.mentor.MentorProfileScreen
-import com.example.holoverse.ui.mentor.analysis.MentorAnalysisScreen
-import com.example.holoverse.ui.mentor.announcements.AnnouncementsScreen
-import com.example.holoverse.ui.search.SearchScreen
+import com.example.holoverse.user.presentation.mentor_profile.MentorProfileScreen
+import com.example.holoverse.user.presentation.analysis.MentorAnalysisScreen
+import com.example.holoverse.user.presentation.announcements.AnnouncementsScreen
+import com.example.holoverse.search.presentation.SearchScreen
 import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.spatialtheme.HoloIntroScreen
 import com.example.holoverse.course.presentation.creation.CreateCourseScreen
@@ -621,5 +621,8 @@ fun AppNavHost(
             predictivePopTransitionSpec = { NavAnimations.backward() })
     }
 }
+
+
+
 
 
