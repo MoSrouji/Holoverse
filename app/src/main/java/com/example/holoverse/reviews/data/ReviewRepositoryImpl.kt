@@ -2,7 +2,7 @@ package com.example.holoverse.reviews.data
 
 import com.example.holoverse.reviews.domain.Review
 import com.example.holoverse.reviews.domain.ReviewRepository
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.Response
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -81,3 +81,4 @@ class ReviewRepositoryImpl(private val firestore: FirebaseFirestore) : ReviewRep
         }
     }
 }
+

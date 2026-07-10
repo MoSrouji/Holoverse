@@ -7,7 +7,7 @@ import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.course.domain.BoostedCourse
 import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
-import com.example.holoverse.utils.NetworkConstant
+import com.example.holoverse.core.utils.NetworkConstant
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -169,4 +169,5 @@ class FetchDataRepositoryImpl(
         cachedMentors = null
     }
 }
+
 

@@ -1,7 +1,7 @@
 package com.example.holoverse.di
 
 import android.content.Context
-import com.example.holoverse.utils.PreferenceManager
+import com.example.holoverse.core.utils.PreferenceManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,3 +19,4 @@ object AppModule {
         return PreferenceManager(context)
     }
 }
+

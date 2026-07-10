@@ -1,7 +1,7 @@
 package com.example.holoverse.auth.domain.repository
 
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.Response
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
@@ -36,3 +36,4 @@ interface AuthRepository {
     suspend fun toggleSaveCourse(userId: String, courseId: String): Response<Boolean>
     suspend fun addCourseToMentor(mentorId: String, courseId: String): Response<Boolean>
 }
+

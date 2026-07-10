@@ -1,7 +1,7 @@
 package com.example.holoverse.notifications.domain.repository
 
 import com.example.holoverse.notifications.domain.models.Notification
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.Response
 import kotlinx.coroutines.flow.Flow
 
 interface NotificationRepository {
@@ -16,3 +16,4 @@ interface NotificationRepository {
     
     suspend fun markAsRead(notificationId: String): Response<Boolean>
 }
+

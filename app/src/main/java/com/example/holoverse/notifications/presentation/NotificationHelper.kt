@@ -10,7 +10,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.holoverse.MainActivity
 import com.example.holoverse.R
-import com.example.holoverse.utils.PreferenceManager
+import com.example.holoverse.core.utils.PreferenceManager
 
 object NotificationHelper {
     private const val CHANNEL_ID_MESSAGES = "chat_notifications"
@@ -111,3 +111,4 @@ object NotificationHelper {
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 }
+

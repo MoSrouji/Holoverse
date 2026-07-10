@@ -85,8 +85,8 @@ import com.example.holoverse.threedmodel.presentation.ar.rememberArStatus
 import com.example.holoverse.ui.three_D_Part.ar.ArStatus
 import com.example.holoverse.ui.three_D_Part.ar.ArViewer
 import com.example.holoverse.ui.three_D_Part.gallery.ModelGalleryOverlay
-import com.example.holoverse.ui.whiteboard.WhiteboardManager
-import com.example.holoverse.ui.whiteboard.WhiteboardToolbar
+import com.example.holoverse.whiteboard.presentation.WhiteboardManager
+import com.example.holoverse.whiteboard.presentation.WhiteboardToolbar
 import com.example.holoverse.webrtc.domain.model.CallMode
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -826,3 +826,4 @@ fun VideoRenderer(
         }
     )
 }
+

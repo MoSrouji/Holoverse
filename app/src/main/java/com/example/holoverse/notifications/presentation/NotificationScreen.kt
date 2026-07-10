@@ -26,7 +26,7 @@ import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.notifications.domain.models.Notification
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.Response
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -250,3 +250,4 @@ fun formatTimestamp(date: Date): String {
     val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
     return sdf.format(date)
 }
+

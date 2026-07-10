@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.notifications.domain.models.Notification
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,3 +45,4 @@ class NotificationViewModel @Inject constructor(
         }
     }
 }
+

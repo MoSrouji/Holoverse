@@ -1,6 +1,6 @@
 package com.example.holoverse.reviews.domain
 
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.Response
 import kotlinx.coroutines.flow.Flow
 
 interface ReviewRepository {
@@ -8,3 +8,4 @@ interface ReviewRepository {
     suspend fun getReviewsByTargetId(targetId: String): Flow<Response<List<Review>>>
     suspend fun getAverageRating(targetId: String): Flow<Response<Double>>
 }
+

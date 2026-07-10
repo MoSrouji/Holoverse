@@ -63,8 +63,8 @@ import com.example.holoverse.R
 import com.example.holoverse.admin.domain.repository.Timeframe
 import com.example.holoverse.admin.presentation.viewmodel.AdminUiState
 import com.example.holoverse.admin.presentation.viewmodel.AdminViewModel
-import com.example.holoverse.ui.spatialtheme.Brush
-import com.example.holoverse.ui.theme.HoloverseTheme
+import com.example.holoverse.core.ui.spatial.Brush
+import com.example.holoverse.core.ui.theme.HoloverseTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -567,3 +567,4 @@ fun AdminControlPanelPreview() {
         )
     }
 }
+

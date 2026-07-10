@@ -10,7 +10,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.holoverse.MainActivity
 import com.example.holoverse.R
-import com.example.holoverse.utils.PreferenceManager
+import com.example.holoverse.core.utils.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -140,3 +140,4 @@ class CallNotificationManager @Inject constructor(
         notificationManager.cancel(NOTIFICATION_ID)
     }
 }
+
