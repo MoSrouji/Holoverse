@@ -4,8 +4,8 @@ import android.content.ContentValues.TAG
 import android.util.Log
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.courses.domain.BoostedCourse
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.BoostedCourse
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.utils.NetworkConstant
 import com.google.firebase.firestore.FirebaseFirestore
@@ -169,3 +169,4 @@ class FetchDataRepositoryImpl(
         cachedMentors = null
     }
 }
+

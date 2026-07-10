@@ -68,7 +68,7 @@ import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.ui.home.HomeViewModel
 import com.example.holoverse.ui.theme.HoloverseTheme
 import com.example.holoverse.ui.theme.IbarraNovaFont
@@ -475,3 +475,4 @@ fun PopularCoursesScreenPreview() {
         PopularCoursesScreen(onBackClick = {}, onCourseClick = {})
     }
 }
+

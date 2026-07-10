@@ -4,9 +4,9 @@ import android.content.Context
 import com.example.holoverse.admin.data.repository.AdminRepositoryImpl
 import com.example.holoverse.admin.domain.repository.AdminRepository
 import com.example.holoverse.auth.domain.repository.AuthRepository
-import com.example.holoverse.chatsystem.data.remote.FcmApi
-import com.example.holoverse.courses.data.CourseRepo
-import com.example.holoverse.courses.data.CourseRepoImpl
+import com.example.holoverse.chat.data.remote.FcmApi
+import com.example.holoverse.course.data.CourseRepo
+import com.example.holoverse.course.data.CourseRepoImpl
 import com.example.holoverse.notifications.data.repository.NotificationRepositoryImpl
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.example.holoverse.reviews.data.ReviewRepositoryImpl
@@ -64,3 +64,4 @@ object RepositoryModule {
         return AdminRepositoryImpl(firestore)
     }
 }
+

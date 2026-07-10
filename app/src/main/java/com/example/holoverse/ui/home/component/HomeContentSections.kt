@@ -33,11 +33,11 @@ import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.courses.domain.BoostedCourse
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.BoostedCourse
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.ui.home.HomeTab
 import com.example.holoverse.ui.home.HomeUiState
-import com.example.holoverse.ui.teacherpart.courses.BoostedCourseCard
+import com.example.holoverse.course.presentation.creation.BoostedCourseCard
 import kotlinx.coroutines.delay
 
 @Composable
@@ -369,3 +369,4 @@ fun BoostedCarouselSection(
         }
     }
 }
+

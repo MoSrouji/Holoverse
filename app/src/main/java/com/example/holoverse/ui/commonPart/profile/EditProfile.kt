@@ -60,13 +60,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonpart.auth.widget.DatePickerInput
-import com.example.holoverse.ui.commonpart.auth.widget.RadioButtonMenu
-import com.example.holoverse.ui.commonpart.auth.widget.button.AuthenticationButton
-import com.example.holoverse.ui.commonpart.auth.widget.textfield.AuthenticationTextField
+import com.example.holoverse.auth.presentation.common.util.TextFieldType
+import com.example.holoverse.auth.presentation.common.validation.event.ValidationEvent
+import com.example.holoverse.auth.presentation.common.validation.event.ValidationResultEvent
+import com.example.holoverse.auth.presentation.common.widget.DatePickerInput
+import com.example.holoverse.auth.presentation.common.widget.RadioButtonMenu
+import com.example.holoverse.auth.presentation.common.widget.button.AuthenticationButton
+import com.example.holoverse.auth.presentation.common.widget.textfield.AuthenticationTextField
 import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.IbarraNovaBoldPlatinum18
 import com.example.holoverse.ui.theme.IbarraNovaFont
@@ -381,3 +381,4 @@ fun EditProfileScreen(
         }
     }
 }
+

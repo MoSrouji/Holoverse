@@ -3,8 +3,8 @@ package com.example.holoverse.utils
 import android.util.Log
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.courses.domain.CourseSession
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.CourseSession
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -250,3 +250,4 @@ class DummyDataPopulator(private val firestore: FirebaseFirestore) {
         }
     }
 }
+

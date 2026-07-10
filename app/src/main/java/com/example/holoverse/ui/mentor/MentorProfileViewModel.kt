@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repository.AuthRepository
-import com.example.holoverse.courses.data.CourseRepo
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.data.CourseRepo
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -170,3 +170,4 @@ data class MentorProfileUiState(
     val isLoading: Boolean = false,
     val error: String? = null
 )
+

@@ -28,10 +28,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
-import com.example.holoverse.courses.domain.AdCardStyle
-import com.example.holoverse.courses.domain.BoostedCourse
-import com.example.holoverse.courses.domain.Courses
-import com.example.holoverse.ui.teacherpart.courses.*
+import com.example.holoverse.course.domain.AdCardStyle
+import com.example.holoverse.course.domain.BoostedCourse
+import com.example.holoverse.course.domain.Courses
+import com.example.holoverse.course.presentation.creation.*
 import com.example.holoverse.ui.theme.HoloCyan
 import com.example.holoverse.ui.theme.HoloPurple
 import com.example.holoverse.ui.theme.IbarraNovaFont
@@ -393,3 +393,4 @@ fun BoostedStatus(boostedCourse: BoostedCourse) {
         }
     }
 }
+

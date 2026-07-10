@@ -4,7 +4,7 @@
 -keep class * extends com.squareup.moshi.JsonAdapter { *; }
 -keep class * implements com.squareup.moshi.JsonAdapter { *; }
 -keepattributes Signature, *Annotation*, EnclosingMethod
--keep class com.example.holoverse.three_d_model.data.remote.dto.** { *; }
+-keep class com.example.holoverse.threedmodel.data.remote.dto.** { *; }
 
 # Kotlin Serialization rules
 -keepattributes *Annotation*, InnerClasses
@@ -15,7 +15,7 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 -keep class com.example.holoverse.auth.domain.entities.** { *; }
--keep class com.example.holoverse.chat_system.data.remote.** { *; }
+-keep class com.example.holoverse.chatsystem.data.remote.** { *; }
 
 # Retrofit rules
 -keepattributes Signature, InnerClasses, EnclosingMethod

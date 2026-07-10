@@ -2,12 +2,12 @@ package com.example.holoverse.ui.commonpart.profile
 
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.repository.AuthRepository
-import com.example.holoverse.ui.commonpart.auth.presentation.base.BaseValidationViewModel
-import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonpart.auth.validation.interfaces.TextFieldId
-import com.example.holoverse.ui.commonpart.auth.validation.state.ValidationState
+import com.example.holoverse.auth.presentation.common.base.BaseValidationViewModel
+import com.example.holoverse.auth.presentation.common.util.TextFieldType
+import com.example.holoverse.auth.presentation.common.validation.event.ValidationEvent
+import com.example.holoverse.auth.presentation.common.validation.event.ValidationResultEvent
+import com.example.holoverse.auth.presentation.common.validation.interfaces.TextFieldId
+import com.example.holoverse.auth.presentation.common.validation.state.ValidationState
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,3 +64,4 @@ class ChangePasswordViewModel @Inject constructor(
 enum class ChangePasswordTextFieldId : TextFieldId {
     OLD_PASSWORD, NEW_PASSWORD, CONFIRM_PASSWORD
 }
+

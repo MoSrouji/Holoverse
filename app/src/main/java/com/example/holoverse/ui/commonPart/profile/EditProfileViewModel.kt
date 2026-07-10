@@ -9,12 +9,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.cloudinaryservices.domain.repository.CloudinaryRepository
-import com.example.holoverse.ui.commonpart.auth.presentation.base.BaseValidationViewModel
-import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonpart.auth.validation.interfaces.TextFieldId
-import com.example.holoverse.ui.commonpart.auth.validation.state.ValidationState
+import com.example.holoverse.auth.presentation.common.base.BaseValidationViewModel
+import com.example.holoverse.auth.presentation.common.util.TextFieldType
+import com.example.holoverse.auth.presentation.common.validation.event.ValidationEvent
+import com.example.holoverse.auth.presentation.common.validation.event.ValidationResultEvent
+import com.example.holoverse.auth.presentation.common.validation.interfaces.TextFieldId
+import com.example.holoverse.auth.presentation.common.validation.state.ValidationState
 import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -198,3 +198,4 @@ class EditProfileViewModel @Inject constructor(
 enum class EditProfileTextFieldId : TextFieldId {
     FULL_NAME, EMAIL, PHONE_NUMBER, ADDRESS, GENDER, DATE_OF_BIRTH, BIO
 }
+

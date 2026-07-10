@@ -49,7 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.ui.home.component.FabMenuItem
 import com.example.holoverse.ui.home.component.FloatingActionButtonMenu
 import com.example.holoverse.ui.home.component.HomeContentSections
@@ -355,4 +355,5 @@ fun HomeScreenPreview() {
         )
     }
 }
+
 

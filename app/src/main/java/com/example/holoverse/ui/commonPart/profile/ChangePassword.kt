@@ -35,11 +35,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
-import com.example.holoverse.ui.commonpart.auth.util.TextFieldType
-import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationEvent
-import com.example.holoverse.ui.commonpart.auth.validation.event.ValidationResultEvent
-import com.example.holoverse.ui.commonpart.auth.widget.button.AuthenticationButton
-import com.example.holoverse.ui.commonpart.auth.widget.textfield.AuthenticationTextField
+import com.example.holoverse.auth.presentation.common.util.TextFieldType
+import com.example.holoverse.auth.presentation.common.validation.event.ValidationEvent
+import com.example.holoverse.auth.presentation.common.validation.event.ValidationResultEvent
+import com.example.holoverse.auth.presentation.common.widget.button.AuthenticationButton
+import com.example.holoverse.auth.presentation.common.widget.textfield.AuthenticationTextField
 import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import com.example.holoverse.utils.Response
@@ -190,3 +190,4 @@ fun ChangePasswordScreen(
         }
     }
 }
+

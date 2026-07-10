@@ -8,8 +8,8 @@ import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.cloudinaryservices.domain.repository.CloudinaryRepository
 import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.courses.domain.BoostedCourse
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.BoostedCourse
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.utils.PreferenceManager
 import com.example.holoverse.utils.Response
@@ -288,3 +288,4 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
+

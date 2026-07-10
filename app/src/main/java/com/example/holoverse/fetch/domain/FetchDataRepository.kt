@@ -1,8 +1,8 @@
 package com.example.holoverse.fetch.domain
 
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.courses.domain.BoostedCourse
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.BoostedCourse
+import com.example.holoverse.course.domain.Courses
 
 interface FetchDataRepository {
 
@@ -17,3 +17,4 @@ interface FetchDataRepository {
     suspend fun fetchStudentsByIds(studentIds: List<String>): List<User.Student>
     fun clearCache()
 }
+

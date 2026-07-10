@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repository.AuthRepository
-import com.example.holoverse.courses.data.CourseRepo
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.data.CourseRepo
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,3 +96,4 @@ class MentorAnalysisViewModel @Inject constructor(
         }
     }
 }
+

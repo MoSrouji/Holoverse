@@ -49,7 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.Courses
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -343,3 +343,4 @@ fun CoursePerformanceChart(completion: Float, progress: Float) {
         }
     }
 }
+

@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.search.domain.model.CourseFilters
 import com.example.holoverse.search.domain.model.MentorFilters
 import com.example.holoverse.search.domain.repository.SearchRepository
@@ -242,3 +242,4 @@ class SearchViewModel @Inject constructor(
         }
     }
 }
+

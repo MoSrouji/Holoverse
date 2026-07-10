@@ -48,23 +48,23 @@ import androidx.navigation3.ui.NavDisplay
 import com.example.holoverse.R
 import com.example.holoverse.admin.presentation.screen.AdminControlPanelScreen
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.chatsystem.presentation.ChatScreen
-import com.example.holoverse.chatsystem.presentation.ChatViewModel
+import com.example.holoverse.chat.presentation.ChatScreen
+import com.example.holoverse.chat.presentation.ChatViewModel
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.notifications.presentation.NotificationScreen
 import com.example.holoverse.threedmodel.presentation.ModelViewModel
-import com.example.holoverse.ui.category.CategoryCoursesScreen
-import com.example.holoverse.ui.category.CategoryScreen
-import com.example.holoverse.ui.collectuserdata.student.screens.StudentPreferenceInfoInput
-import com.example.holoverse.ui.collectuserdata.student.screens.StudentProfileInput
-import com.example.holoverse.ui.collectuserdata.teacher.screens.TeacherProfessionalInfoInput
-import com.example.holoverse.ui.commonpart.auth.presentation.authentication.signin.SignInScreen
-import com.example.holoverse.ui.commonpart.auth.presentation.authentication.signup.SignUpScreen
+import com.example.holoverse.course.presentation.category.CategoryCoursesScreen
+import com.example.holoverse.course.presentation.category.CategoryScreen
+import com.example.holoverse.auth.presentation.profile_setup.student.StudentPreferenceInfoInput
+import com.example.holoverse.auth.presentation.profile_setup.student.StudentProfileInput
+import com.example.holoverse.auth.presentation.profile_setup.teacher.TeacherProfessionalInfoInput
+import com.example.holoverse.auth.presentation.login.SignInScreen
+import com.example.holoverse.auth.presentation.signup.SignUpScreen
 import com.example.holoverse.ui.commonpart.profile.ChangePasswordScreen
 import com.example.holoverse.ui.commonpart.profile.EditProfileScreen
 import com.example.holoverse.ui.commonpart.profile.ProfileScreen
 import com.example.holoverse.ui.commonpart.profile.TermsAndConditionsScreen
-import com.example.holoverse.ui.coursedetail.CourseDetailScreen
+import com.example.holoverse.course.presentation.detail.CourseDetailScreen
 import com.example.holoverse.ui.home.HomeScreen
 import com.example.holoverse.ui.home.courseslist.PopularCoursesScreen
 import com.example.holoverse.ui.home.courseslist.RecommendationScreen
@@ -76,8 +76,8 @@ import com.example.holoverse.ui.mentor.announcements.AnnouncementsScreen
 import com.example.holoverse.ui.search.SearchScreen
 import com.example.holoverse.ui.spatialtheme.Brush
 import com.example.holoverse.ui.spatialtheme.HoloIntroScreen
-import com.example.holoverse.ui.teacherpart.courses.CreateCourseScreen
-import com.example.holoverse.ui.teacherpart.students.StudentListScreen
+import com.example.holoverse.course.presentation.creation.CreateCourseScreen
+import com.example.holoverse.course.presentation.students.StudentListScreen
 import com.example.holoverse.ui.three_D_Part.ar.ArScreen
 import com.example.holoverse.ui.three_D_Part.gallery.GalleryScreen
 import com.example.holoverse.ui.three_D_Part.viewer.ViewerScreen
@@ -621,3 +621,5 @@ fun AppNavHost(
             predictivePopTransitionSpec = { NavAnimations.backward() })
     }
 }
+
+

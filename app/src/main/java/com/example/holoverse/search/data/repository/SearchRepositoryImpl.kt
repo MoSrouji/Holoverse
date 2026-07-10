@@ -1,7 +1,7 @@
 package com.example.holoverse.search.data.repository
 
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.search.data.local.dao.RecentSearchDao
 import com.example.holoverse.search.data.local.entities.RecentSearchEntity
 import com.example.holoverse.search.domain.model.CourseFilters

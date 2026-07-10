@@ -4,12 +4,12 @@ import android.content.Context
 import android.util.Log
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.repository.AuthRepository
-import com.example.holoverse.chatsystem.data.remote.AndroidConfig
-import com.example.holoverse.chatsystem.data.remote.AndroidNotification
-import com.example.holoverse.chatsystem.data.remote.FcmApi
-import com.example.holoverse.chatsystem.data.remote.FcmMessage
-import com.example.holoverse.chatsystem.data.remote.FcmV1Request
-import com.example.holoverse.chatsystem.data.remote.NotificationData
+import com.example.holoverse.chat.data.remote.AndroidConfig
+import com.example.holoverse.chat.data.remote.AndroidNotification
+import com.example.holoverse.chat.data.remote.FcmApi
+import com.example.holoverse.chat.data.remote.FcmMessage
+import com.example.holoverse.chat.data.remote.FcmV1Request
+import com.example.holoverse.chat.data.remote.NotificationData
 import com.example.holoverse.notifications.domain.models.Notification
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
@@ -160,3 +160,4 @@ class NotificationRepositoryImpl @Inject constructor(
         }
     }
 }
+

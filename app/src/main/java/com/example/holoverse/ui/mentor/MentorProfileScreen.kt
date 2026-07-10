@@ -61,7 +61,7 @@ import coil3.compose.AsyncImage
 import com.example.composeautoshimmer.components.ShimmerBox
 import com.example.holoverse.R
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.reviews.domain.Review
 import com.example.holoverse.ui.reviews.ui.ReviewViewModel
 import com.example.holoverse.ui.reviews.ui.components.ReviewItem
@@ -682,3 +682,4 @@ private fun formatValue(num: Int): String {
         num.toString()
     }
 }
+

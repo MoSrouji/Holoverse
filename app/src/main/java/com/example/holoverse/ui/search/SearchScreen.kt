@@ -366,7 +366,7 @@ fun SearchResultsSection(
                         val displayCourses =
                             if (uiState.isLoading && uiState.searchResults.courses.isEmpty()) {
                                 List(5) {
-                                    com.example.holoverse.courses.domain.Courses(
+                                    com.example.holoverse.course.domain.Courses(
                                         id = "shimmer_$it",
                                         name = "loading mentor"
                                     )
@@ -723,3 +723,4 @@ fun SearchScreenPreview() {
         onMentorClick = {}
     )
 }
+

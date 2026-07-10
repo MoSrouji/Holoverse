@@ -3,9 +3,9 @@ package com.example.holoverse.ui.mentor.announcements
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.repository.AuthRepository
-import com.example.holoverse.courses.data.CourseRepo
-import com.example.holoverse.courses.domain.BoostedCourse
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.data.CourseRepo
+import com.example.holoverse.course.domain.BoostedCourse
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,3 +90,4 @@ class AnnouncementsViewModel @Inject constructor(
         _uiState.update { it.copy(boostResponse = null) }
     }
 }
+

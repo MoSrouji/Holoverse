@@ -27,8 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.holoverse.R
-import com.example.holoverse.courses.domain.BoostedCourse
-import com.example.holoverse.courses.domain.Courses
+import com.example.holoverse.course.domain.BoostedCourse
+import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.ui.theme.IbarraNovaFont
 import java.util.Calendar
 
@@ -118,3 +118,4 @@ private fun getGreeting(): Int {
         else -> R.string.good_evening
     }
 }
+
