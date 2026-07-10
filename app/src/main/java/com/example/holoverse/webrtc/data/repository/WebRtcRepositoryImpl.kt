@@ -4,6 +4,7 @@ import android.view.Surface
 import com.example.holoverse.webrtc.data.datasource.WebRtcSessionManager
 import com.example.holoverse.webrtc.domain.model.CallMode
 import com.example.holoverse.webrtc.domain.repository.WebRtcRepository
+import com.example.holoverse.whiteboard.presentation.WhiteboardManager
 import kotlinx.coroutines.flow.StateFlow
 import org.webrtc.EglBase
 import org.webrtc.VideoTrack
@@ -75,7 +76,7 @@ class WebRtcRepositoryImpl @Inject constructor(
         sessionManager.setCallMode(mode)
     }
 
-    override fun setWhiteboardManager(manager: com.example.holoverse.ui.whiteboard.WhiteboardManager?) {
+    override fun setWhiteboardManager(manager: WhiteboardManager?) {
         sessionManager.setWhiteboardManager(manager)
     }
 

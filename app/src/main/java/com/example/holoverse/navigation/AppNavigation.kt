@@ -65,23 +65,23 @@ import com.example.holoverse.user.presentation.edit_profile.EditProfileScreen
 import com.example.holoverse.user.presentation.profile.ProfileScreen
 import com.example.holoverse.user.presentation.profile.TermsAndConditionsScreen
 import com.example.holoverse.course.presentation.detail.CourseDetailScreen
-import com.example.holoverse.ui.home.HomeScreen
-import com.example.holoverse.ui.home.courseslist.PopularCoursesScreen
-import com.example.holoverse.ui.home.courseslist.RecommendationScreen
-import com.example.holoverse.ui.home.mentorslist.RecommendedMentorsScreen
-import com.example.holoverse.ui.home.mentorslist.TopMentorsScreen
+import com.example.holoverse.home.presentation.HomeScreen
+import com.example.holoverse.home.presentation.courseslist.PopularCoursesScreen
+import com.example.holoverse.home.presentation.courseslist.RecommendationScreen
+import com.example.holoverse.home.presentation.mentorslist.RecommendedMentorsScreen
+import com.example.holoverse.home.presentation.mentorslist.TopMentorsScreen
 import com.example.holoverse.user.presentation.mentor_profile.MentorProfileScreen
 import com.example.holoverse.user.presentation.analysis.MentorAnalysisScreen
 import com.example.holoverse.user.presentation.announcements.AnnouncementsScreen
 import com.example.holoverse.search.presentation.SearchScreen
-import com.example.holoverse.ui.spatialtheme.Brush
-import com.example.holoverse.ui.spatialtheme.HoloIntroScreen
+import com.example.holoverse.core.ui.spatial.Brush
+import com.example.holoverse.core.ui.spatial.HoloIntroScreen
 import com.example.holoverse.course.presentation.creation.CreateCourseScreen
 import com.example.holoverse.course.presentation.students.StudentListScreen
 import com.example.holoverse.ui.three_D_Part.ar.ArScreen
 import com.example.holoverse.ui.three_D_Part.gallery.GalleryScreen
 import com.example.holoverse.ui.three_D_Part.viewer.ViewerScreen
-import com.example.holoverse.ui.transaction.TransactionScreen
+import com.example.holoverse.transaction.presentation.TransactionScreen
 import com.example.holoverse.webrtc.presentation.IncomingCallScreen
 import com.example.holoverse.webrtc.presentation.OutgoingCallScreen
 import kotlinx.coroutines.delay
@@ -621,6 +621,8 @@ fun AppNavHost(
             predictivePopTransitionSpec = { NavAnimations.backward() })
     }
 }
+
+
 
 
 

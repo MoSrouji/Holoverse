@@ -12,8 +12,8 @@ import com.example.holoverse.chat.data.remote.FcmV1Request
 import com.example.holoverse.chat.data.remote.NotificationData
 import com.example.holoverse.notifications.domain.models.Notification
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
-import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
+import com.example.holoverse.core.utils.Response
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -160,4 +160,5 @@ class NotificationRepositoryImpl @Inject constructor(
         }
     }
 }
+
 

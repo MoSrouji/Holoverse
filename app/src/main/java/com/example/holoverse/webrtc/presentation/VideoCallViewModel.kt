@@ -28,6 +28,7 @@ import com.example.holoverse.webrtc.domain.usecase.ToggleMuteUseCase
 import com.example.holoverse.webrtc.domain.usecase.TogglePdfModeUseCase
 import com.example.holoverse.webrtc.domain.usecase.ToggleSpeakerUseCase
 import com.example.holoverse.webrtc.domain.usecase.ToggleWhiteboardModeUseCase
+import com.example.holoverse.whiteboard.presentation.WhiteboardManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import org.webrtc.EglBase
@@ -118,7 +119,7 @@ class VideoCallViewModel @Inject constructor(
         setCallModeUseCase(mode)
     }
 
-    fun setWhiteboardManager(manager: com.example.holoverse.ui.whiteboard.WhiteboardManager?) {
+    fun setWhiteboardManager(manager: WhiteboardManager?) {
         setWhiteboardManagerUseCase(manager)
     }
 
@@ -136,9 +137,4 @@ class VideoCallViewModel @Inject constructor(
 
     fun getEglContext(): EglBase.Context = getEglContextUseCase()
 
-    override fun onCleared() {
-        super.onCleared()
-        // Removed endCallUseCase() to prevent automatic disconnection during screen transitions.
-        // Cleanup is now handled explicitly by user actions or in MainActivity.onDestroy().
-    }
 }

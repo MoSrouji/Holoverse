@@ -7,6 +7,8 @@ import android.graphics.Rect
 import android.media.AudioManager
 import android.util.Log
 import android.view.Surface
+import com.example.holoverse.pdf.presentation.PdfManager
+import com.example.holoverse.whiteboard.presentation.WhiteboardManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -111,10 +113,10 @@ class WebRtcSessionManager @Inject constructor(
     private var videoSourceObserver: org.webrtc.CapturerObserver? = null
     private var syntheticLoopJob: Job? = null
 
-    val pdfManager by lazy { com.example.holoverse.ui.pdf.PdfManager(context) }
-    private var whiteboardManager: com.example.holoverse.ui.whiteboard.WhiteboardManager? = null
+    val pdfManager by lazy { PdfManager(context) }
+    private var whiteboardManager: WhiteboardManager? = null
 
-    fun setWhiteboardManager(manager: com.example.holoverse.ui.whiteboard.WhiteboardManager?) {
+    fun setWhiteboardManager(manager: WhiteboardManager?) {
         whiteboardManager = manager
     }
 
@@ -180,6 +182,7 @@ class WebRtcSessionManager @Inject constructor(
                 override fun onSignalingChange(p0: PeerConnection.SignalingState?) {
                     Log.d(TAG, "onSignalingChange: $p0")
                 }
+
                 override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) {
                     Log.i(TAG, "onConnectionChange: $newState")
                     _connectionState.value = newState
@@ -198,6 +201,7 @@ class WebRtcSessionManager @Inject constructor(
                 override fun onIceConnectionReceivingChange(p0: Boolean) {
                     Log.d(TAG, "onIceConnectionReceivingChange: $p0")
                 }
+
                 override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {
                     Log.d(TAG, "onIceGatheringChange: $p0")
                 }
@@ -235,7 +239,7 @@ class WebRtcSessionManager @Inject constructor(
         videoSourceObserver = videoSource.capturerObserver
         localSurfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", eglBaseContext)
         videoCapturer?.initialize(localSurfaceTextureHelper, context, videoSourceObserver)
-        
+
         val metrics = context.resources.displayMetrics
         videoCapturer?.startCapture(metrics.widthPixels, metrics.heightPixels, 30)
 
@@ -450,12 +454,12 @@ class WebRtcSessionManager @Inject constructor(
         }
         isDisconnecting = true
         Log.d(TAG, "disconnect: Starting session teardown for call $currentCallId")
-        
+
         currentCallId?.let { id ->
             Log.d(TAG, "disconnect: Requesting Firestore cleanup for $id")
             signalingClient.clearCall(id)
         }
-        
+
         stopSyntheticMode()
         videoCapturer?.stopCapture()
         videoCapturer?.dispose()
@@ -581,15 +585,16 @@ class WebRtcSessionManager @Inject constructor(
         if (syntheticSurfaceTextureHelper != null) return
 
         Log.d(TAG, "Starting synthetic mode capture")
-        
+
         // Apply optimizations for PDF/Whiteboard content
-        val isTextMode = _callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.PDF || 
-                         _callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.WHITEBOARD
+        val isTextMode =
+            _callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.PDF ||
+                    _callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.WHITEBOARD
         applyTextOptimizations(isTextMode)
 
         syntheticSurfaceTextureHelper =
             SurfaceTextureHelper.create("SyntheticThread", eglBaseContext)
-        
+
         val metrics = context.resources.displayMetrics
         syntheticSurfaceTextureHelper?.setTextureSize(metrics.widthPixels, metrics.heightPixels)
         syntheticSurface = Surface(syntheticSurfaceTextureHelper?.surfaceTexture)
@@ -599,8 +604,9 @@ class WebRtcSessionManager @Inject constructor(
         }
 
         syntheticLoopJob = scope.launch(Dispatchers.Default) {
-            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.FILTER_BITMAP_FLAG)
-            
+            val paint =
+                android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.FILTER_BITMAP_FLAG)
+
             while (_callMode.value != com.example.holoverse.webrtc.domain.model.CallMode.VIDEO) {
                 when (_callMode.value) {
                     com.example.holoverse.webrtc.domain.model.CallMode.WHITEBOARD,
@@ -656,9 +662,10 @@ class WebRtcSessionManager @Inject constructor(
 
                     else -> {}
                 }
-                
+
                 // For PDF and Whiteboard, lower FPS is acceptable and helps maintain quality
-                val frameDelay = if (_callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.AR) 33 else 100
+                val frameDelay =
+                    if (_callMode.value == com.example.holoverse.webrtc.domain.model.CallMode.AR) 33 else 100
                 delay(frameDelay.milliseconds)
             }
         }
@@ -666,7 +673,7 @@ class WebRtcSessionManager @Inject constructor(
 
     private fun stopSyntheticMode() {
         Log.d(TAG, "Stopping synthetic mode capture")
-        
+
         // Reset optimizations back to default
         applyTextOptimizations(false)
 

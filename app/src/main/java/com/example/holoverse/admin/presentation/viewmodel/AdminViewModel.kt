@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.admin.domain.repository.AdminRepository
 import com.example.holoverse.admin.domain.repository.Timeframe
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -97,3 +97,4 @@ class AdminViewModel @Inject constructor(
         }
     }
 }
+

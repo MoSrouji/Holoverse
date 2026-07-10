@@ -8,8 +8,8 @@ import com.example.holoverse.search.domain.model.CourseFilters
 import com.example.holoverse.search.domain.model.MentorFilters
 import com.example.holoverse.search.domain.repository.SearchRepository
 import com.example.holoverse.search.presentation.SearchType
-import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
+import com.example.holoverse.core.utils.Response
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -184,4 +184,5 @@ class SearchRepositoryImpl @Inject constructor(
         }
     }
 }
+
 

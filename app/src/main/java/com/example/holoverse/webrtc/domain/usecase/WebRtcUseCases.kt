@@ -1,10 +1,12 @@
 package com.example.holoverse.webrtc.domain.usecase
 
 import com.example.holoverse.webrtc.domain.repository.WebRtcRepository
+import com.example.holoverse.whiteboard.presentation.WhiteboardManager
 import javax.inject.Inject
 
 class InitCallUseCase @Inject constructor(private val repository: WebRtcRepository) {
-    operator fun invoke(callId: String, isOffer: Boolean): Boolean = repository.init(callId, isOffer)
+    operator fun invoke(callId: String, isOffer: Boolean): Boolean =
+        repository.init(callId, isOffer)
 }
 
 class StartCallUseCase @Inject constructor(private val repository: WebRtcRepository) {
@@ -85,7 +87,7 @@ class SetCallModeUseCase @Inject constructor(private val repository: WebRtcRepos
 }
 
 class SetWhiteboardManagerUseCase @Inject constructor(private val repository: WebRtcRepository) {
-    operator fun invoke(manager: com.example.holoverse.ui.whiteboard.WhiteboardManager?) =
+    operator fun invoke(manager: WhiteboardManager?) =
         repository.setWhiteboardManager(manager)
 }
 

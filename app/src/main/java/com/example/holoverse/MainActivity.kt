@@ -26,9 +26,9 @@ import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.ui.theme.HoloverseTheme
-import com.example.holoverse.utils.LanguageManager
-import com.example.holoverse.utils.SplashViewModel
+import com.example.holoverse.core.ui.theme.HoloverseTheme
+import com.example.holoverse.core.utils.LanguageManager
+import com.example.holoverse.core.utils.SplashViewModel
 import com.example.holoverse.webrtc.data.datasource.SignalingClient
 import com.example.holoverse.webrtc.presentation.CallNotificationManager
 import com.google.firebase.firestore.FirebaseFirestore
@@ -272,3 +272,4 @@ class MainActivity : AppCompatActivity() {
         notificationObservationJob?.cancel()
     }
 }
+

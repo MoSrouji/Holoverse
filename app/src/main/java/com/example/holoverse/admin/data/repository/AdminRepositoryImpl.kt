@@ -2,9 +2,9 @@ package com.example.holoverse.admin.data.repository
 
 import com.example.holoverse.admin.domain.repository.AdminRepository
 import com.example.holoverse.admin.domain.repository.Timeframe
-import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_MENTORS
-import com.example.holoverse.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
-import com.example.holoverse.utils.Response
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
+import com.example.holoverse.core.utils.Response
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.Query
@@ -129,3 +129,4 @@ class AdminRepositoryImpl @Inject constructor(
         }
     }
 }
+

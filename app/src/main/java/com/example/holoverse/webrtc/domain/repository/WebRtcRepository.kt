@@ -2,6 +2,7 @@ package com.example.holoverse.webrtc.domain.repository
 
 import android.view.Surface
 import com.example.holoverse.webrtc.domain.model.CallMode
+import com.example.holoverse.whiteboard.presentation.WhiteboardManager
 import kotlinx.coroutines.flow.StateFlow
 import org.webrtc.EglBase
 import org.webrtc.VideoTrack
@@ -30,7 +31,7 @@ interface WebRtcRepository {
     fun toggleWhiteboardMode(enabled: Boolean)
     fun togglePdfMode(enabled: Boolean)
     fun setCallMode(mode: CallMode)
-    fun setWhiteboardManager(manager: com.example.holoverse.ui.whiteboard.WhiteboardManager?)
+    fun setWhiteboardManager(manager: WhiteboardManager?)
     fun loadPdf(uri: android.net.Uri)
     fun pdfNextPage()
     fun pdfPreviousPage()
