@@ -88,6 +88,9 @@ sealed interface AppDestination : NavKey {
     data object Transactions : AppDestination
 
     @Serializable
+    data object PaymentMethod : AppDestination
+
+    @Serializable
     data object ChatList : AppDestination
 
     @Serializable
@@ -131,4 +134,16 @@ sealed interface AppDestination : NavKey {
 
     @Serializable
     data object AdminControlPanel : AppDestination
+
+    @Serializable
+    data object UserManagement : AppDestination
+
+    @Serializable
+    data object Broadcast : AppDestination
+
+    @Serializable
+    data object HelpCenter : AppDestination
+
+    @Serializable
+    data class ChatSupport(val chatId: String) : AppDestination
 }

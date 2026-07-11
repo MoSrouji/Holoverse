@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
@@ -70,6 +71,8 @@ import com.example.holoverse.core.ui.theme.HoloverseTheme
 @Composable
 fun AdminControlPanelScreen(
     onBackClick: () -> Unit,
+    onNavigateToUserManagement: () -> Unit,
+    onNavigateToBroadcast: () -> Unit,
     darkTheme: Boolean,
     viewModel: AdminViewModel = hiltViewModel(),
 ) {
@@ -78,6 +81,8 @@ fun AdminControlPanelScreen(
         uiState = uiState,
         onBackClick = onBackClick,
         onTimeframeSelected = viewModel::onTimeframeSelected,
+        onNavigateToUserManagement = onNavigateToUserManagement,
+        onNavigateToBroadcast = onNavigateToBroadcast,
         darkTheme = darkTheme
     )
 }
@@ -88,6 +93,8 @@ fun AdminControlPanelContent(
     uiState: AdminUiState,
     onBackClick: () -> Unit,
     onTimeframeSelected: (Timeframe) -> Unit,
+    onNavigateToUserManagement: () -> Unit,
+    onNavigateToBroadcast: () -> Unit,
     darkTheme: Boolean
 ) {
     val headerBrush = remember(darkTheme) { Brush(darkTheme) }
@@ -129,6 +136,10 @@ fun AdminControlPanelContent(
                 ) {
                     item {
                         AdminSummarySection(uiState)
+                    }
+
+                    item {
+                        ManagementSection(onNavigateToUserManagement, onNavigateToBroadcast)
                     }
 
                     item {
@@ -193,6 +204,109 @@ fun AdminSummarySection(uiState: AdminUiState) {
                 color = Color(0xFFFF9800),
                 modifier = Modifier.weight(1f)
             )
+        }
+    }
+}
+
+@Composable
+fun ManagementSection(onNavigateToUserManagement: () -> Unit, onNavigateToBroadcast: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            "Management Tools",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Card(
+                onClick = onNavigateToUserManagement,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(140.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Groups,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Column {
+                        Text(
+                            "Users",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Moderate users",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            Card(
+                onClick = onNavigateToBroadcast,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(140.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Campaign,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    Column {
+                        Text(
+                            "Broadcast",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Mass notify",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -563,6 +677,8 @@ fun AdminControlPanelPreview() {
             ),
             onBackClick = {},
             onTimeframeSelected = {},
+            onNavigateToUserManagement = {},
+            onNavigateToBroadcast = {},
             darkTheme = true
         )
     }

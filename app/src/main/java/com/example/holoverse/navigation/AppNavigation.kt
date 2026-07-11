@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material.icons.filled.Storefront
@@ -47,6 +48,8 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.example.holoverse.R
 import com.example.holoverse.admin.presentation.screen.AdminControlPanelScreen
+import com.example.holoverse.admin.presentation.screen.BroadcastScreen
+import com.example.holoverse.admin.presentation.screen.UserManagementScreen
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.chat.presentation.ChatScreen
 import com.example.holoverse.chat.presentation.ChatViewModel
@@ -62,8 +65,10 @@ import com.example.holoverse.auth.presentation.login.SignInScreen
 import com.example.holoverse.auth.presentation.signup.SignUpScreen
 import com.example.holoverse.user.presentation.edit_profile.ChangePasswordScreen
 import com.example.holoverse.user.presentation.edit_profile.EditProfileScreen
+import com.example.holoverse.user.presentation.profile.PaymentMethodScreen
 import com.example.holoverse.user.presentation.profile.ProfileScreen
 import com.example.holoverse.user.presentation.profile.TermsAndConditionsScreen
+import com.example.holoverse.user.presentation.help_center.HelpCenterScreen
 import com.example.holoverse.course.presentation.detail.CourseDetailScreen
 import com.example.holoverse.home.presentation.HomeScreen
 import com.example.holoverse.home.presentation.courseslist.PopularCoursesScreen
@@ -93,13 +98,19 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun AppNavHost(
     navigator: AppNavigator,
+    currentUser: User? = null,
     isLoggedIn: Boolean = false,
     darkTheme: Boolean,
 ) {
-    val startRoute = if (isLoggedIn) AppDestination.HomeScreen else AppDestination.HoloIntro
+    val startRoute = when {
+        currentUser is User.Admin -> AppDestination.AdminControlPanel
+        isLoggedIn -> AppDestination.HomeScreen
+        else -> AppDestination.HoloIntro
+    }
     val topLevelRoutes = setOf(
         AppDestination.HoloIntro,
         AppDestination.HomeScreen,
+        AppDestination.AdminControlPanel,
         AppDestination.ChatList,
         AppDestination.GalleryScreen,
         AppDestination.Profile,
@@ -147,7 +158,7 @@ fun AppNavHost(
 
     LaunchedEffect(currentRoute, isCompact) {
         val shouldShow = when (currentRoute) {
-            is AppDestination.HomeScreen, is AppDestination.Category, is AppDestination.ChatList, is AppDestination.GalleryScreen, is AppDestination.Profile -> true
+            is AppDestination.HomeScreen, is AppDestination.Category, is AppDestination.ChatList, is AppDestination.GalleryScreen, is AppDestination.Profile, is AppDestination.AdminControlPanel -> true
             is AppDestination.ChatScreen, is AppDestination.OutgoingCall -> !isCompact
             else -> false
         }
@@ -179,6 +190,13 @@ fun AppNavHost(
                 navToHomeScreen = {
                     navigator.navigateAndPopUpTo(
                         destination = AppDestination.HomeScreen,
+                        popUpTo = AppDestination.HoloIntro,
+                        inclusive = true
+                    )
+                },
+                navToAdminPanel = {
+                    navigator.navigateAndPopUpTo(
+                        destination = AppDestination.AdminControlPanel,
                         popUpTo = AppDestination.HoloIntro,
                         inclusive = true
                     )
@@ -296,8 +314,12 @@ fun AppNavHost(
                         AppDestination.EditProfile
                     )
                 },
+                onPaymentOptionClick = {
+                    navigator.navigateTo(AppDestination.PaymentMethod)
+                },
                 onAdminClick = { navigator.navigateTo(AppDestination.AdminControlPanel) },
                 onTermsAndConditionsClick = { navigator.navigateTo(AppDestination.TermsAndConditions) },
+                onHelpCenterClick = { navigator.navigateTo(AppDestination.HelpCenter) },
                 onSignOutSuccess = { navigator.navigateTo(AppDestination.HoloIntro) },
                 darkTheme = darkTheme
             )
@@ -475,6 +497,12 @@ fun AppNavHost(
                 appNavigator = navigator, darkTheme = darkTheme
             )
         }
+        entry<AppDestination.PaymentMethod> {
+            PaymentMethodScreen(
+                onBackClick = { navigator.popBackStack() },
+                darkTheme = darkTheme
+            )
+        }
         entry<AppDestination.CourseDetail> { key: AppDestination.CourseDetail ->
             CourseDetailScreen(
                 courseId = key.courseId,
@@ -523,7 +551,39 @@ fun AppNavHost(
         entry<AppDestination.AdminControlPanel> {
             AdminControlPanelScreen(
                 onBackClick = { navigator.popBackStack() },
+                onNavigateToUserManagement = { navigator.navigateTo(AppDestination.UserManagement) },
+                onNavigateToBroadcast = { navigator.navigateTo(AppDestination.Broadcast) },
                 darkTheme = darkTheme
+            )
+        }
+        entry<AppDestination.UserManagement> {
+            UserManagementScreen(
+                onBackClick = { navigator.popBackStack() },
+                darkTheme = darkTheme
+            )
+        }
+        entry<AppDestination.Broadcast> {
+            BroadcastScreen(
+                onBackClick = { navigator.popBackStack() },
+                darkTheme = darkTheme
+            )
+        }
+        entry<AppDestination.HelpCenter> {
+            HelpCenterScreen(
+                onBackClick = { navigator.popBackStack() },
+                onNavigateToSupportChat = { chatId ->
+                    navigator.navigateTo(AppDestination.ChatSupport(chatId))
+                },
+                darkTheme = darkTheme
+            )
+        }
+        entry<AppDestination.ChatSupport> { key: AppDestination.ChatSupport ->
+            val viewModel: ChatViewModel = hiltViewModel()
+            ChatScreen(
+                darkTheme = darkTheme,
+                mentorId = key.chatId, // Passing chatId as mentorId, ChatScreen handles both
+                viewModel = viewModel,
+                onBackClick = { navigator.popBackStack() }
             )
         }
 
@@ -555,21 +615,37 @@ fun AppNavHost(
                         .background(Brush(darkTheme)),
                     containerColor = Color.Transparent,
                 ) {
-                    val items = listOf(
-                        Triple(
-                            AppDestination.Category,
-                            Icons.AutoMirrored.Default.ViewList,
-                            "Categories"
-                        ),
-                        Triple(
-                            AppDestination.ChatList,
-                            Icons.AutoMirrored.Filled.Message,
-                            "Messages"
-                        ),
-                        Triple(AppDestination.HomeScreen, Icons.Default.Home, "Home"),
-                        Triple(AppDestination.GalleryScreen, Icons.Default.Storefront, "Gallery"),
-                        Triple(AppDestination.Profile, Icons.Default.PersonOutline, "Profile")
-                    )
+                    val items = if (currentUser is User.Admin) {
+                        listOf(
+                            Triple(
+                                AppDestination.AdminControlPanel,
+                                Icons.Default.Dashboard,
+                                "Control Panel"
+                            ),
+                            Triple(
+                                AppDestination.ChatList,
+                                Icons.AutoMirrored.Filled.Message,
+                                "Messages"
+                            ),
+                            Triple(AppDestination.Profile, Icons.Default.PersonOutline, "Profile")
+                        )
+                    } else {
+                        listOf(
+                            Triple(
+                                AppDestination.Category,
+                                Icons.AutoMirrored.Default.ViewList,
+                                "Categories"
+                            ),
+                            Triple(
+                                AppDestination.ChatList,
+                                Icons.AutoMirrored.Filled.Message,
+                                "Messages"
+                            ),
+                            Triple(AppDestination.HomeScreen, Icons.Default.Home, "Home"),
+                            Triple(AppDestination.GalleryScreen, Icons.Default.Storefront, "Gallery"),
+                            Triple(AppDestination.Profile, Icons.Default.PersonOutline, "Profile")
+                        )
+                    }
 
                     items.forEach { (destination, icon, label) ->
                         val isSelected = navigationState.topLevelRoute == destination

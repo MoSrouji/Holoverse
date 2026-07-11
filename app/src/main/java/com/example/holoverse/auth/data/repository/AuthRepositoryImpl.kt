@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_ADMINS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
 import com.example.holoverse.core.utils.PreferenceManager
@@ -73,6 +74,8 @@ class AuthRepositoryImpl @Inject constructor(
                     userDoc.set(mentor).await()
                     mentor
                 }
+
+                UserType.Admin -> throw Exception("Admin sign up is not allowed")
             }
 
             preferenceManager.saveUser(savedUser, isProfileComplete = false)
@@ -234,11 +237,14 @@ class AuthRepositoryImpl @Inject constructor(
             val userId = user.uid
             val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId)
             val mentorDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(userId)
+            val adminDoc = firestore.collection(COLLECTION_NAME_ADMINS).document(userId)
             
             if (studentDoc.get().await().exists()) {
                 studentDoc.update("email", newEmail).await()
             } else if (mentorDoc.get().await().exists()) {
                 mentorDoc.update("email", newEmail).await()
+            } else if (adminDoc.get().await().exists()) {
+                adminDoc.update("email", newEmail).await()
             }
             
             // Refresh local cache
@@ -295,6 +301,13 @@ class AuthRepositoryImpl @Inject constructor(
                 )
             }
 
+            // If not found, check admins collection
+            val adminDoc =
+                firestore.collection(COLLECTION_NAME_ADMINS).document(uid).get().await()
+            if (adminDoc.exists()) {
+                return adminDoc.toObject(User.Admin::class.java)?.copy(userId = uid)
+            }
+
             null
         } catch (e: Exception) {
             e.printStackTrace()
@@ -333,6 +346,14 @@ class AuthRepositoryImpl @Inject constructor(
                 return Response.Success(true)
             }
 
+            // Try updating in admins collection
+            val adminRef = firestore.collection(COLLECTION_NAME_ADMINS).document(userId)
+            val adminDoc = adminRef.get().await()
+            if (adminDoc.exists()) {
+                adminRef.update("fcmToken", token).await()
+                return Response.Success(true)
+            }
+
             Response.Error("User document not found")
         } catch (e: Exception) {
             Response.Error(e.message ?: "Failed to update FCM token")
@@ -350,6 +371,11 @@ class AuthRepositoryImpl @Inject constructor(
             val mentorDoc =
                 firestore.collection(COLLECTION_NAME_MENTORS).document(userId).get().await()
             if (mentorDoc.exists()) return mentorDoc.getString("fcmToken")
+
+            // Check admins
+            val adminDoc =
+                firestore.collection(COLLECTION_NAME_ADMINS).document(userId).get().await()
+            if (adminDoc.exists()) return adminDoc.getString("fcmToken")
 
             null
         } catch (e: Exception) {
@@ -497,6 +523,24 @@ class AuthRepositoryImpl @Inject constructor(
             Response.Success(true)
         } catch (e: Exception) {
             Response.Error(e.message ?: "Failed to add course to mentor")
+        }
+    }
+
+    override fun getSupportAdmin(): Flow<Response<User.Admin>> = flow {
+        emit(Response.Loading)
+        try {
+            val snapshot = firestore.collection(COLLECTION_NAME_ADMINS)
+                .limit(1)
+                .get()
+                .await()
+            val admin = snapshot.documents.firstOrNull()?.toObject(User.Admin::class.java)
+            if (admin != null) {
+                emit(Response.Success(admin))
+            } else {
+                emit(Response.Error("No support admin available"))
+            }
+        } catch (e: Exception) {
+            emit(Response.Error(e.message ?: "Failed to get support admin"))
         }
     }
 }

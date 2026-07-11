@@ -35,5 +35,6 @@ interface AuthRepository {
     suspend fun enrollInCourse(userId: String, courseId: String, instructorId: String): Response<Boolean>
     suspend fun toggleSaveCourse(userId: String, courseId: String): Response<Boolean>
     suspend fun addCourseToMentor(mentorId: String, courseId: String): Response<Boolean>
+    fun getSupportAdmin(): Flow<Response<User.Admin>>
 }
 

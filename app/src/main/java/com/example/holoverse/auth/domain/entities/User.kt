@@ -119,9 +119,20 @@ sealed interface User {
         val savedCourses: List<String>? = null,
         val createdAt: Long? = null
     ) : User
+
+    @Serializable
+    data class Admin(
+        override val userId: String? = null,
+        override val fullName: String? = null,
+        override val email: String? = null,
+        override val accountType: UserType = UserType.Admin,
+        override val fcmToken: String? = null,
+        val profileImageUrl: String? = null,
+        val createdAt: Long? = null
+    ) : User
 }
 
 @Serializable
 enum class UserType {
-    Student, Mentor
+    Student, Mentor, Admin
 }

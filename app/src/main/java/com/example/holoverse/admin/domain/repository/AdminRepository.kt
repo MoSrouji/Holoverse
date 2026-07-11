@@ -1,5 +1,6 @@
 package com.example.holoverse.admin.domain.repository
 
+import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.core.utils.Response
 import kotlinx.coroutines.flow.Flow
 
@@ -12,5 +13,6 @@ interface AdminRepository {
     fun getCoursesByCategory(): Flow<Response<Map<String, Int>>>
     fun getUserGrowthData(timeframe: Timeframe): Flow<Response<List<Pair<String, Int>>>>
     fun getTotalRevenue(): Flow<Response<Double>>
+    fun getAllUsers(): Flow<Response<List<User>>>
 }
 

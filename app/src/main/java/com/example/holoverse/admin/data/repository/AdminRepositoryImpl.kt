@@ -2,6 +2,7 @@ package com.example.holoverse.admin.data.repository
 
 import com.example.holoverse.admin.domain.repository.AdminRepository
 import com.example.holoverse.admin.domain.repository.Timeframe
+import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
 import com.example.holoverse.core.utils.Response
@@ -126,6 +127,25 @@ class AdminRepositoryImpl @Inject constructor(
             emit(Response.Success(totalRevenue))
         } catch (e: Exception) {
             emit(Response.Error(e.message ?: "Failed to calculate revenue"))
+        }
+    }
+
+    override fun getAllUsers(): Flow<Response<List<User>>> = flow {
+        emit(Response.Loading)
+        try {
+            val studentDocs = firestore.collection(COLLECTION_NAME_STUDENTS).get().await()
+            val mentorDocs = firestore.collection(COLLECTION_NAME_MENTORS).get().await()
+
+            val students = studentDocs.mapNotNull { doc ->
+                doc.toObject(User.Student::class.java).copy(userId = doc.id)
+            }
+            val mentors = mentorDocs.mapNotNull { doc ->
+                doc.toObject(User.Mentor::class.java).copy(userId = doc.id)
+            }
+
+            emit(Response.Success(students + mentors))
+        } catch (e: Exception) {
+            emit(Response.Error(e.message ?: "Failed to fetch users"))
         }
     }
 }

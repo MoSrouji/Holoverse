@@ -149,6 +149,7 @@ class MainActivity : AppCompatActivity() {
                         if (!isLoading) {
                             AppNavHost(
                                 navigator = navigator,
+                                currentUser = currentUser,
                                 isLoggedIn = isLoggedIn,
                                 darkTheme = darkTheme
                             )

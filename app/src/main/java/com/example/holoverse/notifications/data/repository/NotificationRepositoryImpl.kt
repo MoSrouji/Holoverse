@@ -11,8 +11,10 @@ import com.example.holoverse.chat.data.remote.FcmMessage
 import com.example.holoverse.chat.data.remote.FcmV1Request
 import com.example.holoverse.chat.data.remote.NotificationData
 import com.example.holoverse.notifications.domain.models.Notification
+import com.example.holoverse.notifications.domain.repository.BroadcastTarget
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
 import com.example.holoverse.core.utils.Response
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.Timestamp
@@ -157,6 +159,91 @@ class NotificationRepositoryImpl @Inject constructor(
             Response.Success(true)
         } catch (e: Exception) {
             Response.Error(e.message ?: "Failed to mark notification as read")
+        }
+    }
+
+    override suspend fun sendBroadcastNotification(
+        title: String,
+        body: String,
+        target: BroadcastTarget
+    ): Response<Boolean> {
+        return try {
+            val recipientIds = mutableListOf<String>()
+            
+            when (target) {
+                BroadcastTarget.ALL -> {
+                    val students = firestore.collection(COLLECTION_NAME_STUDENTS).get().await()
+                    val mentors = firestore.collection(COLLECTION_NAME_MENTORS).get().await()
+                    recipientIds.addAll(students.documents.map { it.id })
+                    recipientIds.addAll(mentors.documents.map { it.id })
+                }
+                BroadcastTarget.STUDENTS -> {
+                    val students = firestore.collection(COLLECTION_NAME_STUDENTS).get().await()
+                    recipientIds.addAll(students.documents.map { it.id })
+                }
+                BroadcastTarget.MENTORS -> {
+                    val mentors = firestore.collection(COLLECTION_NAME_MENTORS).get().await()
+                    recipientIds.addAll(mentors.documents.map { it.id })
+                }
+            }
+
+            if (recipientIds.isEmpty()) return Response.Success(true)
+
+            // Create notification for each recipient in Firestore (Batched)
+            // Note: Firestore batch has a limit of 500 operations. For simplicity, we'll use small chunks if needed, 
+            // but for now, we'll implement a basic loop or a simple chunked batch.
+            recipientIds.chunked(500).forEach { chunk ->
+                firestore.runBatch { batch ->
+                    chunk.forEach { recipientId ->
+                        val notificationRef = firestore.collection("notifications").document()
+                        val notification = Notification(
+                            id = notificationRef.id,
+                            recipientId = recipientId,
+                            title = title,
+                            body = body,
+                            type = "broadcast_announcement",
+                            timestamp = Timestamp.now(),
+                            isRead = false,
+                            senderName = "HoloVerse Admin"
+                        )
+                        batch.set(notificationRef, notification)
+                    }
+                }.await()
+            }
+
+            // Send FCM notifications
+            try {
+                val authHeader = getAccessToken()
+                recipientIds.forEach { recipientId ->
+                    val token = authRepository.getFcmToken(recipientId)
+                    if (!token.isNullOrBlank()) {
+                        val request = FcmV1Request(
+                            message = FcmMessage(
+                                token = token,
+                                notification = NotificationData(title, body),
+                                data = mapOf(
+                                    "type" to "broadcast_announcement",
+                                    "title" to title,
+                                    "body" to body
+                                ),
+                                android = AndroidConfig(
+                                    priority = "high",
+                                    notification = AndroidNotification(
+                                        channel_id = "general_notifications"
+                                    )
+                                )
+                            )
+                        )
+                        fcmApi.sendNotification(authHeader, request)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("NotificationRepo", "FCM Broadcast failed: ${e.message}")
+            }
+
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Broadcast failed")
         }
     }
 }
