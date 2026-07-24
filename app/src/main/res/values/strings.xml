@@ -40,6 +40,7 @@
     <string name="fill_the_form">Please Fill The Form</string>
     <string name="sign_in_successfully">Sign in successfully</string>
     <string name="select_role">Select User Type</string>
+    <string name="you_must_be_at_least_18_years_old">You must be at least 18 years old</string>
 
     <!-- Profile -->
     <string name="bio">BIO</string>

@@ -2,7 +2,6 @@ package com.example.holoverse.auth.data.repository
 
 import android.util.Log
 import com.example.holoverse.auth.domain.entities.User
-import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_ADMINS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
@@ -36,8 +35,8 @@ class AuthRepositoryImpl @Inject constructor(
 
             val userId = user.uid
 
-            val savedUser = when (userDto.accountType) {
-                UserType.Student -> {
+            val savedUser = when (userDto) {
+                is User.Student -> {
                     val userDoc = firestore.collection(COLLECTION_NAME_STUDENTS)
                         .document(userId)
 
@@ -46,9 +45,7 @@ class AuthRepositoryImpl @Inject constructor(
                         user.delete().await()
                         throw Exception("Sign up failed ")
                     }
-                    val student = User.Student(
-                        fullName = userDto.fullName,
-                        email = userDto.email,
+                    val student = userDto.copy(
                         userId = userId,
                         createdAt = System.currentTimeMillis()
                     )
@@ -56,7 +53,7 @@ class AuthRepositoryImpl @Inject constructor(
                     student
                 }
 
-                UserType.Mentor -> {
+                is User.Mentor -> {
                     val userDoc = firestore.collection(COLLECTION_NAME_MENTORS)
                         .document(userId)
                     if (userDoc.get().await().exists()) {
@@ -65,9 +62,7 @@ class AuthRepositoryImpl @Inject constructor(
                         throw Exception("Sign up failed ")
                     }
 
-                    val mentor = User.Mentor(
-                        fullName = userDto.fullName,
-                        email = userDto.email,
+                    val mentor = userDto.copy(
                         userId = userId,
                         createdAt = System.currentTimeMillis()
                     )
@@ -75,7 +70,7 @@ class AuthRepositoryImpl @Inject constructor(
                     mentor
                 }
 
-                UserType.Admin -> throw Exception("Admin sign up is not allowed")
+                is User.Admin -> throw Exception("Admin sign up is not allowed")
             }
 
             preferenceManager.saveUser(savedUser, isProfileComplete = false)

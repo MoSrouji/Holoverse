@@ -147,6 +147,7 @@ fun AppNavHost(
 
     val mentorState = remember { MutableStateFlow(User.Mentor()) }
     val studentState = remember { MutableStateFlow(User.Student()) }
+    val signUpPassword = remember { MutableStateFlow("") }
 
     val currentRoute = navigationState.backStacks[navigationState.topLevelRoute]?.last()
         ?: navigationState.topLevelRoute
@@ -216,6 +217,9 @@ fun AppNavHost(
                         inclusive = true
                     )
                 },
+                mentorStates = mentorState,
+                studentStates = studentState,
+                passwordState = signUpPassword,
                 darkTheme = darkTheme
             )
         }
@@ -230,6 +234,7 @@ fun AppNavHost(
                     )
                 },
                 mentorStates = mentorState,
+                passwordState = signUpPassword,
                 darkTheme = darkTheme
             )
         }
@@ -244,6 +249,7 @@ fun AppNavHost(
                     )
                 },
                 mentorStates = mentorState,
+                passwordState = signUpPassword,
                 darkTheme = darkTheme
             )
         }
@@ -258,6 +264,7 @@ fun AppNavHost(
                     )
                 },
                 studentStates = studentState,
+                passwordState = signUpPassword,
                 darkTheme = darkTheme
             )
         }
@@ -272,6 +279,7 @@ fun AppNavHost(
                     )
                 },
                 studentStates = studentState,
+                passwordState = signUpPassword,
                 darkTheme = darkTheme
             )
         }

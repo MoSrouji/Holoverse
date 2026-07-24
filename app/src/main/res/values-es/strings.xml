@@ -33,6 +33,7 @@
     <string name="fill_the_form">Por favor, complete el formulario\n</string>
     <string name="sign_in_successfully">Inicio de sesión exitoso\n</string>
     <string name="select_role">Seleccionar tipo de usuario</string>
+    <string name="you_must_be_at_least_18_years_old">Debes tener al menos 18 años</string>
     <string name="bio">Biografía</string>
     <string name="dateOfBirth">Fecha de nacimiento</string>
     <string name="phoneNumber">Número de teléfono</string>

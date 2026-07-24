@@ -64,6 +64,11 @@ class WebRtcSessionManager @Inject constructor(
     }
 
     private val peerConnectionFactory = PeerConnectionFactory.builder()
+        .setOptions(PeerConnectionFactory.Options().apply {
+            networkIgnoreMask = 0
+            disableEncryption = false
+            disableNetworkMonitor = false
+        })
         .setVideoEncoderFactory(DefaultVideoEncoderFactory(eglBaseContext, true, true))
         .setVideoDecoderFactory(DefaultVideoDecoderFactory(eglBaseContext))
         .createPeerConnectionFactory()
@@ -151,29 +156,49 @@ class WebRtcSessionManager @Inject constructor(
                 PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
                 PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer(),
                 PeerConnection.IceServer.builder("stun:stun4.l.google.com:19302").createIceServer(),
-
-                // Open Relay TURN — Standard UDP port 80
-                PeerConnection.IceServer.builder("turn:openrelay.metered.ca:80")
-                    .setUsername("openrelayproject")
-                    .setPassword("openrelayproject")
+                PeerConnection.IceServer.builder("stun:stun.l.google.com:19305").createIceServer(),
+                PeerConnection.IceServer.builder("stun:stun1.l.google.com:19305").createIceServer(),
+                PeerConnection.IceServer.builder("stun:stun.services.mozilla.com")
                     .createIceServer(),
 
-                // Open Relay TURN — TCP fallback on port 443
-                PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443")
-                    .setUsername("openrelayproject")
-                    .setPassword("openrelayproject")
+                // Open Relay TURN — Standard UDP
+                PeerConnection.IceServer.builder("free.expressturn.com:3478")
+                    .setUsername("000000002099818629")
+                    .setPassword("xGWQ2yp8kOlCj9mK6oI/xFJDXhI=")
+                    .createIceServer(),
+                // Open Relay TURN — Standard UDP
+                PeerConnection.IceServer.builder("free.expressturn.com:3478")
+                    .setUsername("000000002099818629")
+                    .setPassword("xGWQ2yp8kOlCj9mK6oI/xFJDXhI=")
+                    .createIceServer(),
+                // Open Relay TURN — Standard UDP
+                PeerConnection.IceServer.builder("free.expressturn.com:3478")
+                    .setUsername("000000002099818629")
+                    .setPassword("xGWQ2yp8kOlCj9mK6oI/xFJDXhI=")
+                    .createIceServer(),
+                // Open Relay TURN — Standard UDP
+                PeerConnection.IceServer.builder("free.expressturn.com:3478")
+                    .setUsername("000000002099818629")
+                    .setPassword("xGWQ2yp8kOlCj9mK6oI/xFJDXhI=")
                     .createIceServer(),
 
-                // Open Relay TURNS (TLS) — for strict corporate firewalls with DPI
-                PeerConnection.IceServer.builder("turns:openrelay.metered.ca:443")
-                    .setUsername("openrelayproject")
-                    .setPassword("openrelayproject")
-                    .createIceServer()
-            )
+                // ExpressTurn Fallback
+                PeerConnection.IceServer.builder("turn:free.expressturn.com:3478")
+                    .setUsername("000000002099753104")
+                    .setPassword("l5IWziJsJTN91btHEak4vx8cvTo=")
+                    .createIceServer(),
+
+
+                )
         ).apply {
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
             iceTransportsType = PeerConnection.IceTransportsType.ALL
+
+            bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE
+            rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE
+            tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED
+            iceCandidatePoolSize = 2
         }
 
         peerConnection = peerConnectionFactory.createPeerConnection(
@@ -208,9 +233,14 @@ class WebRtcSessionManager @Inject constructor(
 
                 override fun onIceCandidate(candidate: IceCandidate) {
                     Log.i(TAG, "onIceCandidate generated: ${candidate.sdpMid} - ${candidate.sdp}")
-                    // Callers (isOffer=true) send to offerCandidates. 
-                    // Receivers (isOffer=false) send to answerCandidates.
                     signalingClient.sendIceCandidate(callId, candidate, isOffer)
+                }
+
+                override fun onIceCandidateError(event: org.webrtc.IceCandidateErrorEvent?) {
+                    Log.e(
+                        TAG,
+                        "onIceCandidateError: address=${event?.address}, port=${event?.port}, url=${event?.url}, errorCode=${event?.errorCode}, errorText=${event?.errorText}"
+                    )
                 }
 
                 override fun onIceCandidatesRemoved(p0: Array<out IceCandidate>?) {}
@@ -295,12 +325,12 @@ class WebRtcSessionManager @Inject constructor(
         }
 
         scope.launch {
-            signalingClient.observeCandidates(callId, isOffer).collectLatest { candidate ->
+            signalingClient.observeCandidates(callId, isOffer).collect { candidate ->
                 if (isRemoteDescriptionSet) {
-                    Log.d(TAG, "Adding ICE candidate immediately")
+                    Log.d(TAG, "Adding ICE candidate immediately: ${candidate.sdp}")
                     peerConnection?.addIceCandidate(candidate)
                 } else {
-                    Log.d(TAG, "Buffering ICE candidate")
+                    Log.d(TAG, "Buffering ICE candidate: ${candidate.sdp}")
                     synchronized(pendingIceCandidates) {
                         pendingIceCandidates.add(candidate)
                     }

@@ -32,6 +32,7 @@
     <string name="fill_the_form">يرجى ملء النموذج</string>
     <string name="sign_in_successfully">تم تسجيل الدخول بنجاح</string>
     <string name="select_role">حدد نوع المستخدم</string>
+    <string name="you_must_be_at_least_18_years_old">يجب أن يكون عمرك 18 عامًا على الأقل</string>
     <string name="bio">نبذة تعريفية</string>
     <string name="dateOfBirth">تاريخ الميلاد</string>
     <string name="phoneNumber">رقم الهاتف</string>
