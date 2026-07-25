@@ -1,0 +1,601 @@
+package com.example.holoverse.chat.data.repository
+
+import android.content.Context
+import android.util.Log
+import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.chat.data.local.dao.ChatDao
+import com.example.holoverse.chat.data.local.dao.MessageDao
+import com.example.holoverse.chat.data.local.entities.ChatEntity
+import com.example.holoverse.chat.data.local.entities.MessageEntity
+import com.example.holoverse.chat.data.remote.AndroidConfig
+import com.example.holoverse.chat.data.remote.AndroidNotification
+import com.example.holoverse.chat.data.remote.FcmApi
+import com.example.holoverse.chat.data.remote.FcmMessage
+import com.example.holoverse.chat.data.remote.FcmV1Request
+import com.example.holoverse.chat.data.remote.NotificationData
+import com.example.holoverse.chat.domain.model.Chat
+import com.example.holoverse.chat.domain.model.Message
+import com.example.holoverse.chat.domain.model.MessageStatus
+import com.example.holoverse.chat.domain.repository.ChatRepository
+import com.example.holoverse.core.utils.NetworkConstant
+import com.google.auth.oauth2.GoogleCredentials
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.core.utils.Response
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.util.UUID
+import javax.inject.Inject
+
+class ChatRepositoryImpl @Inject constructor(
+    private val firestore: FirebaseFirestore,
+    private val chatDao: ChatDao,
+    private val messageDao: MessageDao,
+    private val authRepository: AuthRepository,
+    private val fcmApi: FcmApi,
+    @ApplicationContext private val context: Context
+) : ChatRepository {
+
+    private val repositoryScope = CoroutineScope(Dispatchers.IO)
+
+    private val _chatsState = MutableStateFlow<List<Chat>>(emptyList())
+    override val chatsState: StateFlow<List<Chat>> = _chatsState.asStateFlow()
+
+    private val _messagesState = MutableStateFlow<Map<String, List<Message>>>(emptyMap())
+    override val messagesState: StateFlow<Map<String, List<Message>>> = _messagesState.asStateFlow()
+
+    private val messageListeners = mutableMapOf<String, ListenerRegistration>()
+    private var chatsListener: ListenerRegistration? = null
+
+    override fun createOrGetSupportChat(
+        userId: String,
+        userName: String,
+        userImageUrl: String?,
+        admin: User.Admin
+    ): Flow<Response<String>> = flow {
+        emit(Response.Loading)
+        try {
+            val adminId = admin.userId ?: ""
+            val participants = listOf(userId, adminId).sorted()
+            val chatId = "support_${participants.joinToString("_")}"
+
+            val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            val snapshot = chatRef.get().await()
+
+            if (!snapshot.exists()) {
+                val namesMap = mutableMapOf(
+                    userId to userName,
+                    adminId to (admin.fullName ?: "Admin")
+                )
+                val imagesMap = mutableMapOf<String, String>()
+                userImageUrl?.let { imagesMap[userId] = it }
+                admin.profileImageUrl?.let { imagesMap[adminId] = it }
+
+                val chatData = Chat(
+                    id = chatId,
+                    participants = participants,
+                    participantNames = namesMap,
+                    participantProfileImages = imagesMap,
+                    isSupportChat = true
+                )
+                chatRef.set(chatData).await()
+                withContext(Dispatchers.IO) {
+                    chatDao.insertChats(listOf(chatData.toEntity()))
+                }
+            } else {
+                val remoteChat = snapshot.toObject(Chat::class.java)?.copy(id = snapshot.id)
+                remoteChat?.let {
+                    withContext(Dispatchers.IO) {
+                        chatDao.insertChats(listOf(it.toEntity()))
+                    }
+                }
+            }
+            emit(Response.Success(chatId))
+        } catch (e: Exception) {
+            emit(Response.Error(e.message ?: "Failed to create support chat"))
+        }
+    }
+
+    override fun getMessages(chatId: String): Flow<List<Message>> {
+        // Start remote listener if not already started
+        if (!messageListeners.containsKey(chatId)) {
+            val listener = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS)
+                .document(chatId)
+                .collection(NetworkConstant.COLLECTION_NAME_MESSAGES)
+                .orderBy("timestamp", Query.Direction.ASCENDING)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("ChatRepository", "Error listening for messages: ${error.message}")
+                        return@addSnapshotListener
+                    }
+                    snapshot?.let {
+                        val messages = it.documents.mapNotNull { doc ->
+                            doc.toObject(Message::class.java)?.copy(id = doc.id)
+                        }
+                        repositoryScope.launch {
+                            messageDao.insertMessages(messages.map { m -> m.toEntity(chatId) })
+                        }
+                    }
+                }
+            messageListeners[chatId] = listener
+        }
+
+        // Return local flow and update messagesState
+        val flow = messageDao.getMessagesForChat(chatId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+
+        repositoryScope.launch {
+            flow.collect { messages ->
+                _messagesState.value = _messagesState.value.toMutableMap().apply {
+                    put(chatId, messages)
+                }
+            }
+        }
+        return flow
+    }
+
+    override fun getChats(userId: String): Flow<List<Chat>> {
+        // Start remote listener for chats if not already started
+        if (chatsListener == null) {
+            chatsListener = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS)
+                .whereArrayContains("participants", userId)
+                .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("ChatRepository", "Error listening for chats: ${error.message}")
+                        return@addSnapshotListener
+                    }
+                    snapshot?.let {
+                        val chats = it.documents.mapNotNull { doc ->
+                            doc.toObject(Chat::class.java)?.copy(id = doc.id)
+                        }
+                        repositoryScope.launch {
+                            chatDao.insertChats(chats.map { it.toEntity() })
+                        }
+                    }
+                }
+        }
+
+        // Return local flow and update chatsState
+        val flow = chatDao.getChatsForUser(userId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+        repositoryScope.launch {
+            flow.collect { chats ->
+                _chatsState.value = chats
+            }
+        }
+        return flow
+    }
+
+    override suspend fun createOrGetChat(
+        currentUserId: String,
+        otherUserId: String,
+        currentUserName: String,
+        otherUserName: String,
+        currentUserImageUrl: String?,
+        otherUserImageUrl: String?
+    ): String {
+        val participants = listOf(currentUserId, otherUserId).sorted()
+        val chatId = participants.joinToString("_")
+
+        // 1. Check local first
+        val localChat = chatDao.getChatById(chatId)
+        if (localChat != null) {
+            return chatId
+        }
+
+        // 2. Try remote if not found locally
+        try {
+            val chatRef =
+                firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            val snapshot = chatRef.get().await()
+
+            if (!snapshot.exists()) {
+                val namesMap = mutableMapOf(
+                    currentUserId to currentUserName,
+                    otherUserId to otherUserName
+                )
+                val imagesMap = mutableMapOf<String, String>()
+                currentUserImageUrl?.let { imagesMap[currentUserId] = it }
+                otherUserImageUrl?.let { imagesMap[otherUserId] = it }
+
+                val chatData = Chat(
+                    id = chatId,
+                    participants = participants,
+                    participantNames = namesMap,
+                    participantProfileImages = imagesMap
+                )
+                chatRef.set(chatData).await()
+                chatDao.insertChats(listOf(chatData.toEntity()))
+            } else {
+                val remoteChat = snapshot.toObject(Chat::class.java)?.copy(id = snapshot.id)
+                remoteChat?.let { chatDao.insertChats(listOf(it.toEntity())) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // In offline mode, if it's not in local DB, create a temporary local entry
+            val namesMap = mutableMapOf(
+                currentUserId to currentUserName,
+                otherUserId to otherUserName
+            )
+            val imagesMap = mutableMapOf<String, String>()
+            currentUserImageUrl?.let { imagesMap[currentUserId] = it }
+            otherUserImageUrl?.let { imagesMap[otherUserId] = it }
+
+            val tempChat = Chat(
+                id = chatId,
+                participants = participants,
+                participantNames = namesMap,
+                participantProfileImages = imagesMap
+            )
+            chatDao.insertChats(listOf(tempChat.toEntity()))
+        }
+        return chatId
+    }
+
+    override suspend fun createOrJoinGroupChat(
+        courseId: String,
+        courseName: String,
+        courseImageUrl: String?,
+        participantId: String,
+        participantName: String,
+        participantImageUrl: String?
+    ): String {
+        val chatId = "group_$courseId"
+
+        try {
+            val chatRef =
+                firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            val snapshot = chatRef.get().await()
+
+            if (!snapshot.exists()) {
+                val chatData = Chat(
+                    id = chatId,
+                    participants = listOf(participantId),
+                    participantNames = mapOf(
+                        participantId to participantName,
+                        chatId to "$courseName Group"
+                    ),
+                    participantProfileImages = participantImageUrl?.let { mapOf(participantId to it) }
+                        ?: emptyMap(),
+                    lastMessage = "Group created for $courseName",
+                    lastMessageTimestamp = Timestamp.now()
+                )
+                chatRef.set(chatData).await()
+                chatDao.insertChats(listOf(chatData.toEntity()))
+            } else {
+                // Add participant to existing group
+                val updateData = mutableMapOf<String, Any>(
+                    "participants" to FieldValue.arrayUnion(participantId),
+                    "participantNames.$participantId" to participantName
+                )
+                participantImageUrl?.let {
+                    updateData["participantProfileImages.$participantId"] = it
+                }
+
+                chatRef.update(updateData).await()
+
+                // Refresh local chat
+                val updatedSnapshot = chatRef.get().await()
+                val remoteChat =
+                    updatedSnapshot.toObject(Chat::class.java)?.copy(id = updatedSnapshot.id)
+                remoteChat?.let { chatDao.insertChats(listOf(it.toEntity())) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return chatId
+    }
+
+    override suspend fun sendMessage(
+        chatId: String,
+        text: String,
+        senderId: String,
+        senderName: String,
+        senderType: String,
+        audioUrl: String?,
+        imageUrl: String?,
+        videoUrl: String?,
+        glbUrl: String?,
+        fileUrl: String?,
+        fileName: String?
+    ) {
+        val messageId = UUID.randomUUID().toString()
+        val currentTime = System.currentTimeMillis()
+
+        // 1. Create local message entity with SENDING status
+        val localMessage = MessageEntity(
+            id = messageId,
+            chatId = chatId,
+            senderId = senderId,
+            senderName = senderName,
+            senderType = senderType,
+            text = text,
+            audioUrl = audioUrl,
+            imageUrl = imageUrl,
+            videoUrl = videoUrl,
+            glbUrl = glbUrl,
+            fileUrl = fileUrl,
+            fileName = fileName,
+            timestamp = currentTime / 1000,
+            status = MessageStatus.SENDING
+        )
+
+        // 2. Save to local DB immediately
+        messageDao.insertMessages(listOf(localMessage))
+
+        // 3. Update local chat last message
+        val lastMessageText = when {
+            imageUrl != null -> "Image"
+            videoUrl != null -> "Video"
+            glbUrl != null -> "3D Model"
+            fileUrl != null -> fileName ?: "Document"
+            audioUrl != null && text.isEmpty() -> "Audio message"
+            else -> text
+        }
+
+        chatDao.getChatById(chatId)?.let { currentChat ->
+            chatDao.insertChats(
+                listOf(
+                    currentChat.copy(
+                        lastMessage = lastMessageText,
+                        lastMessageTimestamp = currentTime / 1000,
+                        lastSenderId = senderId,
+                        lastSenderName = senderName
+                    )
+                )
+            )
+        }
+
+        // 4. Attempt remote sync in background
+        repositoryScope.launch {
+            try {
+                val chatRef =
+                    firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+                val messageRef =
+                    chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document(messageId)
+                val serverTime = FieldValue.serverTimestamp()
+
+                val messageMap = mutableMapOf(
+                    "senderId" to senderId,
+                    "senderName" to senderName,
+                    "senderType" to senderType,
+                    "text" to text,
+                    "timestamp" to serverTime
+                )
+                audioUrl?.let { messageMap["audioUrl"] = it }
+                imageUrl?.let { messageMap["imageUrl"] = it }
+                videoUrl?.let { messageMap["videoUrl"] = it }
+                glbUrl?.let { messageMap["glbUrl"] = it }
+                fileUrl?.let { messageMap["fileUrl"] = it }
+                fileName?.let { messageMap["fileName"] = it }
+
+                firestore.runBatch { batch ->
+                    batch.set(messageRef, messageMap)
+                    val chatUpdate = mutableMapOf(
+                        "lastMessage" to lastMessageText,
+                        "lastMessageTimestamp" to serverTime,
+                        "lastSenderId" to senderId,
+                        "lastSenderName" to senderName
+                    )
+                    if (!chatId.startsWith("group_")) {
+                        chatUpdate["participants"] = FieldValue.arrayUnion(senderId)
+                    }
+                    batch.set(chatRef, chatUpdate, SetOptions.merge())
+                }.await()
+
+                // Update local status to SENT
+                messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.SENT)))
+
+                // Trigger Notification
+                try {
+                    val participants = chatId.split("_")
+                    val recipientId = participants.find { it != senderId } ?: return@launch
+
+                    val recipientToken = authRepository.getFcmToken(recipientId)
+
+                    if (!recipientToken.isNullOrBlank()) {
+                        try {
+                            val authHeader = getAccessToken()
+                            val request = FcmV1Request(
+                                message = FcmMessage(
+                                    token = recipientToken,
+                                    notification = NotificationData(
+                                        title = senderName,
+                                        body = lastMessageText
+                                    ),
+                                    data = mapOf(
+                                        "chatId" to chatId,
+                                        "senderId" to senderId
+                                    ),
+                                    android = AndroidConfig(
+                                        priority = "high",
+                                        notification = AndroidNotification(
+                                            channel_id = "chat_notifications",
+                                            notification_priority = "PRIORITY_HIGH"
+                                        )
+                                    )
+                                )
+                            )
+                            fcmApi.sendNotification(authHeader, request)
+                        } catch (e: Exception) {
+                            Log.e("ChatRepository", "Failed to send notification: ${e.message}")
+                            // We don't mark the message as failed here because the message 
+                            // was already successfully sent to Firestore.
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Update status to FAILED if offline/error
+                messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.FAILED)))
+            }
+        }
+    }
+
+    override suspend fun sendCallNotification(
+        chatId: String,
+        senderId: String,
+        senderName: String,
+        senderImageUrl: String?
+    ) {
+        repositoryScope.launch {
+            try {
+                val participants = chatId.split("_")
+                val recipientId = participants.find { it != senderId } ?: return@launch
+
+                val recipientToken = authRepository.getFcmToken(recipientId)
+                Log.d("ChatRepository", "sendCallNotification: Recipient=$recipientId, Token=${recipientToken ?: "MISSING"}")
+
+                if (!recipientToken.isNullOrBlank()) {
+                    val authHeader = getAccessToken()
+                    val request = FcmV1Request(
+                        message = FcmMessage(
+                            token = recipientToken,
+                            // Data-only message to ensure onMessageReceived is always called
+                            notification = null, 
+                            data = mapOf(
+                                "type" to "call",
+                                "callId" to chatId,
+                                "callerName" to senderName,
+                                "callerImage" to (senderImageUrl ?: ""),
+                                "chatId" to chatId,
+                                "title" to "Incoming Video Call",
+                                "body" to "$senderName is calling you..."
+                            ),
+                            android = AndroidConfig(
+                                priority = "high",
+                                notification = null // Let FcmService handle the notification
+                            )
+                        )
+                    )
+                    Log.d("ChatRepository", "Sending FCM request to API...")
+                    fcmApi.sendNotification(authHeader, request)
+                    Log.d("ChatRepository", "Call notification sent successfully")
+                } else {
+                    Log.e("ChatRepository", "Cannot send call notification: Recipient token is null or blank")
+                }
+            } catch (e: Exception) {
+                Log.e("ChatRepository", "Failed to send call notification: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun getAccessToken(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val stream = context.assets.open("service-account.json")
+                val credentials = GoogleCredentials.fromStream(stream)
+                    .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
+                credentials.refreshIfExpired()
+                "Bearer ${credentials.accessToken.tokenValue}"
+            } catch (e: Exception) {
+                Log.e(
+                    "ChatRepository", "Error getting access token: ${e.message}. " +
+                            "Ensure 'service-account.json' is in assets folder."
+                )
+                throw e
+            }
+        }
+    }
+
+    // Helper extensions
+    private fun Message.toEntity(chatId: String): MessageEntity {
+        return MessageEntity(
+            id = this.id,
+            chatId = chatId,
+            senderId = this.senderId,
+            senderName = this.senderName,
+            senderType = this.senderType,
+            text = this.text,
+            audioUrl = this.audioUrl,
+            imageUrl = this.imageUrl,
+            videoUrl = this.videoUrl,
+            glbUrl = this.glbUrl,
+            fileUrl = this.fileUrl,
+            fileName = this.fileName,
+            timestamp = this.timestamp?.seconds ?: (System.currentTimeMillis() / 1000),
+            status = this.status
+        )
+    }
+
+    private fun MessageEntity.toDomain(): Message {
+        return Message(
+            id = this.id,
+            senderId = this.senderId,
+            senderName = this.senderName,
+            senderType = this.senderType,
+            text = this.text,
+            audioUrl = this.audioUrl,
+            imageUrl = this.imageUrl,
+            videoUrl = this.videoUrl,
+            glbUrl = this.glbUrl,
+            fileUrl = this.fileUrl,
+            fileName = this.fileName,
+            timestamp = if (this.timestamp != 0L) Timestamp(this.timestamp, 0) else null,
+            status = this.status
+        )
+    }
+
+    private fun Chat.toEntity(): ChatEntity {
+        return ChatEntity(
+            id = this.id,
+            participants = this.participants,
+            lastMessage = this.lastMessage,
+            lastMessageTimestamp = this.lastMessageTimestamp?.seconds ?: 0L,
+            lastSenderName = this.lastSenderName,
+            lastSenderId = this.lastSenderId,
+            participantNames = this.participantNames,
+            participantProfileImages = this.participantProfileImages,
+            isSupportChat = this.isSupportChat
+        )
+    }
+
+    private fun ChatEntity.toDomain(): Chat {
+        return Chat(
+            id = this.id,
+            participants = this.participants,
+            lastMessage = this.lastMessage,
+            lastMessageTimestamp = if (this.lastMessageTimestamp != 0L) Timestamp(
+                this.lastMessageTimestamp,
+                0
+            ) else null,
+            lastSenderName = this.lastSenderName,
+            lastSenderId = this.lastSenderId,
+            participantNames = this.participantNames,
+            participantProfileImages = this.participantProfileImages,
+            isSupportChat = this.isSupportChat
+        )
+    }
+
+    fun cleanup() {
+        messageListeners.values.forEach { it.remove() }
+        messageListeners.clear()
+        chatsListener?.remove()
+        chatsListener = null
+    }
+}
+
+

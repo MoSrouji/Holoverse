@@ -154,6 +154,7 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // Camera and Permissions
     implementation(libs.accompanist.permissions)
@@ -204,4 +205,5 @@ dependencies {
     implementation(libs.webrtc)
     implementation(libs.webrtc.ktx)
     debugImplementation(libs.leakcanary.android)
+    implementation(libs.mlkit.translate)
 }

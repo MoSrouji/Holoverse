@@ -118,7 +118,7 @@ sealed interface AppDestination : NavKey {
     data object ArScreen : AppDestination
 
     @Serializable
-    data object ViewerScreen : AppDestination
+    data class ViewerScreen(val modelUrl: String? = null, val modelName: String? = null) : AppDestination
 
     @Serializable
     data object GalleryScreen : AppDestination

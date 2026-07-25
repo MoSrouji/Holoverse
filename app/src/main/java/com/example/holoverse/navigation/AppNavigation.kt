@@ -172,6 +172,10 @@ fun AppNavHost(
         }
     }
 
+    val onNavigateToViewerFromChat: (String, String) -> Unit = { url, name ->
+        navigator.navigateTo(AppDestination.ViewerScreen(modelUrl = url, modelName = name))
+    }
+
     val entryProvider = entryProvider<NavKey> {
         // Auth
         entry<AppDestination.HoloIntro> {
@@ -362,11 +366,14 @@ fun AppNavHost(
                 })
         ) {
             ChatScreen(
-                darkTheme = darkTheme, onNavigateToConversation = { mentorId ->
+                darkTheme = darkTheme,
+                onNavigateToConversation = { mentorId ->
                     navigator.navigateTo(
                         AppDestination.ChatScreen(mentorId = mentorId)
                     )
-                })
+                },
+                onNavigateToViewer = onNavigateToViewerFromChat
+            )
         }
         entry<AppDestination.ChatScreen>(
             metadata = ListDetailSceneStrategy.detailPane()
@@ -395,7 +402,9 @@ fun AppNavHost(
                             callerImageUrl = partnerImageUrl
                         )
                     )
-                })
+                },
+                onNavigateToViewer = onNavigateToViewerFromChat
+            )
         }
         entry<AppDestination.OutgoingCall> { key: AppDestination.OutgoingCall ->
             OutgoingCallScreen(
@@ -591,7 +600,8 @@ fun AppNavHost(
                 darkTheme = darkTheme,
                 mentorId = key.chatId, // Passing chatId as mentorId, ChatScreen handles both
                 viewModel = viewModel,
-                onBackClick = { navigator.popBackStack() }
+                onBackClick = { navigator.popBackStack() },
+                onNavigateToViewer = onNavigateToViewerFromChat
             )
         }
 
@@ -600,9 +610,14 @@ fun AppNavHost(
             val viewModel: ModelViewModel = hiltViewModel()
             GalleryScreen(appNavigator = navigator, darkTheme = darkTheme, viewModel = viewModel)
         }
-        entry<AppDestination.ViewerScreen> {
+        entry<AppDestination.ViewerScreen> { key: AppDestination.ViewerScreen ->
             val viewModel: ModelViewModel = hiltViewModel()
-            ViewerScreen(appNavigator = navigator, viewModel = viewModel)
+            ViewerScreen(
+                appNavigator = navigator,
+                viewModel = viewModel,
+                modelUrl = key.modelUrl,
+                modelName = key.modelName
+            )
         }
         entry<AppDestination.ArScreen> {
             val viewModel: ModelViewModel = hiltViewModel()

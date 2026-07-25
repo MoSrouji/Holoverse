@@ -249,6 +249,7 @@
     <string name="send_multimedia">Send multimedia</string>
     <string name="photo">Photo</string>
     <string name="video">Video</string>
+    <string name="glb_model">3D Model (.glb)</string>
     <string name="pdf">PDF</string>
     <string name="voice">Voice</string>
     <string name="send">Send</string>
