@@ -5,6 +5,7 @@ import com.example.holoverse.threedmodel.data.local.ModelCacheManager
 import com.example.holoverse.threedmodel.data.remote.ApiService
 import com.example.holoverse.threedmodel.data.repository.ModelRepositoryImpl
 import com.example.holoverse.threedmodel.domain.repository.ModelRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -37,9 +38,10 @@ object Three_d_Module {
     @Provides
     @Singleton
     fun provideModelRepository(
-        apiService: ApiService
+        apiService: ApiService,
+        firestore: FirebaseFirestore
     ): ModelRepository {
-        return ModelRepositoryImpl(apiService)
+        return ModelRepositoryImpl(apiService, firestore)
     }
 
     @Provides

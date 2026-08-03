@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileDownloadDone
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.rounded.ViewInAr
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,11 +53,10 @@ fun ViewerScreen(
     modelName: String? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val cacheManager = viewModel.cacheManager
-    var cachedModelPath by remember { mutableStateOf<String?>(null) }
     val arStatus = rememberArStatus()
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+    
+    var showPaymentDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(modelUrl) {
         if (modelUrl != null) {
@@ -78,22 +79,6 @@ fun ViewerScreen(
         }
     )
 
-    LaunchedEffect(uiState.selectedModel) {
-        uiState.selectedModel?.let { model ->
-            try {
-                if (model.path.startsWith("content://") || model.path.startsWith("file://")) {
-                    cachedModelPath = model.path
-                } else {
-                    cachedModelPath = cacheManager.getModelPath(model.id, model.path)
-                }
-            } catch (e: Exception) {
-                // Handle the error gracefully without crashing
-                cachedModelPath = null
-                // We can potentially update the UI state with this error if needed
-            }
-        }
-    }
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
@@ -110,20 +95,12 @@ fun ViewerScreen(
                 )
             } else {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    cachedModelPath?.let { path ->
-                        if (path.startsWith("http") && !path.startsWith("file://") && !path.startsWith(
-                                "content://"
-                            )
-                        ) {
-                            // This means getModelPath is still downloading or failed
+                    uiState.selectedModelPath?.let { path ->
+                        SceneViewer(modelPath = path, modifier = Modifier.fillMaxSize())
+                    } ?: run {
+                        if (uiState.selectedModel != null) {
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                        } else {
-                            SceneViewer(modelPath = path, modifier = Modifier.fillMaxSize())
                         }
-                    }
-
-                    if (uiState.isLoading && uiState.selectedModel != null) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     }
                 }
 
@@ -177,6 +154,49 @@ fun ViewerScreen(
                             .padding(top = 16.dp, end = 16.dp)
                     )
                 }
+
+                // Download / Save Button
+                uiState.selectedModel?.let { model ->
+                    IconButton(
+                        onClick = {
+                            if (uiState.isModelSaved) return@IconButton
+                            
+                            if (model.price > 0) {
+                                showPaymentDialog = true
+                            } else {
+                                viewModel.saveModelToMaterial(model)
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(WindowInsets.statusBars.asPaddingValues())
+                            .padding(top = 80.dp, end = 16.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                            contentColor = if (uiState.isModelSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (uiState.isModelSaved) Icons.Default.FileDownloadDone else Icons.Default.FileDownload,
+                            contentDescription = "Save to Materials"
+                        )
+                    }
+                }
+            }
+
+            if (showPaymentDialog && uiState.selectedModel != null) {
+                com.example.holoverse.course.presentation.detail.PaymentConfirmationDialog(
+                    course = com.example.holoverse.course.domain.Courses(
+                        id = uiState.selectedModel!!.id,
+                        name = uiState.selectedModel!!.name,
+                        price = uiState.selectedModel!!.price
+                    ),
+                    onConfirm = {
+                        showPaymentDialog = false
+                        viewModel.saveModelToMaterial(uiState.selectedModel!!)
+                    },
+                    onDismiss = { showPaymentDialog = false }
+                )
             }
 
             uiState.error?.let { error ->

@@ -21,7 +21,8 @@ data class Courses(
     val imageUrl: String = "",
     val completionRate: Double = 0.0,
     val averageProgress: Double = 0.0,
-    val sessions: List<CourseSession> = emptyList()
+    val sessions: List<CourseSession> = emptyList(),
+    val quizzes: List<Quiz> = emptyList()
 )
 
 data class CourseSession(
@@ -29,4 +30,30 @@ data class CourseSession(
     val date: String = "",
     val time: String = "",
     val description: String = ""
+)
+
+data class Quiz(
+    val id: String = "",
+    val title: String = "",
+    val description: String = "",
+    val timeLimitMinutes: Int = 30,
+    val questions: List<Question> = emptyList(),
+    val imageUrl: String = ""
+)
+
+data class Question(
+    val id: String = "",
+    val text: String = "",
+    val imageUrl: String = "",
+    val options: List<String> = emptyList(), // Should be exactly 4
+    val correctOptionIndices: List<Int> = emptyList() // Support for multiple true answers
+)
+
+data class QuizResult(
+    val id: String = "",
+    val quizId: String = "",
+    val userId: String = "",
+    val courseId: String = "",
+    val score: Int = 0,
+    val timestamp: Long = System.currentTimeMillis()
 )

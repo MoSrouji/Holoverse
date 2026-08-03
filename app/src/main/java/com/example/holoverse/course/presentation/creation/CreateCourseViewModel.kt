@@ -8,12 +8,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repository.AuthRepository
+import com.example.holoverse.chat.domain.repository.ChatRepository
 import com.example.holoverse.cloudinaryservices.domain.use_case.UploadPhotoUseCase
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.course.data.CourseRepo
 import com.example.holoverse.course.domain.BoostedCourse
 import com.example.holoverse.course.domain.CourseSession
 import com.example.holoverse.course.domain.Courses
+import com.example.holoverse.course.domain.Quiz
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.example.holoverse.core.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +28,7 @@ import javax.inject.Inject
 class CreateCourseViewModel @Inject constructor(
     private val courseRepo: CourseRepo,
     private val authRepo: AuthRepository,
+    private val chatRepository: ChatRepository,
     private val uploadPhotoUseCase: UploadPhotoUseCase,
     private val notificationRepo: NotificationRepository
 ) : ViewModel() {
@@ -47,6 +50,9 @@ class CreateCourseViewModel @Inject constructor(
 
     private val _sessions = mutableStateListOf<CourseSession>()
     val sessions: List<CourseSession> = _sessions
+
+    private val _quizzes = mutableStateListOf<Quiz>()
+    val quizzes: List<Quiz> = _quizzes
 
     init {
         fetchMentorCategory()
@@ -74,6 +80,22 @@ class CreateCourseViewModel @Inject constructor(
     fun updateSession(index: Int, session: CourseSession) {
         if (index in _sessions.indices) {
             _sessions[index] = session
+        }
+    }
+
+    fun addQuiz(quiz: Quiz) {
+        _quizzes.add(quiz)
+    }
+
+    fun removeQuiz(index: Int) {
+        if (index in _quizzes.indices) {
+            _quizzes.removeAt(index)
+        }
+    }
+
+    fun updateQuiz(index: Int, quiz: Quiz) {
+        if (index in _quizzes.indices) {
+            _quizzes[index] = quiz
         }
     }
 
@@ -118,7 +140,8 @@ class CreateCourseViewModel @Inject constructor(
                 instructorName = instructorName,
                 description = description,
                 imageUrl = imageUrl,
-                sessions = _sessions.toList()
+                sessions = _sessions.toList(),
+                quizzes = _quizzes.toList()
             )
 
             courseRepo.addCourse(course).collectLatest { response ->
@@ -126,6 +149,18 @@ class CreateCourseViewModel @Inject constructor(
                     _lastCreatedCourse.value = course
                     // Link course to mentor
                     authRepo.addCourseToMentor(instructorId, course.id)
+                    
+                    // Create group chat for the course
+                    val profileImageUrl = (currentUser as? User.Mentor)?.profileImageUrl
+                    chatRepository.createOrJoinGroupChat(
+                        courseId = course.id,
+                        courseName = course.name,
+                        courseImageUrl = course.imageUrl,
+                        participantId = instructorId,
+                        participantName = instructorName,
+                        participantImageUrl = profileImageUrl
+                    )
+
                     // Send notification to followers
                     notificationRepo.sendCourseNotificationToFollowers(
                         mentorId = instructorId,
@@ -146,6 +181,11 @@ class CreateCourseViewModel @Inject constructor(
                 _boostCourseState.value = response
             }
         }
+    }
+
+    suspend fun uploadQuizImage(uri: Uri): String? {
+        val result = uploadPhotoUseCase(uri)
+        return result.getOrNull()
     }
 }
 

@@ -15,7 +15,8 @@ fun ChatScreen(
     onNavigateToVideoCall: ((String, String, String?) -> Unit)? = null,
     onNavigateToViewer: ((String, String) -> Unit)? = null,
     onIncomingCall: ((String, String, String?) -> Unit)? = null,
-    onBackClick: (() -> Unit)? = null
+    onBackClick: (() -> Unit)? = null,
+    onGroupInfoClick: ((String) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -44,7 +45,8 @@ fun ChatScreen(
             onVideoCallClick = onNavigateToVideoCall,
             darkTheme = darkTheme,
             onIncomingCall = onIncomingCall,
-            onGlbClick = onNavigateToViewer
+            onGlbClick = onNavigateToViewer,
+            onGroupInfoClick = onGroupInfoClick
         )
     }
 }

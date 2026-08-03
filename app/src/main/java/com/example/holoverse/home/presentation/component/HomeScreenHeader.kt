@@ -15,34 +15,30 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.holoverse.R
 import com.example.holoverse.course.domain.BoostedCourse
 import com.example.holoverse.course.domain.Courses
-import com.example.holoverse.core.ui.theme.IbarraNovaFont
-import java.util.Calendar
 
 @Composable
 fun HomeScreenHeader(
     fullName: String?,
+    profileImageUrl: String?,
     isLoading: Boolean,
     darkTheme: Boolean,
     boostedCourses: List<BoostedCourse>,
     allCourses: List<Courses>,
     onCourseClick: (Courses) -> Unit,
+    onIdentityClick: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onNavigateToNotifications: () -> Unit,
-    brush: (Boolean) -> Brush
+    brush: (Boolean) -> Brush,
 ) {
     Box(
         modifier = Modifier
@@ -60,20 +56,11 @@ fun HomeScreenHeader(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = stringResource(getGreeting()),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    Text(
-                        text = fullName ?: stringResource(R.string.guest),
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.5).sp,
-                            fontFamily = IbarraNovaFont
-                        ),
-                    )
-                }
+                UserIdentityCard(
+                    fullName = fullName,
+                    profileImageUrl = profileImageUrl,
+                    onClick = onIdentityClick
+                )
 
                 IconButton(
                     onClick = onNavigateToNotifications
@@ -107,15 +94,6 @@ fun HomeScreenHeader(
 
             Spacer(modifier = Modifier.height(8.dp))
         }
-    }
-}
-
-private fun getGreeting(): Int {
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    return when (hour) {
-        in 0..11 -> R.string.good_morning
-        in 12..16 -> R.string.good_afternoon
-        else -> R.string.good_evening
     }
 }
 

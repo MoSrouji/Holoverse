@@ -34,15 +34,34 @@ class BaselineProfileGenerator {
             homeList.setGestureMargin(device.displayWidth / 5)
             homeList.fling(androidx.test.uiautomator.Direction.DOWN)
             device.waitForIdle()
+            homeList.fling(androidx.test.uiautomator.Direction.UP)
+            device.waitForIdle()
         }
 
-        // Journey 2: Navigate to 3D Gallery
+        // Journey 2: Search Journey
+        val searchBar = device.findObject(androidx.test.uiautomator.By.textContains("Search for"))
+        searchBar?.click()
+        device.waitForIdle()
+        val searchInput = device.findObject(androidx.test.uiautomator.By.clazz("android.widget.EditText"))
+        searchInput?.text = "Android"
+        device.waitForIdle()
+        device.pressBack() // Close search
+        device.waitForIdle()
+
+        // Journey 3: Tab Switching
+        val yourCoursesTab = device.findObject(androidx.test.uiautomator.By.text("Your Courses"))
+        yourCoursesTab?.click()
+        device.waitForIdle()
+        val exploreTab = device.findObject(androidx.test.uiautomator.By.text("Explore"))
+        exploreTab?.click()
+        device.waitForIdle()
+
+        // Journey 4: Navigate to 3D Gallery
         val galleryTab = device.findObject(androidx.test.uiautomator.By.desc("Gallery"))
-        
         galleryTab?.click()
         device.waitForIdle()
 
-        // Journey 3: Gallery Scrolling
+        // Journey 5: Gallery Scrolling
         val galleryList = device.findObject(androidx.test.uiautomator.By.scrollable(true))
         if (galleryList != null) {
             galleryList.setGestureMargin(device.displayWidth / 5)
@@ -50,15 +69,16 @@ class BaselineProfileGenerator {
             device.waitForIdle()
         }
 
-        // Journey 4: Open 3D Viewer
-        // Assuming the first item in the gallery is clickable
+        // Journey 6: Open 3D Viewer
         val firstModel = device.findObject(androidx.test.uiautomator.By.desc("Model item"))
         firstModel?.click()
         device.waitForIdle()
 
-        // Journey 5: AR Transition (if supported)
-        val arButton = device.findObject(androidx.test.uiautomator.By.text("View in AR"))
-        arButton?.click()
+        // Journey 7: Navigate to Profile
+        device.pressBack() // Back to gallery
+        device.waitForIdle()
+        val profileTab = device.findObject(androidx.test.uiautomator.By.desc("Profile"))
+        profileTab?.click()
         device.waitForIdle()
     }
 }

@@ -10,13 +10,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -76,6 +77,7 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToAnnouncements: () -> Unit,
     onNavigateToChat: () -> Unit,
+    onNavigateToYourMaterial: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
     onCategorySelected: (AppCategory) -> Unit,
@@ -105,6 +107,7 @@ fun HomeScreen(
         onNavigateToNotifications = onNavigateToNotifications,
         onNavigateToAnnouncements = onNavigateToAnnouncements,
         onNavigateToChat = onNavigateToChat,
+        onNavigateToYourMaterial = onNavigateToYourMaterial,
         onNavigateToSearch = onNavigateToSearch,
         onCourseClick = onCourseClick,
         darkTheme = darkTheme
@@ -132,18 +135,19 @@ fun HomeScreenContent(
     onNavigateToNotifications: () -> Unit,
     onNavigateToAnnouncements: () -> Unit,
     onNavigateToChat: () -> Unit,
+    onNavigateToYourMaterial: () -> Unit,
     onNavigateToSearch: (Boolean) -> Unit,
     onCourseClick: (Courses) -> Unit,
     darkTheme: Boolean
 ) {
-    val scrollState = rememberScrollState()
+    val lazyListState = rememberLazyListState()
 
     // Optimized FAB visibility logic using a simpler scroll-direction detection
     var lastScrollValue by remember { mutableIntStateOf(0) }
     var fabVisible by remember { mutableStateOf(true) }
 
-    LaunchedEffect(scrollState) {
-        snapshotFlow { scrollState.value }
+    LaunchedEffect(lazyListState) {
+        snapshotFlow { lazyListState.firstVisibleItemIndex * 1000 + lazyListState.firstVisibleItemScrollOffset }
             .collect { currentScroll ->
                 val delta = currentScroll - lastScrollValue
                 if (delta > SCROLL_THRESHOLD) {
@@ -160,14 +164,14 @@ fun HomeScreenContent(
     val createCourseLabel = stringResource(R.string.create_course)
     val analyticsLabel = stringResource(R.string.analytics)
     val studentsLabel = stringResource(R.string.students)
-    val messagesLabel = stringResource(R.string.messages)
+    val materialLabel = "Your Material"
     val announcementsLabel = stringResource(R.string.announcements)
 
     val fabMenuItems = remember(
         createCourseLabel,
         analyticsLabel,
         studentsLabel,
-        messagesLabel,
+        materialLabel,
         announcementsLabel
     ) {
         listOf(
@@ -180,8 +184,8 @@ fun HomeScreenContent(
             FabMenuItem(studentsLabel, Icons.Default.Groups) {
                 onNavigateToStudentsList()
             },
-            FabMenuItem(messagesLabel, Icons.Default.Chat) {
-                onNavigateToChat()
+            FabMenuItem(materialLabel, Icons.Default.Inventory2) {
+                onNavigateToYourMaterial()
             },
             FabMenuItem(announcementsLabel, Icons.Default.Campaign) {
                 onNavigateToAnnouncements()
@@ -228,57 +232,77 @@ fun HomeScreenContent(
                 .padding(innerPadding)
         ) {
 
-            Column(
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .fillMaxSize(),
+                state = lazyListState
             ) {
-                HomeScreenHeader(
-                    fullName = uiState.currentUser?.fullName,
-                    isLoading = uiState.isLoading,
-                    darkTheme = darkTheme,
-                    boostedCourses = uiState.boostedCourses,
-                    allCourses = uiState.allCourses,
-                    onCourseClick = onCourseClick,
-                    onNavigateToSearch = onNavigateToSearch,
-                    onNavigateToNotifications = onNavigateToNotifications,
-                    brush = { headerBrush }
-                )
-
-                // Error and Offline Handling
-                if (uiState.error != null) {
-                    ErrorCard(
-                        error = uiState.error,
-                        onRetry = onRefresh
+                item {
+                    HomeScreenHeader(
+                        fullName = uiState.currentUser?.fullName,
+                        profileImageUrl = uiState.currentUser?.profileImageUrl,
+                        isLoading = uiState.isLoading,
+                        darkTheme = darkTheme,
+                        boostedCourses = uiState.boostedCourses,
+                        allCourses = uiState.allCourses,
+                        onCourseClick = onCourseClick,
+                        onIdentityClick = {
+                            val user = uiState.currentUser
+                            if (user?.accountType == UserType.Mentor) {
+                                user.userId?.let { onMentorClick(it) }
+                            }
+                        },
+                        onNavigateToSearch = onNavigateToSearch,
+                        onNavigateToNotifications = onNavigateToNotifications,
+                        brush = { headerBrush }
                     )
                 }
 
-                if (uiState.isOffline) {
-                    OfflineBanner()
+                // Error and Offline Handling
+                if (uiState.error != null) {
+                    item {
+                        ErrorCard(
+                            error = uiState.error,
+                            onRetry = onRefresh
+                        )
+                    }
                 }
 
-                HomeTabRow(
-                    selectedTab = uiState.selectedTab,
-                    onTabSelected = onTabSelected
-                )
+                if (uiState.isOffline) {
+                    item {
+                        OfflineBanner()
+                    }
+                }
 
-                HomeContentSections(
-                    uiState = uiState,
-                    onTabSelected = onTabSelected,
-                    onCategorySelected = onCategorySelected,
-                    onFilterCategorySelected = onFilterCategorySelected,
-                    onCategoryClick = onCategoryClick,
-                    onPopularCoursesClick = onPopularCoursesClick,
-                    onRecommendedCoursesClick = onRecommendedCoursesClick,
-                    onTopMentorClick = onTopMentorClick,
-                    onTopMentorsListClick = onTopMentorsListClick,
-                    onMentorClick = onMentorClick,
-                    onCourseClick = onCourseClick,
-                    onSaveCourseClick = onSaveCourseClick
-                )
+                item {
+                    HomeTabRow(
+                        selectedTab = uiState.selectedTab,
+                        onTabSelected = onTabSelected
+                    )
+                }
+
+                item {
+                    HomeContentSections(
+                        uiState = uiState,
+                        onTabSelected = onTabSelected,
+                        onCategorySelected = onCategorySelected,
+                        onFilterCategorySelected = onFilterCategorySelected,
+                        onCategoryClick = onCategoryClick,
+                        onPopularCoursesClick = onPopularCoursesClick,
+                        onRecommendedCoursesClick = onRecommendedCoursesClick,
+                        onTopMentorClick = onTopMentorClick,
+                        onTopMentorsListClick = onTopMentorsListClick,
+                        onMentorClick = onMentorClick,
+                        onCourseClick = onCourseClick,
+                        onSaveCourseClick = onSaveCourseClick
+                    )
+                }
+
+                // Extra spacer to ensure content isn't hidden by FAB
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
-            // Extra spacer to ensure content isn't hidden by FAB
-            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
@@ -349,6 +373,7 @@ fun HomeScreenPreview() {
             onNavigateToNotifications = {},
             onNavigateToAnnouncements = {},
             onNavigateToChat = {},
+            onNavigateToYourMaterial = {},
             onNavigateToSearch = {},
             onCourseClick = {},
             darkTheme = true

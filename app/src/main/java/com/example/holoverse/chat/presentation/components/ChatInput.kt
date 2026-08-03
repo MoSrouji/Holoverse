@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
@@ -43,11 +44,13 @@ fun ChatInput(
     isRecording: Boolean,
     onTextChange: (String) -> Unit,
     onSend: () -> Unit,
-    onMediaClick: (String) -> Unit,
     onEmojiClick: () -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
-    onCancelRecording: () -> Unit
+    onCancelRecording: () -> Unit,
+    onAttachmentClick: () -> Unit,
+    isRestricted: Boolean = false,
+    restrictionMessage: String = "You are restricted from sending messages"
 ) {
     var showAttachmentMenu by remember { mutableStateOf(false) }
 
@@ -62,7 +65,22 @@ fun ChatInput(
                 .imePadding(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isRecording) {
+            if (isRestricted) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = Color.Gray,
+                    modifier = Modifier.padding(12.dp)
+                )
+                Text(
+                    text = restrictionMessage,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 12.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else if (isRecording) {
                 // ... (existing recording UI)
                 Text(
                     text = stringResource(R.string.recording),
@@ -109,61 +127,11 @@ fun ChatInput(
                     maxLines = 4
                 )
                 Box {
-                    IconButton(onClick = { showAttachmentMenu = true }) {
+                    IconButton(onClick = onAttachmentClick) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = stringResource(R.string.send_multimedia),
                             tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = showAttachmentMenu,
-                        onDismissRequest = { showAttachmentMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.photo)) },
-                            onClick = {
-                                showAttachmentMenu = false
-                                onMediaClick("image")
-                            },
-                            leadingIcon = { Icon(Icons.Default.Image, contentDescription = null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.video)) },
-                            onClick = {
-                                showAttachmentMenu = false
-                                onMediaClick("video")
-                            },
-                            leadingIcon = { Icon(Icons.Default.Movie, contentDescription = null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.glb_model)) },
-                            onClick = {
-                                showAttachmentMenu = false
-                                onMediaClick("glb")
-                            },
-                            leadingIcon = { Icon(Icons.Rounded.ViewInAr, contentDescription = null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.pdf)) },
-                            onClick = {
-                                showAttachmentMenu = false
-                                onMediaClick("pdf")
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.Description,
-                                    contentDescription = null
-                                )
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.voice)) },
-                            onClick = {
-                                showAttachmentMenu = false
-                                onStartRecording()
-                            },
-                            leadingIcon = { Icon(Icons.Default.Mic, contentDescription = null) }
                         )
                     }
                 }

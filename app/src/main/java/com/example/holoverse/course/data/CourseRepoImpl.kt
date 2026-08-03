@@ -3,6 +3,7 @@ package com.example.holoverse.course.data
 import android.util.Log
 import com.example.holoverse.course.domain.BoostedCourse
 import com.example.holoverse.course.domain.Courses
+import com.example.holoverse.course.domain.QuizResult
 import com.example.holoverse.core.utils.Response
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
@@ -157,6 +158,36 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
         } catch (e: Exception) {
             Log.e("CourseRepoImpl", "Error deleting boosted course", e)
             emit(Response.Error(e.message ?: "Error deleting boosted course"))
+        }
+    }
+
+    override suspend fun saveQuizResult(result: QuizResult): Flow<Response<Boolean>> = flow {
+        emit(Response.Loading)
+        try {
+            firestore.collection("quizResults")
+                .document(result.id.ifEmpty { firestore.collection("quizResults").document().id })
+                .set(result)
+                .await()
+            emit(Response.Success(true))
+        } catch (e: Exception) {
+            Log.e("CourseRepoImpl", "Error saving quiz result: ${e.message}", e)
+            emit(Response.Error(e.message ?: "Unknown error occurred"))
+        }
+    }
+
+    override suspend fun getQuizResults(userId: String, courseId: String): Flow<Response<List<QuizResult>>> = flow {
+        emit(Response.Loading)
+        try {
+            val snapshot = firestore.collection("quizResults")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("courseId", courseId)
+                .get()
+                .await()
+            val results = snapshot.toObjects(QuizResult::class.java)
+            emit(Response.Success(results))
+        } catch (e: Exception) {
+            Log.e("CourseRepoImpl", "Error getting quiz results: ${e.message}", e)
+            emit(Response.Error(e.message ?: "Error fetching quiz results"))
         }
     }
 }

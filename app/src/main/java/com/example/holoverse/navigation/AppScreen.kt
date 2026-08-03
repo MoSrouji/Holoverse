@@ -115,10 +115,16 @@ sealed interface AppDestination : NavKey {
     data class CourseDetail(val courseId: String) : AppDestination
 
     @Serializable
+    data class QuizScreen(val courseId: String, val quizId: String) : AppDestination
+
+    @Serializable
     data object ArScreen : AppDestination
 
     @Serializable
     data class ViewerScreen(val modelUrl: String? = null, val modelName: String? = null) : AppDestination
+
+    @Serializable
+    data object YourMaterial : AppDestination
 
     @Serializable
     data object GalleryScreen : AppDestination
@@ -146,4 +152,7 @@ sealed interface AppDestination : NavKey {
 
     @Serializable
     data class ChatSupport(val chatId: String) : AppDestination
+
+    @Serializable
+    data class GroupInfo(val chatId: String) : AppDestination
 }

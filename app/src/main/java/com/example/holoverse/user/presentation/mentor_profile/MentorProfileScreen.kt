@@ -1,5 +1,12 @@
 package com.example.holoverse.user.presentation.mentor_profile
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -402,55 +409,67 @@ fun MentorProfileContent(
             }
         }
 
-        if (selectedTab == 0) {
-            items(
-                items = courses,
-                key = { it.id },
-                contentType = { "mentor_course" }
-            ) { course ->
-                MentorCourseItem(
-                    course = course,
-                    isSaved = savedCourseIds.contains(course.id),
-                    isSaving = savingCourseIds.contains(course.id),
-                    onSaveClick = { onSaveCourseClick(course.id) },
-                    onClick = { onCourseClick(course.id) }
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-            }
-        } else {
-            items(
-                items = reviews,
-                key = { it.id },
-                contentType = { "mentor_review" }
-            ) { review ->
-                ReviewItem(
-                    review = review,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-            }
-
-            if (reviews.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No reviews yet",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+        item {
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> -width } + fadeOut()
                         )
+                    } else {
+                        (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> width } + fadeOut()
+                        )
+                    }.using(
+                        SizeTransform(clip = false)
+                    )
+                },
+                label = "MentorProfileTabTransition"
+            ) { targetTabIndex ->
+                Column {
+                    if (targetTabIndex == 0) {
+                        courses.forEach { course ->
+                            MentorCourseItem(
+                                course = course,
+                                isSaved = savedCourseIds.contains(course.id),
+                                isSaving = savingCourseIds.contains(course.id),
+                                onSaveClick = { onSaveCourseClick(course.id) },
+                                onClick = { onCourseClick(course.id) }
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 24.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+                    } else {
+                        reviews.forEach { review ->
+                            ReviewItem(
+                                review = review,
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 24.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+
+                        if (reviews.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No reviews yet",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }

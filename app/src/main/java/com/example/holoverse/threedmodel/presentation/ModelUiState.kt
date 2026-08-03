@@ -14,7 +14,11 @@ data class ModelUiState(
     val modelScale: Float = 1f,
     val searchQuery: String = "",
     val selectedCategory: String = "All",
-    val downloadProgress: Map<String, DownloadProgress> = emptyMap()
+    val downloadProgress: Map<String, DownloadProgress> = emptyMap(),
+    val isUploading: Boolean = false,
+    val uploadProgress: Float = 0f,
+    val selectedModelPath: String? = null,
+    val isModelSaved: Boolean = false
 )
 
 data class DownloadProgress(

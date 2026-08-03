@@ -55,6 +55,7 @@ import com.example.holoverse.chat.presentation.ChatScreen
 import com.example.holoverse.chat.presentation.ChatViewModel
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.notifications.presentation.NotificationScreen
+import com.example.holoverse.material.presentation.YourMaterialScreen
 import com.example.holoverse.threedmodel.presentation.ModelViewModel
 import com.example.holoverse.course.presentation.category.CategoryCoursesScreen
 import com.example.holoverse.course.presentation.category.CategoryScreen
@@ -82,6 +83,7 @@ import com.example.holoverse.search.presentation.SearchScreen
 import com.example.holoverse.core.ui.spatial.Brush
 import com.example.holoverse.core.ui.spatial.HoloIntroScreen
 import com.example.holoverse.course.presentation.creation.CreateCourseScreen
+import com.example.holoverse.course.presentation.quiz.QuizScreen
 import com.example.holoverse.course.presentation.students.StudentListScreen
 import com.example.holoverse.ui.three_D_Part.ar.ArScreen
 import com.example.holoverse.ui.three_D_Part.gallery.GalleryScreen
@@ -148,6 +150,8 @@ fun AppNavHost(
     val mentorState = remember { MutableStateFlow(User.Mentor()) }
     val studentState = remember { MutableStateFlow(User.Student()) }
     val signUpPassword = remember { MutableStateFlow("") }
+
+    val modelViewModel: ModelViewModel = hiltViewModel()
 
     val currentRoute = navigationState.backStacks[navigationState.topLevelRoute]?.last()
         ?: navigationState.topLevelRoute
@@ -295,6 +299,7 @@ fun AppNavHost(
                 onNavigateToCreateCourse = { navigator.navigateTo(AppDestination.CreateCourse) },
                 onNavigateToAnalytics = { navigator.navigateTo(AppDestination.MentorAnalysis) },
                 onNavigateToChat = { navigator.navigateTo(AppDestination.ChatList) },
+                onNavigateToYourMaterial = { navigator.navigateTo(AppDestination.YourMaterial) },
                 onNavigateToSearch = { triggerVoice ->
                     navigator.navigateTo(
                         AppDestination.Search(triggerVoice)
@@ -403,7 +408,22 @@ fun AppNavHost(
                         )
                     )
                 },
-                onNavigateToViewer = onNavigateToViewerFromChat
+                onNavigateToViewer = onNavigateToViewerFromChat,
+                onGroupInfoClick = { chatId ->
+                    navigator.navigateTo(AppDestination.GroupInfo(chatId))
+                }
+            )
+        }
+        entry<AppDestination.GroupInfo> { key: AppDestination.GroupInfo ->
+            val viewModel: ChatViewModel = hiltViewModel()
+            com.example.holoverse.chat.presentation.GroupInfoScreen(
+                chatId = key.chatId,
+                viewModel = viewModel,
+                onBackClick = { navigator.popBackStack() },
+                onMemberClick = { memberId ->
+                    navigator.navigateTo(AppDestination.ChatScreen(memberId))
+                },
+                darkTheme = darkTheme
             )
         }
         entry<AppDestination.OutgoingCall> { key: AppDestination.OutgoingCall ->
@@ -526,6 +546,17 @@ fun AppNavHost(
                 onBackClick = { navigator.popBackStack() },
                 onInstructorClick = { id -> navigator.navigateTo(AppDestination.MentorProfile(id)) },
                 onEnrollSuccess = { navigator.popBackStack() },
+                onNavigateToQuiz = { courseId, quizId ->
+                    navigator.navigateTo(AppDestination.QuizScreen(courseId, quizId))
+                },
+                darkTheme = darkTheme
+            )
+        }
+        entry<AppDestination.QuizScreen> { key: AppDestination.QuizScreen ->
+            QuizScreen(
+                courseId = key.courseId,
+                quizId = key.quizId,
+                onBackClick = { navigator.popBackStack() },
                 darkTheme = darkTheme
             )
         }
@@ -607,21 +638,30 @@ fun AppNavHost(
 
         // ModelGraph
         entry<AppDestination.GalleryScreen> {
-            val viewModel: ModelViewModel = hiltViewModel()
-            GalleryScreen(appNavigator = navigator, darkTheme = darkTheme, viewModel = viewModel)
+            GalleryScreen(appNavigator = navigator, darkTheme = darkTheme, viewModel = modelViewModel)
         }
         entry<AppDestination.ViewerScreen> { key: AppDestination.ViewerScreen ->
-            val viewModel: ModelViewModel = hiltViewModel()
             ViewerScreen(
                 appNavigator = navigator,
-                viewModel = viewModel,
+                viewModel = modelViewModel,
                 modelUrl = key.modelUrl,
                 modelName = key.modelName
             )
         }
         entry<AppDestination.ArScreen> {
-            val viewModel: ModelViewModel = hiltViewModel()
-            ArScreen(appNavigator = navigator, viewModel = viewModel)
+            ArScreen(appNavigator = navigator, viewModel = modelViewModel)
+        }
+        entry<AppDestination.YourMaterial> {
+            YourMaterialScreen(
+                onBackClick = { navigator.popBackStack() },
+                onMaterialClick = { material ->
+                    // Handle clicking a saved material
+                    if (material.type == com.example.holoverse.material.domain.model.MaterialType.MODEL) {
+                        navigator.navigateTo(AppDestination.ViewerScreen(modelUrl = material.url, modelName = material.name))
+                    }
+                },
+                darkTheme = darkTheme
+            )
         }
     }
 

@@ -16,6 +16,7 @@ fun GalleryScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filteredModels by viewModel.filteredModels.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val isMentor by viewModel.isMentor.collectAsStateWithLifecycle()
 
     FullGalleryScreen(
         models = filteredModels,
@@ -31,6 +32,12 @@ fun GalleryScreen(
         onBackClick = { appNavigator.popBackStack() },
         onRefresh = { viewModel.onRefresh() },
         isLoading = uiState.isLoading,
+        isMentor = isMentor,
+        isUploading = uiState.isUploading,
+        uploadProgress = uiState.uploadProgress,
+        onUploadModel = { name, desc, cat, price, modelUri, imageUri ->
+            viewModel.uploadModel(name, desc, cat, price, modelUri, imageUri)
+        },
         darkTheme = darkTheme
     )
 }

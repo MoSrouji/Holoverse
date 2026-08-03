@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Videocam
@@ -33,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -52,7 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
+import com.example.holoverse.chat.presentation.components.AttachmentSheet
 import com.example.holoverse.chat.presentation.components.ChatInput
+import com.example.holoverse.chat.presentation.components.CreatePollDialog
 import com.example.holoverse.chat.presentation.components.EmojiPicker
 import com.example.holoverse.chat.presentation.components.MessageBubble
 import com.example.holoverse.chat.presentation.components.SendingVoiceBubble
@@ -67,11 +73,15 @@ fun ConversationScreen(
     onVideoCallClick: ((String, String, String?) -> Unit)? = null,
     onIncomingCall: ((String, String, String?) -> Unit)? = null,
     onGlbClick: ((String, String) -> Unit)? = null,
+    onGroupInfoClick: ((String) -> Unit)? = null,
     darkTheme: Boolean = true
 ) {
     var showEmojiPicker by remember { mutableStateOf(false) }
+    var showAttachmentSheet by remember { mutableStateOf(false) }
+    var showPollDialog by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val context = LocalContext.current
+    val headerBrush = remember(darkTheme) { Brush(darkTheme) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -113,6 +123,20 @@ fun ConversationScreen(
         }
     }
 
+    val audioPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val fileName =
+                context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    cursor.getString(nameIndex)
+                }
+            viewModel.uploadAndSendFile(it, "audio", fileName)
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -134,23 +158,26 @@ fun ConversationScreen(
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            // ... (topBar content)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-//                    .clip(
-//                        RoundedCornerShape(
-//                            bottomStart = 32.dp,
-//                            bottomEnd = 32.dp
-//                        )
-//                    )
-                    .background(Brush(darkTheme))
-
+                    .clip(
+                        RoundedCornerShape(
+                            bottomStart = 32.dp,
+                            bottomEnd = 32.dp
+                        )
+                    )
+                    .background(headerBrush)
             ) {
                 TopAppBar(
                     title = {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable {
+                                if (uiState.currentChatId != null && uiState.currentChatId.startsWith("group_")) {
+                                    onGroupInfoClick?.invoke(uiState.currentChatId)
+                                }
+                            }
                         ) {
                             Surface(
                                 modifier = Modifier.size(40.dp),
@@ -178,6 +205,8 @@ fun ConversationScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = uiState.selectedChatPartnerName.ifEmpty { stringResource(R.string.chat_fallback) },
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (darkTheme) Color.White else Color.Black
                             )
                         }
                     },
@@ -192,6 +221,7 @@ fun ConversationScreen(
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back),
+                                tint = if (darkTheme) Color.White else Color.Black
                             )
                         }
                     },
@@ -206,11 +236,15 @@ fun ConversationScreen(
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Videocam,
-                                    contentDescription = stringResource(R.string.video_call)
+                                    contentDescription = stringResource(R.string.video_call),
+                                    tint = if (darkTheme) Color.White else Color.Black
                                 )
                             }
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    )
                 )
             }
         },
@@ -220,14 +254,7 @@ fun ConversationScreen(
                 isRecording = uiState.isRecording,
                 onTextChange = viewModel::onTextChanged,
                 onSend = viewModel::sendMessage,
-                onMediaClick = { type ->
-                    when (type) {
-                        "image" -> imagePickerLauncher.launch("image/*")
-                        "video" -> videoPickerLauncher.launch("video/*")
-                        "glb" -> glbPickerLauncher.launch("*/*")
-                        "pdf" -> filePickerLauncher.launch("application/pdf")
-                    }
-                },
+                onAttachmentClick = { showAttachmentSheet = true },
                 onEmojiClick = { showEmojiPicker = true },
                 onStartRecording = {
                     when (PackageManager.PERMISSION_GRANTED) {
@@ -244,7 +271,11 @@ fun ConversationScreen(
                     }
                 },
                 onStopRecording = viewModel::stopAndSendRecording,
-                onCancelRecording = viewModel::cancelRecording
+                onCancelRecording = viewModel::cancelRecording,
+                isRestricted = uiState.isRestricted,
+                restrictionMessage = if (uiState.currentChat?.isOnlyMentorMessaging == true && !uiState.currentUserIsMentor) 
+                    "Only the mentor can send messages" 
+                else "You are restricted from sending messages"
             )
         }
     ) { padding ->
@@ -299,12 +330,20 @@ fun ConversationScreen(
                     key = { it.id },
                     contentType = { "chat_message" }
                 ) { message ->
+                    val isCurrentUser = (uiState.currentUser?.userId ?: "") == message.senderId
+                    val isGroup = uiState.currentChat?.isGroup == true
+                    val senderImageUrl = if (isGroup) uiState.currentChat?.participantProfileImages?.get(message.senderId) else null
+
                     MessageBubble(
                         message = message,
-                        isCurrentUser = (uiState.currentUser?.userId ?: "") == message.senderId,
+                        isCurrentUser = isCurrentUser,
                         isPlaying = uiState.playingAudioUrl == message.audioUrl && message.audioUrl != null,
                         onPlayClick = { message.audioUrl?.let { viewModel.playAudio(it) } },
-                        onGlbClick = onGlbClick
+                        onGlbClick = onGlbClick,
+                        onVoteClick = { optionIdx -> viewModel.voteOnPoll(message.id, optionIdx) },
+                        senderImageUrl = senderImageUrl,
+                        showSenderInfo = isGroup,
+                        currentUserId = uiState.currentUser?.userId ?: ""
                     )
                 }
             }
@@ -321,6 +360,34 @@ fun ConversationScreen(
                         }
                     )
                 }
+            }
+
+            if (showAttachmentSheet) {
+                AttachmentSheet(
+                    onDismiss = { showAttachmentSheet = false },
+                    onMediaClick = { type ->
+                        when (type) {
+                            "image" -> imagePickerLauncher.launch("image/*")
+                            "video" -> videoPickerLauncher.launch("video/*")
+                            "glb" -> glbPickerLauncher.launch("*/*")
+                            "pdf" -> filePickerLauncher.launch("application/pdf")
+                            "audio" -> audioPickerLauncher.launch("audio/*")
+                        }
+                    },
+                    onPollClick = { showPollDialog = true },
+                    darkTheme = darkTheme
+                )
+            }
+
+            if (showPollDialog) {
+                CreatePollDialog(
+                    onDismiss = { showPollDialog = false },
+                    onCreate = { question, options ->
+                        viewModel.sendPoll(question, options)
+                        showPollDialog = false
+                    },
+                    darkTheme = darkTheme
+                )
             }
         }
     }

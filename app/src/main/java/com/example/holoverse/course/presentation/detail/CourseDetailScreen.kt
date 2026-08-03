@@ -1,12 +1,17 @@
 package com.example.holoverse.course.presentation.detail
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,6 +57,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -97,6 +103,7 @@ fun CourseDetailScreen(
     onBackClick: () -> Unit,
     onInstructorClick: (String) -> Unit,
     onEnrollSuccess: () -> Unit,
+    onNavigateToQuiz: (String, String) -> Unit,
     darkTheme: Boolean = true
 ) {
     LaunchedEffect(courseId) {
@@ -249,7 +256,10 @@ fun CourseDetailScreen(
                         CourseDetailContent(
                             course = course,
                             instructor = instructor,
+                            isEnrolled = isEnrolled,
+                            quizResults = (viewModel.quizResults.value as? Response.Success)?.data ?: emptyList(),
                             onInstructorClick = onInstructorClick,
+                            onNavigateToQuiz = onNavigateToQuiz,
                             darkTheme = darkTheme,
                             modifier = Modifier.padding(paddingValues)
                         )
@@ -294,7 +304,10 @@ enum class CourseDetailTab {
 fun CourseDetailContent(
     course: Courses,
     instructor: User.Mentor?,
+    isEnrolled: Boolean,
+    quizResults: List<com.example.holoverse.course.domain.QuizResult>,
     onInstructorClick: (String) -> Unit,
+    onNavigateToQuiz: (String, String) -> Unit,
     darkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -487,25 +500,60 @@ fun CourseDetailContent(
             }
         }
 
-        if (selectedTab == CourseDetailTab.Courses) {
-            // Syllabus / Timeline
-            itemsIndexed(
-                items = sessions,
-                key = { _, session -> session.title },
-                contentType = { _, _ -> "timeline_item" }
-            ) { index, session ->
-                TimelineItem(
-                    session = session,
-                    isFirst = index == 0,
-                    isLast = index == sessions.size - 1
-                )
-            }
-        } else {
-            item(
-                key = "rating_section",
-                contentType = "rating_section"
-            ) {
-                RatingSection(course)
+        item {
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    if (targetState.ordinal > initialState.ordinal) {
+                        (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> -width } + fadeOut()
+                        )
+                    } else {
+                        (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> width } + fadeOut()
+                        )
+                    }.using(
+                        SizeTransform(clip = false)
+                    )
+                },
+                label = "CourseDetailTabTransition"
+            ) { targetTab ->
+                when (targetTab) {
+                    CourseDetailTab.Courses -> {
+                        Column {
+                            if (course.quizzes.isNotEmpty()) {
+                                Text(
+                                    text = "Course Quizzes",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                                )
+                                course.quizzes.forEach { quiz ->
+                                    val result = quizResults.find { it.quizId == quiz.id }
+                                    QuizDashboardItem(
+                                        quiz = quiz,
+                                        result = result,
+                                        isEnrolled = isEnrolled,
+                                        onTakeQuiz = { onNavigateToQuiz(course.id, quiz.id) }
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+
+                            sessions.forEachIndexed { index, session ->
+                                TimelineItem(
+                                    session = session,
+                                    isFirst = index == 0,
+                                    isLast = index == sessions.size - 1
+                                )
+                            }
+                        }
+                    }
+
+                    CourseDetailTab.Ratings -> {
+                        RatingSection(course)
+                    }
+                }
             }
         }
 
@@ -998,6 +1046,79 @@ fun PaymentConfirmationDialog(
     }
 }
 
+@Composable
+fun QuizDashboardItem(
+    quiz: com.example.holoverse.course.domain.Quiz,
+    result: com.example.holoverse.course.domain.QuizResult?,
+    isEnrolled: Boolean,
+    onTakeQuiz: () -> Unit
+) {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = quiz.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${quiz.questions.size} Questions • ${quiz.timeLimitMinutes} mins",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (result != null) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Score: ${result.score}/100",
+                            fontWeight = FontWeight.Bold,
+                            color = if (result.score >= 50) HoloCyan else Color.Red
+                        )
+                        TextButton(onClick = {
+                            if (isEnrolled) onTakeQuiz()
+                            else Toast.makeText(context, "Please enroll to retake the exam", Toast.LENGTH_SHORT).show()
+                        }) {
+                            Text("Retake Exam", color = HoloPurple, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            if (isEnrolled) onTakeQuiz()
+                            else Toast.makeText(context, "Please enroll to start the quiz", Toast.LENGTH_SHORT).show()
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isEnrolled) HoloCyan else Color.Gray
+                        )
+                    ) {
+                        Text("Start Quiz")
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun CourseDetailScreenPreview() {
@@ -1015,7 +1136,10 @@ fun CourseDetailScreenPreview() {
                 instructorName = "John Doe"
             ),
             instructor = null,
+            isEnrolled = false,
+            quizResults = emptyList(),
             onInstructorClick = {},
+            onNavigateToQuiz = { _, _ -> },
             darkTheme = true
         )
     }

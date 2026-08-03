@@ -1,9 +1,13 @@
 package com.example.holoverse.home.presentation.component
 
 import TeacherCard
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -55,123 +59,44 @@ fun HomeContentSections(
     onCourseClick: (Courses) -> Unit,
     onSaveCourseClick: (String) -> Unit
 ) {
-    AnimatedVisibility(
-        visible = uiState.selectedTab == HomeTab.Explore,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
-        Column {
-            SectionHeader(
-                titleId = R.string.categories_title,
-                onClick = onCategoryClick
-            )
-            TextListButton(
-                categories = uiState.categories,
-                isLoading = uiState.isLoading,
-                selectedCategory = uiState.selectedCategory,
-                onCategoryClick = onCategorySelected
-            )
-
-            // 1. Recommended Courses (Personalized)
-            SectionHeader(
-                titleId = R.string.for_you_courses,
-                onClick = onRecommendedCoursesClick
-            )
-            HorizontalCourseList(
-                courses = uiState.recommendedCourses,
-                isLoading = uiState.isLoading,
-                savingCourseIds = uiState.savingCourseIds,
-                onCourseClick = onCourseClick,
-                onSaveClick = onSaveCourseClick,
-                savedCourseIds = when (val user = uiState.currentUser) {
-                    is User.Student -> user.savedCourses ?: emptyList()
-                    is User.Mentor -> user.savedCourses ?: emptyList()
-                    else -> emptyList()
-                }
-            )
-
-            // 2. Recommended Mentors (Personalized)
-            SectionHeader(
-                titleId = R.string.for_you_mentor,
-                onClick = onTopMentorClick
-            )
-            HorizontalMentorList(
-                mentors = uiState.recommendedMentors,
-                isLoading = uiState.isLoading,
-                onMentorClick = onMentorClick
-            )
-
-            // 3. Popular Courses (Global)
-            SectionHeader(
-                titleId = R.string.popular_courses,
-                onClick = onPopularCoursesClick
-            )
-            TextListTextButton(
-                categories = uiState.categories,
-                isLoading = uiState.isLoading,
-                selectedCategory = uiState.selectedCategory,
-                onCategoryClick = onFilterCategorySelected
-            )
-
-            HorizontalCourseList(
-                courses = uiState.courses,
-                isLoading = uiState.isLoading,
-                savingCourseIds = uiState.savingCourseIds,
-                onCourseClick = onCourseClick,
-                onSaveClick = onSaveCourseClick,
-                savedCourseIds = when (val user = uiState.currentUser) {
-                    is User.Student -> user.savedCourses ?: emptyList()
-                    is User.Mentor -> user.savedCourses ?: emptyList()
-                    else -> emptyList()
-                }
-            )
-
-            // 4. Top Mentors (Global)
-            SectionHeader(
-                titleId = R.string.top_mentor,
-                onClick = onTopMentorsListClick
-            )
-            HorizontalMentorList(
-                mentors = uiState.mentors,
-                isLoading = uiState.isLoading,
-                onMentorClick = onMentorClick
-            )
-        }
-    }
-
-    AnimatedVisibility(
-        visible = uiState.selectedTab == HomeTab.YourCourses,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(R.string.ongoing_learning),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (uiState.enrolledCourses.isEmpty() && uiState.savedCourses.isEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                EmptyStateText(stringResource(R.string.no_enrolled_courses))
-                Button(
-                    onClick = { onTabSelected(HomeTab.Explore) },
-                    modifier = Modifier.padding(top = 16.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(stringResource(R.string.start_exploring))
-                }
+    AnimatedContent(
+        targetState = uiState.selectedTab,
+        transitionSpec = {
+            if (targetState.ordinal > initialState.ordinal) {
+                (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
+                    slideOutHorizontally { width -> -width } + fadeOut()
+                )
             } else {
-                if (uiState.enrolledCourses.isNotEmpty()) {
+                (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
+                    slideOutHorizontally { width -> width } + fadeOut()
+                )
+            }.using(
+                SizeTransform(clip = false)
+            )
+        },
+        label = "HomeTabTransition"
+    ) { targetTab ->
+        when (targetTab) {
+            HomeTab.Explore -> {
+                Column {
+                    SectionHeader(
+                        titleId = R.string.categories_title,
+                        onClick = onCategoryClick
+                    )
+                    TextListButton(
+                        categories = uiState.categories,
+                        isLoading = uiState.isLoading,
+                        selectedCategory = uiState.selectedCategory,
+                        onCategoryClick = onCategorySelected
+                    )
+
+                    // 1. Recommended Courses (Personalized)
+                    SectionHeader(
+                        titleId = R.string.for_you_courses,
+                        onClick = onRecommendedCoursesClick
+                    )
                     HorizontalCourseList(
-                        courses = uiState.enrolledCourses,
+                        courses = uiState.recommendedCourses,
                         isLoading = uiState.isLoading,
                         savingCourseIds = uiState.savingCourseIds,
                         onCourseClick = onCourseClick,
@@ -182,29 +107,120 @@ fun HomeContentSections(
                             else -> emptyList()
                         }
                     )
-                }
 
-                if (uiState.savedCourses.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(24.dp))
+                    // 2. Recommended Mentors (Personalized)
+                    SectionHeader(
+                        titleId = R.string.for_you_mentor,
+                        onClick = onTopMentorClick
+                    )
+                    HorizontalMentorList(
+                        mentors = uiState.recommendedMentors,
+                        isLoading = uiState.isLoading,
+                        onMentorClick = onMentorClick
+                    )
+
+                    // 3. Popular Courses (Global)
+                    SectionHeader(
+                        titleId = R.string.popular_courses,
+                        onClick = onPopularCoursesClick
+                    )
+                    TextListTextButton(
+                        categories = uiState.categories,
+                        isLoading = uiState.isLoading,
+                        selectedCategory = uiState.selectedCategory,
+                        onCategoryClick = onFilterCategorySelected
+                    )
+
+                    HorizontalCourseList(
+                        courses = uiState.courses,
+                        isLoading = uiState.isLoading,
+                        savingCourseIds = uiState.savingCourseIds,
+                        onCourseClick = onCourseClick,
+                        onSaveClick = onSaveCourseClick,
+                        savedCourseIds = when (val user = uiState.currentUser) {
+                            is User.Student -> user.savedCourses ?: emptyList()
+                            is User.Mentor -> user.savedCourses ?: emptyList()
+                            else -> emptyList()
+                        }
+                    )
+
+                    // 4. Top Mentors (Global)
+                    SectionHeader(
+                        titleId = R.string.top_mentor,
+                        onClick = onTopMentorsListClick
+                    )
+                    HorizontalMentorList(
+                        mentors = uiState.mentors,
+                        isLoading = uiState.isLoading,
+                        onMentorClick = onMentorClick
+                    )
+                }
+            }
+
+            HomeTab.YourCourses -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
-                        text = "Saved for Later",
+                        text = stringResource(R.string.ongoing_learning),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(Alignment.Start)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalCourseList(
-                        courses = uiState.savedCourses,
-                        isLoading = uiState.isLoading,
-                        savingCourseIds = uiState.savingCourseIds,
-                        onCourseClick = onCourseClick,
-                        onSaveClick = onSaveCourseClick,
-                        savedCourseIds = when (val user = uiState.currentUser) {
-                            is User.Student -> user.savedCourses ?: emptyList()
-                            is User.Mentor -> user.savedCourses ?: emptyList()
-                            else -> emptyList()
+
+                    if (uiState.enrolledCourses.isEmpty() && uiState.savedCourses.isEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        EmptyStateText(stringResource(R.string.no_enrolled_courses))
+                        Button(
+                            onClick = { onTabSelected(HomeTab.Explore) },
+                            modifier = Modifier.padding(top = 16.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(stringResource(R.string.start_exploring))
                         }
-                    )
+                    } else {
+                        if (uiState.enrolledCourses.isNotEmpty()) {
+                            HorizontalCourseList(
+                                courses = uiState.enrolledCourses,
+                                isLoading = uiState.isLoading,
+                                savingCourseIds = uiState.savingCourseIds,
+                                onCourseClick = onCourseClick,
+                                onSaveClick = onSaveCourseClick,
+                                savedCourseIds = when (val user = uiState.currentUser) {
+                                    is User.Student -> user.savedCourses ?: emptyList()
+                                    is User.Mentor -> user.savedCourses ?: emptyList()
+                                    else -> emptyList()
+                                }
+                            )
+                        }
+
+                        if (uiState.savedCourses.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Saved for Later",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            HorizontalCourseList(
+                                courses = uiState.savedCourses,
+                                isLoading = uiState.isLoading,
+                                savingCourseIds = uiState.savingCourseIds,
+                                onCourseClick = onCourseClick,
+                                onSaveClick = onSaveCourseClick,
+                                savedCourseIds = when (val user = uiState.currentUser) {
+                                    is User.Student -> user.savedCourses ?: emptyList()
+                                    is User.Mentor -> user.savedCourses ?: emptyList()
+                                    else -> emptyList()
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

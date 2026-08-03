@@ -204,7 +204,8 @@ fun SearchScreen(
                 SearchResultsSection(
                     uiState = uiState,
                     onCourseClick = onCourseClick,
-                    onMentorClick = onMentorClick
+                    onMentorClick = onMentorClick,
+                    onResultClick = viewModel::onSearchResultClicked
                 )
             }
         }
@@ -335,7 +336,8 @@ fun RecentSearchesSection(
 fun SearchResultsSection(
     uiState: SearchUiState,
     onCourseClick: (String) -> Unit,
-    onMentorClick: (String) -> Unit
+    onMentorClick: (String) -> Unit,
+    onResultClick: () -> Unit
 ) {
     ShimmerBox(
         isLoading = uiState.isLoading,
@@ -382,7 +384,12 @@ fun SearchResultsSection(
                             CourseCard(
                                 course = course,
                                 modifier = Modifier.fillMaxWidth(),
-                                onClick = { if (!uiState.isLoading) onCourseClick(course.id) }
+                                onClick = {
+                                    if (!uiState.isLoading) {
+                                        onResultClick()
+                                        onCourseClick(course.id)
+                                    }
+                                }
                             )
                         }
                     } else {
@@ -404,9 +411,10 @@ fun SearchResultsSection(
                             MentorSearchResultItem(
                                 mentor = mentor,
                                 onClick = {
-                                    if (!uiState.isLoading) onMentorClick(
-                                        mentor.userId ?: ""
-                                    )
+                                    if (!uiState.isLoading) {
+                                        onResultClick()
+                                        onMentorClick(mentor.userId ?: "")
+                                    }
                                 }
                             )
                         }

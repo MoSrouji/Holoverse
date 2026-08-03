@@ -18,7 +18,8 @@ fun ModelResponseDto.toModels(): List<Model> {
             name = key.replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
             path = "$baseUrl/$path",
             description = "3D Model: ${key.replace("_", " ")}",
-            category = path.substringBefore("/", "Other")
+            category = path.substringBefore("/", "Other"),
+            uploadedBy = "Holoverse Team"
         )
     }
 }

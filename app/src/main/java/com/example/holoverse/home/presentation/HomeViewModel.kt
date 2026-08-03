@@ -17,6 +17,8 @@ import com.example.holoverse.core.utils.TranslationManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -113,99 +115,109 @@ class HomeViewModel @Inject constructor(
                 val processedData = withContext(Dispatchers.Default) {
                     val targetLang = preferenceManager.getLanguage() ?: "en"
 
-                    val mentors = rawMentors.map { mentor ->
-                        val mentorWithUrl = if (mentor.profileImageUrl != null && !mentor.profileImageUrl.startsWith("http")) {
-                            mentor.copy(profileImageUrl = cloudinaryRepository.getPhotoUrl(mentor.profileImageUrl))
-                        } else {
-                            mentor
+                    coroutineScope {
+                        val mentorsDeferred = rawMentors.map { mentor ->
+                            async {
+                                val mentorWithUrl = if (mentor.profileImageUrl != null && !mentor.profileImageUrl.startsWith("http")) {
+                                    mentor.copy(profileImageUrl = cloudinaryRepository.getPhotoUrl(mentor.profileImageUrl))
+                                } else {
+                                    mentor
+                                }
+
+                                if (targetLang != "en") {
+                                    mentorWithUrl.copy(
+                                        fullName = mentorWithUrl.fullName?.let { translationManager.translate(it, targetLang = targetLang) },
+                                        bio = mentorWithUrl.bio?.let { translationManager.translate(it, targetLang = targetLang) },
+                                        certifications = mentorWithUrl.certifications?.let { translationManager.translate(it, targetLang = targetLang) }
+                                    )
+                                } else {
+                                    mentorWithUrl
+                                }
+                            }
                         }
 
-                        if (targetLang != "en") {
-                            mentorWithUrl.copy(
-                                fullName = mentorWithUrl.fullName?.let { translationManager.translate(it, targetLang = targetLang) },
-                                bio = mentorWithUrl.bio?.let { translationManager.translate(it, targetLang = targetLang) },
-                                certifications = mentorWithUrl.certifications?.let { translationManager.translate(it, targetLang = targetLang) }
-                            )
-                        } else {
-                            mentorWithUrl
+                        val coursesDeferred = rawCourses.map { course ->
+                            async {
+                                if (targetLang != "en") {
+                                    course.copy(
+                                        name = translationManager.translate(course.name, targetLang = targetLang),
+                                        description = translationManager.translate(course.description, targetLang = targetLang),
+                                        instructorName = translationManager.translate(course.instructorName, targetLang = targetLang)
+                                    )
+                                } else {
+                                    course
+                                }
+                            }
                         }
+
+                        val boostedDeferred = rawBoostedCourses.map { boost ->
+                            async {
+                                if (targetLang != "en") {
+                                    boost.copy(
+                                        courseName = translationManager.translate(boost.courseName, targetLang = targetLang),
+                                        courseDescription = translationManager.translate(boost.courseDescription, targetLang = targetLang),
+                                        instructorName = translationManager.translate(boost.instructorName, targetLang = targetLang)
+                                    )
+                                } else {
+                                    boost
+                                }
+                            }
+                        }
+
+                        val mentors = mentorsDeferred.awaitAll()
+                        val translatedCourses = coursesDeferred.awaitAll()
+                        val boostedCourses = boostedDeferred.awaitAll()
+
+                        val userInterests = when (user) {
+                            is User.Student -> (user.favouriteSubjects
+                                ?: emptyList()) + (user.academicInterests ?: emptyList())
+
+                            is User.Mentor -> user.subjects ?: emptyList()
+                            else -> emptyList()
+                        }.distinct().map { it.trim().replace("_", " ").uppercase() }
+
+                        val recommendedCourses = translatedCourses.filter { course ->
+                            userInterests.any { nFav ->
+                                val nCat = course.category.name
+
+                                if (nCat.contains(nFav, ignoreCase = true) || nFav.contains(
+                                        nCat,
+                                        ignoreCase = true
+                                    )
+                                ) return@any true
+
+                                course.category.specializations.any { specRes ->
+                                    val spec = application.getString(specRes)
+                                    spec.replace("_", " ").uppercase()
+                                        .contains(nFav, ignoreCase = true) ||
+                                            nFav.contains(
+                                                spec.replace("_", " ").uppercase(),
+                                                ignoreCase = true
+                                            )
+                                } == true
+                            }
+                        }
+
+                        val recommendedMentors = mentors.filter { mentor ->
+                            userInterests.any { nFav ->
+                                val nSpecName = mentor.specialization.name
+
+                                nSpecName.contains(nFav, ignoreCase = true) ||
+                                        nFav.contains(nSpecName, ignoreCase = true) ||
+                                        mentor.specialization.specializations.any { specRes ->
+                                            val spec = application.getString(specRes)
+                                            spec.replace("_", " ").uppercase()
+                                                .contains(nFav, ignoreCase = true) ||
+                                                    nFav.contains(
+                                                        spec.replace("_", " ").uppercase(),
+                                                        ignoreCase = true
+                                                    )
+                                        }
+                            }
+                        }
+
+                        Triple(mentors, translatedCourses, boostedCourses) to (recommendedCourses to recommendedMentors)
                     }
-
-                    val translatedCourses = if (targetLang != "en") {
-                        rawCourses.map { course ->
-                            course.copy(
-                                name = translationManager.translate(course.name, targetLang = targetLang),
-                                description = translationManager.translate(course.description, targetLang = targetLang),
-                                instructorName = translationManager.translate(course.instructorName, targetLang = targetLang)
-                            )
-                        }
-                    } else {
-                        rawCourses
-                    }
-
-                    val boostedCourses = if (targetLang != "en") {
-                        rawBoostedCourses.map { boost ->
-                            boost.copy(
-                                courseName = translationManager.translate(boost.courseName, targetLang = targetLang),
-                                courseDescription = translationManager.translate(boost.courseDescription, targetLang = targetLang),
-                                instructorName = translationManager.translate(boost.instructorName, targetLang = targetLang)
-                            )
-                        }
-                    } else {
-                        rawBoostedCourses
-                    }
-
-                    val userInterests = when (user) {
-                        is User.Student -> (user.favouriteSubjects
-                            ?: emptyList()) + (user.academicInterests ?: emptyList())
-
-                        is User.Mentor -> user.subjects ?: emptyList()
-                        else -> emptyList()
-                    }.distinct()
-
-                    val recommendedCourses = translatedCourses.filter { course ->
-                        userInterests.any { fav ->
-                            val nFav = fav.trim().replace("_", " ").uppercase()
-                            val nCat = course.category.name
-
-                            if (nCat.contains(nFav, ignoreCase = true) || nFav.contains(
-                                    nCat,
-                                    ignoreCase = true
-                                )
-                            ) return@any true
-
-                            course.category.specializations.any { specRes ->
-                                val spec = application.getString(specRes)
-                                spec.replace("_", " ").uppercase()
-                                    .contains(nFav, ignoreCase = true) ||
-                                        nFav.contains(
-                                            spec.replace("_", " ").uppercase(),
-                                            ignoreCase = true
-                                        )
-                            } == true
-                        }
-                    }
-
-                    val recommendedMentors = mentors.filter { mentor ->
-                        userInterests.any { fav ->
-                            val nFav = fav.trim().replace("_", " ").uppercase()
-                            val nSpecName = mentor.specialization.name
-
-                            nSpecName.contains(nFav, ignoreCase = true) ||
-                                    nFav.contains(nSpecName, ignoreCase = true) ||
-                                    mentor.specialization.specializations.any { specRes ->
-                                        val spec = application.getString(specRes)
-                                        spec.replace("_", " ").uppercase()
-                                            .contains(nFav, ignoreCase = true) ||
-                                                nFav.contains(
-                                                    spec.replace("_", " ").uppercase(),
-                                                    ignoreCase = true
-                                                )
-                                    }
-                        }
-                    }
-
-                    Triple(mentors, translatedCourses, boostedCourses) to (recommendedCourses to recommendedMentors)
                 }
 
                 val (mainData, recommendedData) = processedData

@@ -14,6 +14,12 @@ data class ChatEntity(
     val lastSenderId: String,
     val participantNames: Map<String, String>,
     val participantProfileImages: Map<String, String>,
-    val isSupportChat: Boolean = false
-)
+    val isSupportChat: Boolean = false,
+    val creatorId: String? = null,
+    val groupDescription: String? = null,
+    val restrictedParticipants: List<String> = emptyList(),
+    val isOnlyMentorMessaging: Boolean = false
+) {
+    val isGroup: Boolean get() = id.startsWith("group_")
+}
 

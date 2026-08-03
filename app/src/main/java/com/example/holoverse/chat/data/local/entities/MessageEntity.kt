@@ -20,6 +20,7 @@ data class MessageEntity(
     val glbUrl: String? = null,
     val fileUrl: String? = null,
     val fileName: String? = null,
+    val poll: com.example.holoverse.chat.domain.model.Poll? = null,
     val timestamp: Long,
     val status: MessageStatus = MessageStatus.SENT
 )

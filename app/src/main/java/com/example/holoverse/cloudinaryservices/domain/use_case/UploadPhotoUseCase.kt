@@ -8,6 +8,6 @@ class UploadPhotoUseCase @Inject constructor(
     private val repository: CloudinaryRepository
 ) {
     suspend operator fun invoke(fileUri: Uri): Result<String> {
-        return repository.uploadFile(fileUri)
+        return repository.uploadFile(fileUri).map { it.url }
     }
 }

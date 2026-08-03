@@ -51,8 +51,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,7 +62,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -68,25 +69,22 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
-import com.example.holoverse.core.domain.model.AppCategory
-import com.example.holoverse.course.domain.AdCardStyle
-import com.example.holoverse.course.domain.BoostedCourse
-import com.example.holoverse.course.domain.CourseSession
 import com.example.holoverse.auth.presentation.common.widget.RadioButtonMenu
+import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.core.ui.spatial.Brush
 import com.example.holoverse.core.ui.theme.HoloCyan
 import com.example.holoverse.core.ui.theme.HoloPurple
 import com.example.holoverse.core.ui.theme.IbarraNovaFont
 import com.example.holoverse.core.utils.Response
+import com.example.holoverse.course.domain.AdCardStyle
+import com.example.holoverse.course.domain.BoostedCourse
+import com.example.holoverse.course.domain.CourseSession
+import com.example.holoverse.course.domain.Courses
+import com.example.holoverse.course.domain.Question
+import com.example.holoverse.course.domain.Quiz
+import kotlinx.coroutines.launch
+import java.util.UUID
 
-/**
- * Optimized CreateCourseScreen.
- * Major optimizations:
- * 1. Broken down into smaller, stable composables to limit recomposition scope.
- * 2. Expensive objects like Brush and filtered lists are wrapped in 'remember'.
- * 3. 'derivedStateOf' used for UI-only state derived from other states.
- * 4. Added keys to LazyColumn items for efficient list updates.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCourseScreen(
@@ -114,6 +112,8 @@ fun CreateCourseScreen(
     // UI control states
     var showSessionDialog by remember { mutableStateOf(false) }
     var editingSessionIndex by remember { mutableStateOf<Int?>(null) }
+    var showQuizDialog by remember { mutableStateOf(false) }
+    var editingQuizIndex by remember { mutableStateOf<Int?>(null) }
     var showBoostConfirmation by remember { mutableStateOf(false) }
     var showAdSelection by remember { mutableStateOf(false) }
     var showPlanSelection by remember { mutableStateOf(false) }
@@ -259,6 +259,29 @@ fun CreateCourseScreen(
             )
         }
 
+        if (showQuizDialog) {
+            val quizToEdit = remember(editingQuizIndex) {
+                editingQuizIndex?.let { viewModel.quizzes.getOrNull(it) }
+            }
+            QuizDialog(
+                quiz = quizToEdit,
+                viewModel = viewModel,
+                onDismiss = {
+                    showQuizDialog = false
+                    editingQuizIndex = null
+                },
+                onConfirm = { quiz ->
+                    if (editingQuizIndex != null) {
+                        viewModel.updateQuiz(editingQuizIndex!!, quiz)
+                    } else {
+                        viewModel.addQuiz(quiz)
+                    }
+                    showQuizDialog = false
+                    editingQuizIndex = null
+                }
+            )
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -320,7 +343,6 @@ fun CreateCourseScreen(
                 item { EmptySyllabusPlaceholder() }
             }
 
-            // Optimization: Added key for efficient updates
             itemsIndexed(
                 items = viewModel.sessions,
                 key = { _, session -> session.title + session.date + session.time }
@@ -332,6 +354,33 @@ fun CreateCourseScreen(
                         showSessionDialog = true
                     },
                     onDelete = { viewModel.removeSession(index) }
+                )
+            }
+
+            item {
+                QuizHeader(
+                    onAddQuiz = {
+                        editingQuizIndex = null
+                        showQuizDialog = true
+                    }
+                )
+            }
+
+            if (viewModel.quizzes.isEmpty()) {
+                item { EmptyQuizPlaceholder() }
+            }
+
+            itemsIndexed(
+                items = viewModel.quizzes,
+                key = { _, quiz -> quiz.id.ifEmpty { quiz.title } }
+            ) { index, quiz ->
+                QuizItem(
+                    quiz = quiz,
+                    onEdit = {
+                        editingQuizIndex = index
+                        showQuizDialog = true
+                    },
+                    onDelete = { viewModel.removeQuiz(index) }
                 )
             }
 
@@ -484,7 +533,6 @@ private fun BasicInfoSection(
     var isLanguageExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // Optimization: Use derivedStateOf for display text
     val specializationOptions = remember(mentorCategory) {
         mentorCategory.specializations.map { context.getString(it) }
     }
@@ -657,65 +705,110 @@ private fun EmptySyllabusPlaceholder() {
 }
 
 @Composable
-private fun CreateCourseButton(
-    isLoading: Boolean,
-    onClick: () -> Unit
-) {
-    if (isLoading) {
-        CircularProgressIndicator(color = HoloPurple)
-    } else {
-        Button(
-            onClick = onClick,
+fun QuizHeader(onAddQuiz: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "Course Quizzes",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        IconButton(
+            onClick = onAddQuiz,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = HoloPurple)
+                .clip(CircleShape)
+                .background(HoloCyan)
         ) {
-            Text("Create Course", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Icon(
+                Icons.Default.Add,
+                contentDescription = "Add Quiz",
+                tint = Color.White
+            )
         }
     }
 }
 
 @Composable
-private fun DialogContainer(
-    showBoostConfirmation: Boolean,
-    showAdSelection: Boolean,
-    showPlanSelection: Boolean,
-    showPaymentSimulation: Boolean,
-    lastCreatedCourse: com.example.holoverse.course.domain.Courses?,
-    onBoostConfirm: () -> Unit,
-    onStyleSelected: (AdCardStyle) -> Unit,
-    onPlanSelected: (String) -> Unit,
-    onPaymentSuccess: () -> Unit,
-    onDismissBoost: () -> Unit,
-    onDismissAdSelection: () -> Unit,
-    onDismissPlanSelection: () -> Unit
+fun EmptyQuizPlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(16.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "No quizzes added yet",
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun QuizItem(
+    quiz: Quiz,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
-    if (showBoostConfirmation) {
-        BoostConfirmationDialog(
-            onDismiss = onDismissBoost,
-            onConfirm = onBoostConfirm
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         )
-    }
-
-    if (showAdSelection && lastCreatedCourse != null) {
-        AdCardSelectionDialog(
-            course = lastCreatedCourse,
-            onDismiss = onDismissAdSelection,
-            onStyleSelected = onStyleSelected
-        )
-    }
-
-    if (showPlanSelection) {
-        SubscriptionPlanDialog(
-            onDismiss = onDismissPlanSelection,
-            onPlanSelected = { duration, _ -> onPlanSelected(duration) }
-        )
-    }
-
-    if (showPaymentSimulation) {
-        PaymentSimulationDialog(onSuccess = onPaymentSuccess)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = quiz.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Row {
+                    IconButton(onClick = onEdit) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit",
+                            tint = HoloCyan,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.Red.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "${quiz.questions.size} Questions • ${quiz.timeLimitMinutes} mins",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
@@ -790,6 +883,69 @@ fun SessionItem(
                 Text(text = session.time, style = MaterialTheme.typography.bodySmall)
             }
         }
+    }
+}
+
+@Composable
+private fun CreateCourseButton(
+    isLoading: Boolean,
+    onClick: () -> Unit
+) {
+    if (isLoading) {
+        CircularProgressIndicator(color = HoloPurple)
+    } else {
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = HoloPurple)
+        ) {
+            Text("Create Course", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun DialogContainer(
+    showBoostConfirmation: Boolean,
+    showAdSelection: Boolean,
+    showPlanSelection: Boolean,
+    showPaymentSimulation: Boolean,
+    lastCreatedCourse: com.example.holoverse.course.domain.Courses?,
+    onBoostConfirm: () -> Unit,
+    onStyleSelected: (AdCardStyle) -> Unit,
+    onPlanSelected: (String) -> Unit,
+    onPaymentSuccess: () -> Unit,
+    onDismissBoost: () -> Unit,
+    onDismissAdSelection: () -> Unit,
+    onDismissPlanSelection: () -> Unit
+) {
+    if (showBoostConfirmation) {
+        BoostConfirmationDialog(
+            onDismiss = onDismissBoost,
+            onConfirm = onBoostConfirm
+        )
+    }
+
+    if (showAdSelection && lastCreatedCourse != null) {
+        AdCardSelectionDialog(
+            course = lastCreatedCourse,
+            onDismiss = onDismissAdSelection,
+            onStyleSelected = onStyleSelected
+        )
+    }
+
+    if (showPlanSelection) {
+        SubscriptionPlanDialog(
+            onDismiss = onDismissPlanSelection,
+            onPlanSelected = { duration, _ -> onPlanSelected(duration) }
+        )
+    }
+
+    if (showPaymentSimulation) {
+        PaymentSimulationDialog(onSuccess = onPaymentSuccess)
     }
 }
 
@@ -886,6 +1042,356 @@ fun SessionDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun QuizDialog(
+    quiz: Quiz? = null,
+    viewModel: CreateCourseViewModel,
+    onDismiss: () -> Unit,
+    onConfirm: (Quiz) -> Unit
+) {
+    var title by remember { mutableStateOf(quiz?.title ?: "") }
+    var description by remember { mutableStateOf(quiz?.description ?: "") }
+    var imageUrl by remember { mutableStateOf(quiz?.imageUrl ?: "") }
+    var timeLimit by remember { mutableStateOf(quiz?.timeLimitMinutes?.toString() ?: "30") }
+    val questions = remember { mutableStateListOf<Question>().apply { quiz?.questions?.let { addAll(it) } } }
+
+    var showQuestionDialog by remember { mutableStateOf(false) }
+    var editingQuestionIndex by remember { mutableStateOf<Int?>(null) }
+    var isUploading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            uri?.let {
+                coroutineScope.launch {
+                    isUploading = true
+                    val url = viewModel.uploadQuizImage(it)
+                    if (url != null) {
+                        imageUrl = url
+                    }
+                    isUploading = false
+                }
+            }
+        }
+    )
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = if (quiz == null) "Create Quiz" else "Edit Quiz",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = HoloPurple
+                )
+
+                HoloImagePicker(
+                    imageUrl = imageUrl,
+                    onPickerLaunch = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    isLoading = isUploading
+                )
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Quiz Title") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = timeLimit,
+                    onValueChange = { timeLimit = it },
+                    label = { Text("Time Limit (Minutes)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Quiz Description") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Questions (${questions.size})", fontWeight = FontWeight.Bold)
+                    Button(
+                        onClick = {
+                            editingQuestionIndex = null
+                            showQuestionDialog = true
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = HoloCyan)
+                    ) {
+                        Text("Add Question", fontSize = 12.sp)
+                    }
+                }
+
+                questions.forEachIndexed { index, question ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("${index + 1}. ${question.text}", modifier = Modifier.weight(1f), maxLines = 1)
+                            IconButton(onClick = {
+                                editingQuestionIndex = index
+                                showQuestionDialog = true
+                            }) {
+                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp), tint = HoloCyan)
+                            }
+                            IconButton(onClick = { questions.removeAt(index) }) {
+                                Icon(Icons.Default.Delete, null, modifier = Modifier.size(16.dp), tint = Color.Red.copy(alpha = 0.6f))
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (title.isNotBlank() && questions.isNotEmpty()) {
+                                onConfirm(
+                                    Quiz(
+                                        id = quiz?.id ?: UUID.randomUUID().toString(),
+                                        title = title,
+                                        description = description,
+                                        timeLimitMinutes = timeLimit.toIntOrNull() ?: 30,
+                                        questions = questions.toList(),
+                                        imageUrl = imageUrl
+                                    )
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = HoloPurple)
+                    ) {
+                        Text("Save Quiz")
+                    }
+                }
+            }
+        }
+    }
+
+    if (showQuestionDialog) {
+        QuestionDialog(
+            question = editingQuestionIndex?.let { questions[it] },
+            viewModel = viewModel,
+            onDismiss = { showQuestionDialog = false },
+            onConfirm = { question ->
+                if (editingQuestionIndex != null) {
+                    questions[editingQuestionIndex!!] = question
+                } else {
+                    questions.add(question)
+                }
+                showQuestionDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun QuestionDialog(
+    question: Question? = null,
+    viewModel: CreateCourseViewModel,
+    onDismiss: () -> Unit,
+    onConfirm: (Question) -> Unit
+) {
+    var text by remember { mutableStateOf(question?.text ?: "") }
+    val options = remember { mutableStateListOf<String>().apply { 
+        if (question != null) addAll(question.options) else repeat(4) { add("") }
+    } }
+    val correctIndices = remember { mutableStateListOf<Int>().apply { question?.correctOptionIndices?.let { addAll(it) } } }
+    var imageUrl by remember { mutableStateOf(question?.imageUrl ?: "") }
+    var isUploading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            uri?.let {
+                coroutineScope.launch {
+                    isUploading = true
+                    val url = viewModel.uploadQuizImage(it)
+                    if (url != null) {
+                        imageUrl = url
+                    }
+                    isUploading = false
+                }
+            }
+        }
+    )
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("Add/Edit Question", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+
+                HoloImagePicker(
+                    imageUrl = imageUrl,
+                    onPickerLaunch = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    isLoading = isUploading
+                )
+
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Question Text") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Text("Options (Select correct ones):", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+
+                options.forEachIndexed { index, option ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.Checkbox(
+                            checked = correctIndices.contains(index),
+                            onCheckedChange = { checked ->
+                                if (checked) correctIndices.add(index) else correctIndices.remove(index)
+                            }
+                        )
+                        OutlinedTextField(
+                            value = option,
+                            onValueChange = { options[index] = it },
+                            label = { Text("Option ${index + 1}") },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                }
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    Button(
+                        onClick = {
+                            if (text.isNotBlank() && correctIndices.isNotEmpty() && options.all { it.isNotBlank() }) {
+                                onConfirm(
+                                    Question(
+                                        id = question?.id ?: UUID.randomUUID().toString(),
+                                        text = text,
+                                        options = options.toList(),
+                                        correctOptionIndices = correctIndices.toList(),
+                                        imageUrl = imageUrl
+                                    )
+                                )
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = HoloCyan)
+                    ) {
+                        Text("Confirm")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HoloImagePicker(
+    imageUrl: String,
+    onPickerLaunch: () -> Unit,
+    isLoading: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .clickable(onClick = onPickerLaunch),
+        contentAlignment = Alignment.Center
+    ) {
+        if (imageUrl.isNotEmpty()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.AddAPhoto,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    Icons.Default.AddAPhoto,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = HoloCyan
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Upload Image",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
+        if (isLoading) {
+            CircularProgressIndicator(color = HoloCyan, modifier = Modifier.size(24.dp))
         }
     }
 }

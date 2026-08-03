@@ -30,12 +30,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.holoverse.navigation.AppDestination
-import com.example.holoverse.navigation.AppNavigator
-import com.example.holoverse.navigation.NavigationState
 import com.example.holoverse.core.ui.spatial.Brush
 import com.example.holoverse.core.ui.theme.BorderWhite
 import com.example.holoverse.core.ui.theme.GlassWhite
+import com.example.holoverse.navigation.AppDestination
+import com.example.holoverse.navigation.AppNavigator
+import com.example.holoverse.navigation.NavigationState
 
 @Composable
 fun HoloBottomDock(
@@ -155,13 +155,13 @@ fun GlassCard(
 ) {
     Box(
         modifier = modifier
+            .clip(RoundedCornerShape(cornerRadius))
+            .background(color)
+            .border(1.dp, BorderWhite, RoundedCornerShape(cornerRadius))
             .clickable(
                 onClick = onClick,
                 enabled = enable
-            )
-            .clip(RoundedCornerShape(cornerRadius))
-            .background(color)
-            .border(1.dp, BorderWhite, RoundedCornerShape(cornerRadius)),
+            ),
         content = content,
     )
 }

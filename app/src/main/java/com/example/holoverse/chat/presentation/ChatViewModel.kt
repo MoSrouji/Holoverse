@@ -137,6 +137,22 @@ class ChatViewModel @Inject constructor(
                         emptyList()
                     }
 
+                    val currentChat = if (currentChatId != null) {
+                        repoChats.find { it.id == currentChatId }
+                    } else {
+                        null
+                    }
+
+                    val isMentor = currentChat?.isGroup == true && currentChat.creatorId == currentState.currentUser?.userId
+                    
+                    val isIndividuallyRestricted = currentChat?.isGroup == true && 
+                            currentChat.restrictedParticipants.contains(currentState.currentUser?.userId)
+                    
+                    val isGroupRestricted = currentChat?.isGroup == true && 
+                            currentChat.isOnlyMentorMessaging && !isMentor
+                    
+                    val isRestricted = isIndividuallyRestricted || isGroupRestricted
+
                     // Filter support chats if current user is not Admin
                     val filteredChats = if (currentState.currentUser is User.Admin) {
                         repoChats
@@ -146,7 +162,10 @@ class ChatViewModel @Inject constructor(
 
                     currentState.copy(
                         chats = filteredChats,
-                        messages = messagesForCurrentChat
+                        messages = messagesForCurrentChat,
+                        currentChat = currentChat,
+                        currentUserIsMentor = isMentor,
+                        isRestricted = isRestricted
                     )
                 }
             }
@@ -396,8 +415,8 @@ class ChatViewModel @Inject constructor(
                 _uiState.update { it.copy(isSendingAudio = true) }
 
                 val uploadResult = cloudinaryRepository.uploadFile(uri)
-                uploadResult.onSuccess { audioUrl ->
-                    sendVoiceMessage(audioUrl)
+                uploadResult.onSuccess { result ->
+                    sendVoiceMessage(result.url)
                 }.onFailure {
                     // Handle failure
                 }
@@ -415,12 +434,13 @@ class ChatViewModel @Inject constructor(
                 _uiState.update { it.copy(isUploadingFile = true) }
 
                 val uploadResult = cloudinaryRepository.uploadFile(uri)
-                uploadResult.onSuccess { url ->
+                uploadResult.onSuccess { result ->
                     when (type) {
-                        "image" -> sendImageMessage(url)
-                        "video" -> sendVideoMessage(url)
-                        "glb" -> sendGlbMessage(url, fileName ?: "model.glb")
-                        "pdf" -> sendFileMessage(url, fileName ?: "document.pdf")
+                        "image" -> sendImageMessage(result.url)
+                        "video" -> sendVideoMessage(result.url)
+                        "glb" -> sendGlbMessage(result.url, fileName ?: "model.glb")
+                        "pdf" -> sendFileMessage(result.url, fileName ?: "document.pdf")
+                        "audio" -> sendVoiceMessage(result.url)
                     }
                 }.onFailure {
                     // Handle failure
@@ -504,6 +524,91 @@ class ChatViewModel @Inject constructor(
             _uiState.update { it.copy(isRecording = false) }
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    fun updateGroupSettings(
+        name: String? = null,
+        description: String? = null,
+        isOnlyMentorMessaging: Boolean? = null,
+        imageUri: Uri? = null
+    ) {
+        val chatId = _uiState.value.currentChatId ?: return
+        viewModelScope.launch {
+            try {
+                var imageUrl: String? = null
+                if (imageUri != null) {
+                    val uploadResult = cloudinaryRepository.uploadFile(imageUri)
+                    imageUrl = uploadResult.getOrNull()?.url
+                }
+                chatRepository.updateGroupSettings(
+                    chatId = chatId,
+                    name = name,
+                    description = description,
+                    imageUrl = imageUrl,
+                    isOnlyMentorMessaging = isOnlyMentorMessaging
+                )
+            } catch (e: Exception) {
+                // Log or handle error
+            }
+        }
+    }
+
+    fun leaveGroup() {
+        val chatId = _uiState.value.currentChatId ?: return
+        val userId = _uiState.value.currentUser?.userId ?: return
+        viewModelScope.launch {
+            try {
+                chatRepository.leaveGroup(chatId, userId)
+                backToChatList()
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+    fun restrictMember(userId: String) {
+        val chatId = _uiState.value.currentChatId ?: return
+        viewModelScope.launch {
+            try {
+                chatRepository.restrictMember(chatId, userId)
+            } catch (e: Exception) {
+                // Log or handle error
+            }
+        }
+    }
+
+    fun unrestrictMember(userId: String) {
+        val chatId = _uiState.value.currentChatId ?: return
+        viewModelScope.launch {
+            try {
+                chatRepository.unrestrictMember(chatId, userId)
+            } catch (e: Exception) {
+                // Log or handle error
+            }
+        }
+    }
+
+    fun sendPoll(question: String, options: List<String>) {
+        val chatId = _uiState.value.currentChatId ?: return
+        viewModelScope.launch {
+            try {
+                chatRepository.sendPoll(chatId, question, options)
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+    fun voteOnPoll(messageId: String, optionIndex: Int) {
+        val chatId = _uiState.value.currentChatId ?: return
+        val userId = _uiState.value.currentUser?.userId ?: return
+        viewModelScope.launch {
+            try {
+                chatRepository.voteOnPoll(chatId, messageId, optionIndex, userId)
+            } catch (e: Exception) {
+                // Handle error
+            }
         }
     }
 

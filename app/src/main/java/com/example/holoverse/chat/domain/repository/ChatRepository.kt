@@ -56,5 +56,21 @@ interface ChatRepository {
         userImageUrl: String?,
         admin: com.example.holoverse.auth.domain.entities.User.Admin
     ): Flow<com.example.holoverse.core.utils.Response<String>>
+
+    suspend fun updateGroupSettings(
+        chatId: String,
+        name: String? = null,
+        description: String? = null,
+        imageUrl: String? = null,
+        isOnlyMentorMessaging: Boolean? = null
+    )
+
+    suspend fun leaveGroup(chatId: String, userId: String)
+
+    suspend fun restrictMember(chatId: String, userId: String)
+    suspend fun unrestrictMember(chatId: String, userId: String)
+
+    suspend fun sendPoll(chatId: String, question: String, options: List<String>)
+    suspend fun voteOnPoll(chatId: String, messageId: String, optionIndex: Int, userId: String)
 }
 

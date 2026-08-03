@@ -4,7 +4,11 @@ import android.content.Context
 import android.util.Log
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -21,6 +25,9 @@ class ModelCacheManager(
         .add(KotlinJsonAdapterFactory())
         .build()
 
+    private val activeDownloads = mutableMapOf<String, Deferred<String>>()
+    private val downloadMutex = Mutex()
+
     suspend fun getModelPath(
         modelId: String,
         url: String,
@@ -29,7 +36,28 @@ class ModelCacheManager(
         if (url.startsWith("content://") || url.startsWith("file://")) {
             return@withContext url
         }
+
+        // Use a Mutex and a Map to ensure only one download happens for a specific modelId
+        val deferred = downloadMutex.withLock {
+            activeDownloads[modelId] ?: async {
+                try {
+                    fetchModelPathInternal(modelId, url, onProgress)
+                } finally {
+                    downloadMutex.withLock {
+                        activeDownloads.remove(modelId)
+                    }
+                }
+            }.also { activeDownloads[modelId] = it }
+        }
         
+        deferred.await()
+    }
+
+    private suspend fun fetchModelPathInternal(
+        modelId: String,
+        url: String,
+        onProgress: ((Float, Long, Long) -> Unit)? = null
+    ): String {
         val modelsDir = File(context.filesDir, "models")
         if (!modelsDir.exists()) modelsDir.mkdirs()
 
@@ -40,7 +68,7 @@ class ModelCacheManager(
             val manifestFile = getModelFileFromManifest(modelDir)
             if (manifestFile != null) {
                 onProgress?.invoke(1.0f, manifestFile.length(), manifestFile.length())
-                return@withContext "file://${manifestFile.absolutePath}"
+                return "file://${manifestFile.absolutePath}"
             }
             
             // Fallback to searching
@@ -48,7 +76,7 @@ class ModelCacheManager(
             if (modelFile != null) {
                 saveManifest(modelDir, modelFile)
                 onProgress?.invoke(1.0f, modelFile.length(), modelFile.length())
-                return@withContext "file://${modelFile.absolutePath}"
+                return "file://${modelFile.absolutePath}"
             }
         }
 
@@ -56,20 +84,20 @@ class ModelCacheManager(
         val legacyGlb = File(modelsDir, "$modelId.glb")
         if (legacyGlb.exists()) {
             onProgress?.invoke(1.0f, legacyGlb.length(), legacyGlb.length())
-            return@withContext "file://${legacyGlb.absolutePath}"
+            return "file://${legacyGlb.absolutePath}"
         }
         
         val legacyGltf = File(modelsDir, "$modelId.gltf")
         if (legacyGltf.exists()) {
             onProgress?.invoke(1.0f, legacyGltf.length(), legacyGltf.length())
-            return@withContext "file://${legacyGltf.absolutePath}"
+            return "file://${legacyGltf.absolutePath}"
         }
 
         try {
             if (!url.startsWith("http")) {
                 throw IllegalArgumentException("Invalid URL: $url")
             }
-            downloadAndProcessModel(modelId, url, onProgress)
+            return downloadAndProcessModel(modelId, url, onProgress)
         } catch (e: Exception) {
             Log.e("ModelCacheManager", "Failed to process model from $url", e)
             throw e

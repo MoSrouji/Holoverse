@@ -6,5 +6,8 @@ data class Model(
     val path: String,
     val description: String,
     val category: String = "Other",
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val price: Double = 0.0,
+    val uploadedBy: String = "Holoverse Team",
+    val uploadedById: String? = null
 )

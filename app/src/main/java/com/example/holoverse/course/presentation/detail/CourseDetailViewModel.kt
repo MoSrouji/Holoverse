@@ -9,6 +9,7 @@ import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.chat.domain.repository.ChatRepository
 import com.example.holoverse.course.data.CourseRepo
 import com.example.holoverse.course.domain.Courses
+import com.example.holoverse.course.domain.QuizResult
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.core.utils.Response
 import com.example.holoverse.core.utils.TranslationManager
@@ -46,6 +47,9 @@ class CourseDetailViewModel @Inject constructor(
     private val _saveStatus = mutableStateOf<Response<Boolean>?>(null)
     val saveStatus: State<Response<Boolean>?> = _saveStatus
 
+    private val _quizResults = mutableStateOf<Response<List<QuizResult>>>(Response.Loading)
+    val quizResults: State<Response<List<QuizResult>>> = _quizResults
+
     private var currentCourseId: String? = null
 
     init {
@@ -57,6 +61,16 @@ class CourseDetailViewModel @Inject constructor(
         getCourseById(courseId)
         checkEnrollmentStatus(courseId)
         checkSavedStatus(courseId)
+        fetchQuizResults(courseId)
+    }
+
+    private fun fetchQuizResults(courseId: String) {
+        val userId = authRepository.getCachedUser()?.userId ?: return
+        viewModelScope.launch {
+            repository.getQuizResults(userId, courseId).collectLatest { response ->
+                _quizResults.value = response
+            }
+        }
     }
 
     private fun checkSavedStatus(courseId: String) {
@@ -169,16 +183,6 @@ class CourseDetailViewModel @Inject constructor(
                             participantId = userId,
                             participantName = user.fullName ?: "Student",
                             participantImageUrl = profileImageUrl
-                        )
-                        
-                        // Also ensure teacher is in the group
-                        chatRepository.createOrJoinGroupChat(
-                            courseId = course.id,
-                            courseName = course.name,
-                            courseImageUrl = course.imageUrl,
-                            participantId = course.instructorId,
-                            participantName = course.instructorName,
-                            participantImageUrl = null // We might not have teacher image here easily
                         )
                     }
                 }

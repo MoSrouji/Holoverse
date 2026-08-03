@@ -6,4 +6,5 @@ interface ModelRepository {
     suspend fun getModels(forceRefresh: Boolean = false): List<Model>
     suspend fun searchModels(query: String): List<Model>
     suspend fun getDownloadUrl(modelId: String): String?
+    suspend fun uploadModel(model: Model): Result<Unit>
 }

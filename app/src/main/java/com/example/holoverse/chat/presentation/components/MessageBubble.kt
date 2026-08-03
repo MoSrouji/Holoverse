@@ -2,10 +2,12 @@ package com.example.holoverse.chat.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
@@ -21,6 +24,8 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.ViewInAr
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -34,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.holoverse.R
@@ -46,7 +52,11 @@ fun MessageBubble(
     isCurrentUser: Boolean,
     isPlaying: Boolean = false,
     onPlayClick: () -> Unit = {},
-    onGlbClick: ((String, String) -> Unit)? = null
+    onGlbClick: ((String, String) -> Unit)? = null,
+    onVoteClick: (Int) -> Unit = {},
+    senderImageUrl: String? = null,
+    showSenderInfo: Boolean = false,
+    currentUserId: String = ""
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -64,6 +74,42 @@ fun MessageBubble(
             modifier = Modifier.widthIn(max = 280.dp)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                if (!isCurrentUser && showSenderInfo) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(24.dp),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            if (senderImageUrl != null) {
+                                AsyncImage(
+                                    model = senderImageUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = message.senderName.take(1).uppercase(),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = message.senderName,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
                 if (message.imageUrl != null) {
                     AsyncImage(
                         model = message.imageUrl,
@@ -75,6 +121,15 @@ fun MessageBubble(
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                if (message.poll != null) {
+                    PollContent(
+                        poll = message.poll,
+                        isCurrentUser = isCurrentUser,
+                        currentUserId = currentUserId,
+                        onVoteClick = onVoteClick
+                    )
                 }
 
                 if (message.videoUrl != null) {
@@ -230,6 +285,96 @@ fun MessageBubble(
 }
 
 @Composable
+fun PollContent(
+    poll: com.example.holoverse.chat.domain.model.Poll,
+    isCurrentUser: Boolean,
+    currentUserId: String,
+    onVoteClick: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = poll.question,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.onSecondaryContainer
+        )
+
+        val totalVotes = poll.votes.values.sumOf { it.size }.coerceAtLeast(1)
+
+        poll.options.forEachIndexed { index, option ->
+            val optionVotes = poll.votes[index.toString()]?.size ?: 0
+            val percentage = (optionVotes.toFloat() / totalVotes.toFloat())
+            val hasVoted = poll.votes[index.toString()]?.contains(currentUserId) == true
+
+            Surface(
+                onClick = { onVoteClick(index) },
+                shape = RoundedCornerShape(12.dp),
+                color = if (hasVoted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                else Color.Transparent,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (hasVoted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)
+                )
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    // Progress background
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(percentage)
+                            .height(44.dp)
+                            .background(
+                                (if (isCurrentUser) Color.White else MaterialTheme.colorScheme.primary)
+                                    .copy(alpha = 0.1f)
+                            )
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = if (hasVoted) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                                contentDescription = null,
+                                tint = if (hasVoted) MaterialTheme.colorScheme.primary else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isCurrentUser) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
+                                maxLines = 1
+                            )
+                        }
+                        Text(
+                            text = "$optionVotes",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isCurrentUser) Color.White.copy(alpha = 0.7f) else Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+        
+        Text(
+            text = "${poll.votes.values.sumOf { it.size }} votes",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isCurrentUser) Color.White.copy(alpha = 0.6f) else Color.Gray,
+            modifier = Modifier.align(Alignment.End)
+        )
+    }
+}
+
+@Composable
 fun SendingVoiceBubble() {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -263,4 +408,3 @@ fun SendingVoiceBubble() {
         }
     }
 }
-

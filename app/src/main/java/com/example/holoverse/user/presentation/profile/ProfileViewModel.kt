@@ -144,7 +144,8 @@ class ProfileViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             val uploadResult = cloudinaryRepository.uploadFile(uri)
 
-            uploadResult.onSuccess { imageUrl ->
+            uploadResult.onSuccess { result ->
+                val imageUrl = result.url
                 Log.d("ProfileViewModel", "Cloudinary upload success. URL: $imageUrl")
                 val currentUser = preferenceManager.getUser()
                 Log.d("ProfileViewModel", "Current user from preferenceManager: $currentUser")

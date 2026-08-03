@@ -14,6 +14,7 @@ data class Message(
     val glbUrl: String? = null,
     val fileUrl: String? = null,
     val fileName: String? = null,
+    val poll: Poll? = null,
     val timestamp: Timestamp? = null,
     val status: MessageStatus = MessageStatus.SENT
 )

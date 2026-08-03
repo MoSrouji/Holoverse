@@ -3,6 +3,7 @@ package com.example.holoverse.course.data
 import com.example.holoverse.core.domain.model.AppCategory
 import com.example.holoverse.course.domain.BoostedCourse
 import com.example.holoverse.course.domain.Courses
+import com.example.holoverse.course.domain.QuizResult
 import com.example.holoverse.core.utils.Response
 import kotlinx.coroutines.flow.Flow
 
@@ -18,6 +19,10 @@ interface CourseRepo {
     suspend fun boostCourse(boostedCourse: BoostedCourse): Flow<Response<Boolean>>
     suspend fun getBoostedCourses(): Flow<Response<List<BoostedCourse>>>
     suspend fun deleteBoostedCourse(courseId: String): Flow<Response<Boolean>>
+
+    // Quiz methods
+    suspend fun saveQuizResult(result: QuizResult): Flow<Response<Boolean>>
+    suspend fun getQuizResults(userId: String, courseId: String): Flow<Response<List<QuizResult>>>
 }
 
 

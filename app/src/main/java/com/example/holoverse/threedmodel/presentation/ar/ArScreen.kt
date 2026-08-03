@@ -51,7 +51,6 @@ import com.example.holoverse.threedmodel.presentation.ar.rememberArStatus
 import com.example.holoverse.ui.three_D_Part.gallery.ModelGalleryOverlay
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,11 +61,6 @@ fun ArScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val cacheManager = viewModel.cacheManager
-
-    var cachedModelPath by remember { mutableStateOf<String?>(null) }
-    var isDownloading by remember { mutableStateOf(false) }
-    var downloadError by remember { mutableStateOf<String?>(null) }
 
     val arStatus = rememberArStatus()
     var userRequestedInstall by remember { mutableStateOf(false) }
@@ -83,32 +77,10 @@ fun ArScreen(
         }
     }
 
-    // Cache or download model whenever a new model is selected
-    LaunchedEffect(uiState.selectedModel) {
-        val model = uiState.selectedModel
-        if (model != null) {
-            isDownloading = true
-            downloadError = null
-            try {
-                cachedModelPath = withContext(Dispatchers.IO) {
-                    cacheManager.getModelPath(model.id, model.path)
-                }
-            } catch (e: Exception) {
-                downloadError = "Failed to load model: ${e.localizedMessage}"
-                cachedModelPath = null
-            } finally {
-                isDownloading = false
-            }
-        } else {
-            cachedModelPath = null
-        }
-    }
-
     // Show download errors in a snackbar
-    LaunchedEffect(downloadError) {
-        downloadError?.let {
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
             snackbarHostState.showSnackbar(it)
-            downloadError = null // reset after showing
         }
     }
 
@@ -139,16 +111,16 @@ fun ArScreen(
         ) {
             // AR View – shown even when model path is null
             ArViewer(
-                modelPath = cachedModelPath,
+                modelPath = uiState.selectedModelPath,
                 modifier = Modifier.fillMaxSize(),
                 rotation = uiState.modelRotation,
                 verticalRotation = uiState.modelVerticalRotation,
                 scale = uiState.modelScale,
-                isLoading = isDownloading
+                isLoading = uiState.selectedModelPath == null && uiState.selectedModel != null
             )
 
             // Loading overlay
-            if (isDownloading) {
+            if (uiState.selectedModelPath == null && uiState.selectedModel != null) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -165,7 +137,7 @@ fun ArScreen(
             }
 
             // AR controls and model gallery only when a valid model is ready
-            if (cachedModelPath != null) {
+            if (uiState.selectedModelPath != null) {
                 // Left-side control panel
                 ArControlPanel(
                     rotation = uiState.modelRotation,
@@ -240,7 +212,7 @@ fun ArScreen(
                         }
                     }
                 }
-            } else if (!isDownloading && arStatus == ArStatus.SUPPORTED) {
+            } else if (uiState.selectedModel == null && arStatus == ArStatus.SUPPORTED) {
                 // Placeholder when no model is selected
                 Column(
                     modifier = Modifier

@@ -156,7 +156,7 @@ class EditProfileViewModel @Inject constructor(
 
                 val imageUrl = if (selectedImageUri != null) {
                     val uploadResult = cloudinaryRepository.uploadFile(selectedImageUri!!)
-                    uploadResult.getOrThrow()
+                    uploadResult.getOrThrow().url
                 } else {
                     when (val user = currentUserSnapshot) {
                         is User.Student -> user.profileImageUrl

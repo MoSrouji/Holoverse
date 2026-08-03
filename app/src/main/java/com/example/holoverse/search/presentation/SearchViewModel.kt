@@ -162,11 +162,6 @@ class SearchViewModel @Inject constructor(
     private suspend fun performSearch() {
         val currentState = _uiState.value
         
-        // Save to recent searches if query is not empty and search was triggered
-        if (currentState.query.isNotBlank()) {
-            saveSearch(currentState.query, currentState.searchType)
-        }
-
         if (currentState.searchType == SearchType.COURSES) {
             searchRepository.searchCourses(currentState.courseFilters.copy(query = currentState.query))
                 .collect { response ->
@@ -177,6 +172,13 @@ class SearchViewModel @Inject constructor(
                 .collect { response ->
                     handleMentorResponse(response)
                 }
+        }
+    }
+
+    fun onSearchResultClicked() {
+        val currentState = _uiState.value
+        if (currentState.query.isNotBlank()) {
+            saveSearch(currentState.query, currentState.searchType)
         }
     }
 

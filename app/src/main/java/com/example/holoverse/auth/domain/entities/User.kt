@@ -8,6 +8,7 @@ sealed interface User {
     val userId: String?
     val fullName: String?
     val email: String?
+    val profileImageUrl: String?
     val accountType: UserType
     val fcmToken: String?
 
@@ -20,7 +21,7 @@ sealed interface User {
         override val fcmToken: String? = null,
 
         // Personal Information
-        val profileImageUrl: String? = null,
+        override val profileImageUrl: String? = null,
         val dateOfBirth: String? = null,
         val phoneNumber: String? = null,
         val address: String? = null,
@@ -70,7 +71,7 @@ sealed interface User {
         override val fcmToken: String? = null,
 
         // Personal Information
-        val profileImageUrl: String? = null,
+        override val profileImageUrl: String? = null,
         val dateOfBirth: String? = null,
         val phoneNumber: String? = null,
         val address: String? = null,
@@ -127,7 +128,7 @@ sealed interface User {
         override val email: String? = null,
         override val accountType: UserType = UserType.Admin,
         override val fcmToken: String? = null,
-        val profileImageUrl: String? = null,
+        override val profileImageUrl: String? = null,
         val createdAt: Long? = null
     ) : User
 }

@@ -16,6 +16,7 @@ import com.example.holoverse.chat.data.remote.NotificationData
 import com.example.holoverse.chat.domain.model.Chat
 import com.example.holoverse.chat.domain.model.Message
 import com.example.holoverse.chat.domain.model.MessageStatus
+import com.example.holoverse.chat.domain.model.Poll
 import com.example.holoverse.chat.domain.repository.ChatRepository
 import com.example.holoverse.core.utils.NetworkConstant
 import com.google.auth.oauth2.GoogleCredentials
@@ -279,12 +280,14 @@ class ChatRepositoryImpl @Inject constructor(
                     participantProfileImages = participantImageUrl?.let { mapOf(participantId to it) }
                         ?: emptyMap(),
                     lastMessage = "Group created for $courseName",
-                    lastMessageTimestamp = Timestamp.now()
+                    lastMessageTimestamp = Timestamp.now(),
+                    creatorId = participantId
                 )
                 chatRef.set(chatData).await()
                 chatDao.insertChats(listOf(chatData.toEntity()))
             } else {
                 // Add participant to existing group
+                val remoteChat = snapshot.toObject(Chat::class.java)
                 val updateData = mutableMapOf<String, Any>(
                     "participants" to FieldValue.arrayUnion(participantId),
                     "participantNames.$participantId" to participantName
@@ -292,14 +295,18 @@ class ChatRepositoryImpl @Inject constructor(
                 participantImageUrl?.let {
                     updateData["participantProfileImages.$participantId"] = it
                 }
+                
+                // If creatorId is missing, set it (helpful for migration)
+                if (remoteChat?.creatorId == null) {
+                    updateData["creatorId"] = participantId
+                }
 
                 chatRef.update(updateData).await()
 
                 // Refresh local chat
                 val updatedSnapshot = chatRef.get().await()
-                val remoteChat =
-                    updatedSnapshot.toObject(Chat::class.java)?.copy(id = updatedSnapshot.id)
-                remoteChat?.let { chatDao.insertChats(listOf(it.toEntity())) }
+                val updatedChat = updatedSnapshot.toObject(Chat::class.java)?.copy(id = updatedSnapshot.id)
+                updatedChat?.let { chatDao.insertChats(listOf(it.toEntity())) }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -320,6 +327,17 @@ class ChatRepositoryImpl @Inject constructor(
         fileUrl: String?,
         fileName: String?
     ) {
+        // Restriction Check
+        val chat = chatDao.getChatById(chatId)
+        if (chat != null && chat.isGroup) {
+            if (chat.isOnlyMentorMessaging && chat.creatorId != senderId) {
+                throw IllegalStateException("Only the mentor can send messages in this group.")
+            }
+            if (chat.restrictedParticipants.contains(senderId)) {
+                throw IllegalStateException("You are restricted from sending messages in this group.")
+            }
+        }
+
         val messageId = UUID.randomUUID().toString()
         val currentTime = System.currentTimeMillis()
 
@@ -461,46 +479,164 @@ class ChatRepositoryImpl @Inject constructor(
         senderName: String,
         senderImageUrl: String?
     ) {
-        repositoryScope.launch {
-            try {
-                val participants = chatId.split("_")
-                val recipientId = participants.find { it != senderId } ?: return@launch
+        // ... (existing code)
+    }
 
-                val recipientToken = authRepository.getFcmToken(recipientId)
-                Log.d("ChatRepository", "sendCallNotification: Recipient=$recipientId, Token=${recipientToken ?: "MISSING"}")
+    override suspend fun updateGroupSettings(
+        chatId: String,
+        name: String?,
+        description: String?,
+        imageUrl: String?,
+        isOnlyMentorMessaging: Boolean?
+    ) {
+        val updates = mutableMapOf<String, Any>()
+        name?.let { updates["participantNames.$chatId"] = it }
+        description?.let { updates["groupDescription"] = it }
+        imageUrl?.let { updates["participantProfileImages.$chatId"] = it }
+        isOnlyMentorMessaging?.let { updates["onlyMentorMessaging"] = it }
 
-                if (!recipientToken.isNullOrBlank()) {
-                    val authHeader = getAccessToken()
-                    val request = FcmV1Request(
-                        message = FcmMessage(
-                            token = recipientToken,
-                            // Data-only message to ensure onMessageReceived is always called
-                            notification = null, 
-                            data = mapOf(
-                                "type" to "call",
-                                "callId" to chatId,
-                                "callerName" to senderName,
-                                "callerImage" to (senderImageUrl ?: ""),
-                                "chatId" to chatId,
-                                "title" to "Incoming Video Call",
-                                "body" to "$senderName is calling you..."
-                            ),
-                            android = AndroidConfig(
-                                priority = "high",
-                                notification = null // Let FcmService handle the notification
-                            )
-                        )
-                    )
-                    Log.d("ChatRepository", "Sending FCM request to API...")
-                    fcmApi.sendNotification(authHeader, request)
-                    Log.d("ChatRepository", "Call notification sent successfully")
-                } else {
-                    Log.e("ChatRepository", "Cannot send call notification: Recipient token is null or blank")
-                }
-            } catch (e: Exception) {
-                Log.e("ChatRepository", "Failed to send call notification: ${e.message}")
+        if (updates.isNotEmpty()) {
+            firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+                .update(updates).await()
+            
+            // Local update
+            chatDao.getChatById(chatId)?.let { chat ->
+                val newNames = chat.participantNames.toMutableMap().apply { name?.let { put(chatId, it) } }
+                val newImages = chat.participantProfileImages.toMutableMap().apply { imageUrl?.let { put(chatId, it) } }
+                
+                chatDao.insertChats(listOf(chat.copy(
+                    participantNames = newNames,
+                    participantProfileImages = newImages,
+                    groupDescription = description ?: chat.groupDescription,
+                    isOnlyMentorMessaging = isOnlyMentorMessaging ?: chat.isOnlyMentorMessaging
+                )))
             }
         }
+    }
+
+    override suspend fun leaveGroup(chatId: String, userId: String) {
+        firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            .update(
+                "participants", FieldValue.arrayRemove(userId),
+                "participantNames.$userId", FieldValue.delete(),
+                "participantProfileImages.$userId", FieldValue.delete()
+            ).await()
+        
+        chatDao.getChatById(chatId)?.let { chat ->
+            val newParticipants = chat.participants.filter { it != userId }
+            if (newParticipants.isEmpty()) {
+                // Optionally delete the chat if no participants left
+                // For now just update local
+            }
+            chatDao.insertChats(listOf(chat.copy(participants = newParticipants)))
+        }
+    }
+
+    override suspend fun restrictMember(chatId: String, userId: String) {
+        firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            .update("restrictedParticipants", FieldValue.arrayUnion(userId)).await()
+        
+        chatDao.getChatById(chatId)?.let { chat ->
+            val newList = chat.restrictedParticipants.toMutableList().apply { add(userId) }
+            chatDao.insertChats(listOf(chat.copy(restrictedParticipants = newList)))
+        }
+    }
+
+    override suspend fun unrestrictMember(chatId: String, userId: String) {
+        firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+            .update("restrictedParticipants", FieldValue.arrayRemove(userId)).await()
+        
+        chatDao.getChatById(chatId)?.let { chat ->
+            val newList = chat.restrictedParticipants.toMutableList().apply { remove(userId) }
+            chatDao.insertChats(listOf(chat.copy(restrictedParticipants = newList)))
+        }
+    }
+
+    override suspend fun sendPoll(chatId: String, question: String, options: List<String>) {
+        val user = authRepository.getCurrentUser() ?: return
+        val senderId = user.userId ?: ""
+        val senderName = user.fullName ?: "Unknown"
+        val senderType = user.accountType.name
+        
+        val messageId = UUID.randomUUID().toString()
+        val currentTime = System.currentTimeMillis()
+        
+        val poll = Poll(question = question, options = options)
+        
+        val localMessage = MessageEntity(
+            id = messageId,
+            chatId = chatId,
+            senderId = senderId,
+            senderName = senderName,
+            senderType = senderType,
+            text = "Poll: $question",
+            poll = poll,
+            timestamp = currentTime / 1000,
+            status = MessageStatus.SENDING
+        )
+        
+        messageDao.insertMessages(listOf(localMessage))
+        
+        repositoryScope.launch {
+            try {
+                val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+                val messageRef = chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document(messageId)
+                val serverTime = FieldValue.serverTimestamp()
+                
+                val messageMap = mutableMapOf(
+                    "senderId" to senderId,
+                    "senderName" to senderName,
+                    "senderType" to senderType,
+                    "text" to "Poll: $question",
+                    "poll" to poll,
+                    "timestamp" to serverTime
+                )
+                
+                firestore.runBatch { batch ->
+                    batch.set(messageRef, messageMap)
+                    val chatUpdate = mapOf(
+                        "lastMessage" to "Poll: $question",
+                        "lastMessageTimestamp" to serverTime,
+                        "lastSenderId" to senderId,
+                        "lastSenderName" to senderName
+                    )
+                    batch.set(chatRef, chatUpdate, SetOptions.merge())
+                }.await()
+                
+                messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.SENT)))
+            } catch (e: Exception) {
+                messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.FAILED)))
+            }
+        }
+    }
+
+    override suspend fun voteOnPoll(chatId: String, messageId: String, optionIndex: Int, userId: String) {
+        val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+        val messageRef = chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document(messageId)
+        
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(messageRef)
+            val message = snapshot.toObject(Message::class.java) ?: return@runTransaction
+            val poll = message.poll ?: return@runTransaction
+            
+            val newVotes = poll.votes.toMutableMap()
+            
+            // Remove user from any previous option they voted for
+            newVotes.keys.forEach { idx ->
+                val voters = newVotes[idx]?.toMutableList() ?: mutableListOf()
+                if (voters.contains(userId)) {
+                    voters.remove(userId)
+                    newVotes[idx] = voters
+                }
+            }
+            
+            // Add user to the new option
+            val targetVoters = newVotes[optionIndex.toString()]?.toMutableList() ?: mutableListOf()
+            targetVoters.add(userId)
+            newVotes[optionIndex.toString()] = targetVoters
+            
+            transaction.update(messageRef, "poll.votes", newVotes)
+        }.await()
     }
 
     private suspend fun getAccessToken(): String {
@@ -536,6 +672,7 @@ class ChatRepositoryImpl @Inject constructor(
             glbUrl = this.glbUrl,
             fileUrl = this.fileUrl,
             fileName = this.fileName,
+            poll = this.poll,
             timestamp = this.timestamp?.seconds ?: (System.currentTimeMillis() / 1000),
             status = this.status
         )
@@ -554,6 +691,7 @@ class ChatRepositoryImpl @Inject constructor(
             glbUrl = this.glbUrl,
             fileUrl = this.fileUrl,
             fileName = this.fileName,
+            poll = this.poll,
             timestamp = if (this.timestamp != 0L) Timestamp(this.timestamp, 0) else null,
             status = this.status
         )
@@ -569,7 +707,11 @@ class ChatRepositoryImpl @Inject constructor(
             lastSenderId = this.lastSenderId,
             participantNames = this.participantNames,
             participantProfileImages = this.participantProfileImages,
-            isSupportChat = this.isSupportChat
+            isSupportChat = this.isSupportChat,
+            creatorId = this.creatorId,
+            groupDescription = this.groupDescription,
+            restrictedParticipants = this.restrictedParticipants,
+            isOnlyMentorMessaging = this.isOnlyMentorMessaging
         )
     }
 
@@ -586,7 +728,11 @@ class ChatRepositoryImpl @Inject constructor(
             lastSenderId = this.lastSenderId,
             participantNames = this.participantNames,
             participantProfileImages = this.participantProfileImages,
-            isSupportChat = this.isSupportChat
+            isSupportChat = this.isSupportChat,
+            creatorId = this.creatorId,
+            groupDescription = this.groupDescription,
+            restrictedParticipants = this.restrictedParticipants,
+            isOnlyMentorMessaging = this.isOnlyMentorMessaging
         )
     }
 
