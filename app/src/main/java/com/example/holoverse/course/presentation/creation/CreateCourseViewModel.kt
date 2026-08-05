@@ -119,7 +119,8 @@ class CreateCourseViewModel @Inject constructor(
         level: String,
         language: String,
         description: String,
-        imageUrl: String
+        imageUrl: String,
+        availableTimeSlots: List<String>
     ) {
         viewModelScope.launch {
             _createCourseState.value = Response.Loading
@@ -140,6 +141,7 @@ class CreateCourseViewModel @Inject constructor(
                 instructorName = instructorName,
                 description = description,
                 imageUrl = imageUrl,
+                availableTimeSlots = availableTimeSlots,
                 sessions = _sessions.toList(),
                 quizzes = _quizzes.toList()
             )
@@ -158,7 +160,9 @@ class CreateCourseViewModel @Inject constructor(
                         courseImageUrl = course.imageUrl,
                         participantId = instructorId,
                         participantName = instructorName,
-                        participantImageUrl = profileImageUrl
+                        participantImageUrl = profileImageUrl,
+                        mentorId = instructorId,
+                        mentorName = instructorName
                     )
 
                     // Send notification to followers

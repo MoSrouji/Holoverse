@@ -246,6 +246,62 @@ class NotificationRepositoryImpl @Inject constructor(
             Response.Error(e.message ?: "Broadcast failed")
         }
     }
+
+    override suspend fun sendMentorBatchNotification(
+        mentorId: String,
+        courseName: String,
+        timeSlot: String
+    ): Response<Boolean> {
+        return try {
+            val title = "New Batch Created"
+            val body = "A new $timeSlot cohort has been formed for $courseName."
+
+            val notificationRef = firestore.collection("notifications").document()
+            val notification = Notification(
+                id = notificationRef.id,
+                recipientId = mentorId,
+                title = title,
+                body = body,
+                type = "batch_created",
+                timestamp = Timestamp.now(),
+                isRead = false,
+                senderName = "HoloVerse System"
+            )
+            notificationRef.set(notification).await()
+
+            // Send FCM
+            try {
+                val token = authRepository.getFcmToken(mentorId)
+                if (!token.isNullOrBlank()) {
+                    val authHeader = getAccessToken()
+                    val request = FcmV1Request(
+                        message = FcmMessage(
+                            token = token,
+                            notification = NotificationData(title, body),
+                            data = mapOf(
+                                "type" to "batch_created",
+                                "title" to title,
+                                "body" to body
+                            ),
+                            android = AndroidConfig(
+                                priority = "high",
+                                notification = AndroidNotification(
+                                    channel_id = "general_notifications"
+                                )
+                            )
+                        )
+                    )
+                    fcmApi.sendNotification(authHeader, request)
+                }
+            } catch (e: Exception) {
+                Log.e("NotificationRepo", "FCM for mentor failed: ${e.message}")
+            }
+
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Failed to notify mentor")
+        }
+    }
 }
 
 

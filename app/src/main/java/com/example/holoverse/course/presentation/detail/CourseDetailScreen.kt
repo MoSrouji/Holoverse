@@ -111,19 +111,22 @@ fun CourseDetailScreen(
     }
 
     val courseState by viewModel.courseState
+    val batchesState by viewModel.batchesState
     val instructorState by viewModel.instructorState
     val enrollmentState by viewModel.enrollmentState
+    val currentUser by viewModel.currentUser
     val saveStatus by viewModel.saveStatus
     val isEnrolled by viewModel.isEnrolled
     val isSaved by viewModel.isSaved
     val context = LocalContext.current
     var showPaymentDialog by remember { mutableStateOf(false) }
+    var showSlotSelectionDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(enrollmentState) {
         when (enrollmentState) {
             is Response.Success -> {
                 Toast.makeText(context, "Successfully Enrolled!", Toast.LENGTH_SHORT).show()
-                onEnrollSuccess()
+                // onEnrollSuccess() // We'll handle navigation after batch joining or here
                 viewModel.resetEnrollmentState()
             }
 
@@ -165,9 +168,27 @@ fun CourseDetailScreen(
                 course = course,
                 onConfirm = {
                     showPaymentDialog = false
-                    viewModel.enrollInCourse(course.id)
+                    if (course.availableTimeSlots.isNotEmpty()) {
+                        showSlotSelectionDialog = true
+                    } else {
+                        viewModel.enrollInCourse(course.id)
+                    }
                 },
                 onDismiss = { showPaymentDialog = false }
+            )
+        }
+    }
+
+    if (showSlotSelectionDialog && courseState is Response.Success) {
+        val course = (courseState as Response.Success<Courses?>).data
+        if (course != null) {
+            TimeSlotSelectionDialog(
+                availableSlots = course.availableTimeSlots,
+                onSlotSelected = { slot ->
+                    showSlotSelectionDialog = false
+                    viewModel.enrollInCourse(course.id, slot)
+                },
+                onDismiss = { showSlotSelectionDialog = false }
             )
         }
     }
@@ -760,6 +781,103 @@ fun ReviewItem(name: String, rating: Int, comment: String) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+fun BatchItem(
+    batch: com.example.holoverse.course.domain.Batch,
+    onJoinClick: () -> Unit,
+    isEnrolled: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "Batch ${batch.id.takeLast(4).uppercase()}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${batch.enrolledStudentIds.size}/${batch.capacity} Students",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (batch.enrolledStudentIds.size >= batch.capacity) Color.Red else HoloCyan
+                )
+            }
+            
+            Button(
+                onClick = onJoinClick,
+                enabled = batch.enrolledStudentIds.size < batch.capacity && !isEnrolled,
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = HoloPurple,
+                    disabledContainerColor = Color.Gray.copy(alpha = 0.5f)
+                )
+            ) {
+                Text(if (isEnrolled) "Joined" else "Join Batch")
+            }
+        }
+    }
+}
+@Composable
+fun TimeSlotSelectionDialog(
+    availableSlots: List<String>,
+    onSlotSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Select Preferred Time",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Choose a time that works best for you. You will be assigned to a cohort in this slot.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                availableSlots.forEach { slot ->
+                    Button(
+                        onClick = { onSlotSelected(slot) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = HoloPurple)
+                    ) {
+                        Text(slot)
+                    }
+                }
+
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
         }
     }
 }

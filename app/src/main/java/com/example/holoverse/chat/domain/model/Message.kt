@@ -1,6 +1,7 @@
 package com.example.holoverse.chat.domain.model
 
 import com.google.firebase.Timestamp
+import kotlinx.serialization.Serializable
 
 data class Message(
     val id: String = "",
@@ -15,6 +16,7 @@ data class Message(
     val fileUrl: String? = null,
     val fileName: String? = null,
     val poll: Poll? = null,
+    val bookingRequest: BookingRequest? = null,
     val timestamp: Timestamp? = null,
     val status: MessageStatus = MessageStatus.SENT
 )
@@ -22,4 +24,12 @@ data class Message(
 enum class MessageStatus {
     SENDING, SENT, FAILED
 }
+
+@Serializable
+data class BookingRequest(
+    val sessionId: String = "",
+    val batchId: String = "",
+    val proposedTimes: List<Long> = emptyList(), // Store as epoch seconds
+    val status: String = "PENDING" // PENDING, CONFIRMED, REJECTED
+)
 

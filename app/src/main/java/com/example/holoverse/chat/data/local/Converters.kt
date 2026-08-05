@@ -2,6 +2,7 @@ package com.example.holoverse.chat.data.local
 
 import androidx.room.TypeConverter
 import com.example.holoverse.chat.domain.model.Poll
+import com.example.holoverse.chat.domain.model.BookingRequest
 import com.example.holoverse.core.domain.model.AppCategory
 import kotlinx.serialization.json.Json
 
@@ -13,6 +14,16 @@ class Converters {
 
     @TypeConverter
     fun toPoll(value: String?): Poll? {
+        return value?.let { Json.decodeFromString(it) }
+    }
+
+    @TypeConverter
+    fun fromBookingRequest(value: BookingRequest?): String? {
+        return value?.let { Json.encodeToString(it) }
+    }
+
+    @TypeConverter
+    fun toBookingRequest(value: String?): BookingRequest? {
         return value?.let { Json.decodeFromString(it) }
     }
 

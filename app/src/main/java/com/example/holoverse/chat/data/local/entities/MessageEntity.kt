@@ -21,6 +21,7 @@ data class MessageEntity(
     val fileUrl: String? = null,
     val fileName: String? = null,
     val poll: com.example.holoverse.chat.domain.model.Poll? = null,
+    val bookingRequest: com.example.holoverse.chat.domain.model.BookingRequest? = null,
     val timestamp: Long,
     val status: MessageStatus = MessageStatus.SENT
 )

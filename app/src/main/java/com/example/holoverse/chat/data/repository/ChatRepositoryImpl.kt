@@ -17,6 +17,7 @@ import com.example.holoverse.chat.domain.model.Chat
 import com.example.holoverse.chat.domain.model.Message
 import com.example.holoverse.chat.domain.model.MessageStatus
 import com.example.holoverse.chat.domain.model.Poll
+import com.example.holoverse.chat.domain.model.BookingRequest
 import com.example.holoverse.chat.domain.repository.ChatRepository
 import com.example.holoverse.core.utils.NetworkConstant
 import com.google.auth.oauth2.GoogleCredentials
@@ -260,7 +261,9 @@ class ChatRepositoryImpl @Inject constructor(
         courseImageUrl: String?,
         participantId: String,
         participantName: String,
-        participantImageUrl: String?
+        participantImageUrl: String?,
+        mentorId: String?,
+        mentorName: String?
     ): String {
         val chatId = "group_$courseId"
 
@@ -270,18 +273,28 @@ class ChatRepositoryImpl @Inject constructor(
             val snapshot = chatRef.get().await()
 
             if (!snapshot.exists()) {
+                val participants = mutableListOf(participantId)
+                val namesMap = mutableMapOf(
+                    participantId to participantName,
+                    chatId to "$courseName Group"
+                )
+                val imagesMap = mutableMapOf<String, String>()
+                participantImageUrl?.let { imagesMap[participantId] = it }
+
+                // Add mentor if provided and not the same as participant
+                if (mentorId != null && mentorId != participantId) {
+                    participants.add(mentorId)
+                    namesMap[mentorId] = mentorName ?: "Mentor"
+                }
+
                 val chatData = Chat(
                     id = chatId,
-                    participants = listOf(participantId),
-                    participantNames = mapOf(
-                        participantId to participantName,
-                        chatId to "$courseName Group"
-                    ),
-                    participantProfileImages = participantImageUrl?.let { mapOf(participantId to it) }
-                        ?: emptyMap(),
+                    participants = participants,
+                    participantNames = namesMap,
+                    participantProfileImages = imagesMap,
                     lastMessage = "Group created for $courseName",
                     lastMessageTimestamp = Timestamp.now(),
-                    creatorId = participantId
+                    creatorId = mentorId ?: participantId
                 )
                 chatRef.set(chatData).await()
                 chatDao.insertChats(listOf(chatData.toEntity()))
@@ -298,7 +311,7 @@ class ChatRepositoryImpl @Inject constructor(
                 
                 // If creatorId is missing, set it (helpful for migration)
                 if (remoteChat?.creatorId == null) {
-                    updateData["creatorId"] = participantId
+                    updateData["creatorId"] = mentorId ?: participantId
                 }
 
                 chatRef.update(updateData).await()
@@ -639,6 +652,91 @@ class ChatRepositoryImpl @Inject constructor(
         }.await()
     }
 
+    override suspend fun sendBookingRequest(
+        chatId: String,
+        batchId: String,
+        sessionId: String,
+        proposedTimes: List<Long>
+    ) {
+        val user = authRepository.getCurrentUser() ?: return
+        val senderId = user.userId ?: ""
+        val senderName = user.fullName ?: "Unknown"
+        val senderType = user.accountType.name
+
+        val messageId = UUID.randomUUID().toString()
+        val currentTime = System.currentTimeMillis()
+
+        val bookingRequest = BookingRequest(
+            sessionId = sessionId,
+            batchId = batchId,
+            proposedTimes = proposedTimes,
+            status = "PENDING"
+        )
+
+        val localMessage = MessageEntity(
+            id = messageId,
+            chatId = chatId,
+            senderId = senderId,
+            senderName = senderName,
+            senderType = senderType,
+            text = "Booking Request for Session",
+            bookingRequest = bookingRequest,
+            timestamp = currentTime / 1000,
+            status = MessageStatus.SENDING
+        )
+
+        messageDao.insertMessages(listOf(localMessage))
+
+        repositoryScope.launch {
+            try {
+                val chatRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS).document(chatId)
+                val messageRef = chatRef.collection(NetworkConstant.COLLECTION_NAME_MESSAGES).document(messageId)
+                val serverTime = FieldValue.serverTimestamp()
+
+                val messageMap = mutableMapOf(
+                    "senderId" to senderId,
+                    "senderName" to senderName,
+                    "senderType" to senderType,
+                    "text" to "Booking Request for Session",
+                    "bookingRequest" to bookingRequest,
+                    "timestamp" to serverTime
+                )
+
+                firestore.runBatch { batch ->
+                    batch.set(messageRef, messageMap)
+                    val chatUpdate = mapOf(
+                        "lastMessage" to "New Booking Request",
+                        "lastMessageTimestamp" to serverTime,
+                        "lastSenderId" to senderId,
+                        "lastSenderName" to senderName
+                    )
+                    batch.set(chatRef, chatUpdate, SetOptions.merge())
+                }.await()
+
+                messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.SENT)))
+            } catch (e: Exception) {
+                messageDao.insertMessages(listOf(localMessage.copy(status = MessageStatus.FAILED)))
+            }
+        }
+    }
+
+    override suspend fun respondToBookingRequest(
+        chatId: String,
+        messageId: String,
+        status: String
+    ) {
+        try {
+            val messageRef = firestore.collection(NetworkConstant.COLLECTION_NAME_CHATS)
+                .document(chatId)
+                .collection(NetworkConstant.COLLECTION_NAME_MESSAGES)
+                .document(messageId)
+
+            messageRef.update("bookingRequest.status", status).await()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private suspend fun getAccessToken(): String {
         return withContext(Dispatchers.IO) {
             try {
@@ -673,6 +771,7 @@ class ChatRepositoryImpl @Inject constructor(
             fileUrl = this.fileUrl,
             fileName = this.fileName,
             poll = this.poll,
+            bookingRequest = this.bookingRequest,
             timestamp = this.timestamp?.seconds ?: (System.currentTimeMillis() / 1000),
             status = this.status
         )
@@ -692,6 +791,7 @@ class ChatRepositoryImpl @Inject constructor(
             fileUrl = this.fileUrl,
             fileName = this.fileName,
             poll = this.poll,
+            bookingRequest = this.bookingRequest,
             timestamp = if (this.timestamp != 0L) Timestamp(this.timestamp, 0) else null,
             status = this.status
         )

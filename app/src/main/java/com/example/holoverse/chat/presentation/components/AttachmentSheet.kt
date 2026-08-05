@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
@@ -31,6 +32,7 @@ fun AttachmentSheet(
     onDismiss: () -> Unit,
     onMediaClick: (String) -> Unit,
     onPollClick: () -> Unit,
+    onBookingClick: (() -> Unit)? = null,
     darkTheme: Boolean = true
 ) {
     ModalBottomSheet(
@@ -111,6 +113,15 @@ fun AttachmentSheet(
                         color = Color(0xFF00BCD4),
                         onClick = { onPollClick(); onDismiss() }
                     )
+                    
+                    if (onBookingClick != null) {
+                        AttachmentItem(
+                            icon = Icons.Default.CalendarMonth,
+                            label = "Schedule",
+                            color = Color(0xFFFF5722),
+                            onClick = { onBookingClick(); onDismiss() }
+                        )
+                    }
                 }
                 
                 Spacer(modifier = Modifier.height(16.dp))

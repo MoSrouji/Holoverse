@@ -23,5 +23,11 @@ interface NotificationRepository {
         body: String,
         target: BroadcastTarget
     ): Response<Boolean>
+
+    suspend fun sendMentorBatchNotification(
+        mentorId: String,
+        courseName: String,
+        timeSlot: String
+    ): Response<Boolean>
 }
 

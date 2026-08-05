@@ -26,7 +26,9 @@ interface ChatRepository {
         courseImageUrl: String?,
         participantId: String,
         participantName: String,
-        participantImageUrl: String?
+        participantImageUrl: String?,
+        mentorId: String? = null,
+        mentorName: String? = null
     ): String
 
     suspend fun sendMessage(
@@ -72,5 +74,18 @@ interface ChatRepository {
 
     suspend fun sendPoll(chatId: String, question: String, options: List<String>)
     suspend fun voteOnPoll(chatId: String, messageId: String, optionIndex: Int, userId: String)
+
+    suspend fun sendBookingRequest(
+        chatId: String,
+        batchId: String,
+        sessionId: String,
+        proposedTimes: List<Long>
+    )
+
+    suspend fun respondToBookingRequest(
+        chatId: String,
+        messageId: String,
+        status: String
+    )
 }
 

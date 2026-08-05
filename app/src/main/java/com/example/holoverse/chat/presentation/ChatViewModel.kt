@@ -13,6 +13,7 @@ import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.chat.data.repository.ChatRepositoryImpl
 import com.example.holoverse.chat.domain.model.Chat
 import com.example.holoverse.chat.domain.repository.ChatRepository
+import com.example.holoverse.course.domain.repository.BatchRepository
 import com.example.holoverse.cloudinaryservices.domain.repository.CloudinaryRepository
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.webrtc.data.datasource.SignalingClient
@@ -34,6 +35,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
+    private val batchRepository: BatchRepository,
     private val authRepository: AuthRepository,
     private val fetchDataRepository: FetchDataRepository,
     private val cloudinaryRepository: CloudinaryRepository,
@@ -600,12 +602,37 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun sendBookingRequest(batchId: String, sessionId: String, proposedTimes: List<Long>) {
+        val chatId = _uiState.value.currentChatId ?: return
+        viewModelScope.launch {
+            try {
+                chatRepository.sendBookingRequest(chatId, batchId, sessionId, proposedTimes)
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
     fun voteOnPoll(messageId: String, optionIndex: Int) {
         val chatId = _uiState.value.currentChatId ?: return
         val userId = _uiState.value.currentUser?.userId ?: return
         viewModelScope.launch {
             try {
                 chatRepository.voteOnPoll(chatId, messageId, optionIndex, userId)
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+    fun respondToBookingRequest(messageId: String, status: String, sessionId: String? = null, selectedTime: Long? = null) {
+        val chatId = _uiState.value.currentChatId ?: return
+        viewModelScope.launch {
+            try {
+                chatRepository.respondToBookingRequest(chatId, messageId, status)
+                if (status == "CONFIRMED" && sessionId != null && selectedTime != null) {
+                    batchRepository.finalizeSessionTime(sessionId, com.google.firebase.Timestamp(selectedTime, 0)).collectLatest { }
+                }
             } catch (e: Exception) {
                 // Handle error
             }

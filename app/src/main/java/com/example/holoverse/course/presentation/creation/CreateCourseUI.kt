@@ -108,6 +108,7 @@ fun CreateCourseScreen(
     var language by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") }
+    val selectedTimeSlots = remember { mutableStateListOf<String>() }
 
     // UI control states
     var showSessionDialog by remember { mutableStateOf(false) }
@@ -331,6 +332,20 @@ fun CreateCourseScreen(
             }
 
             item {
+                TimeSlotSection(
+                    availableSlots = levels, // Reusing levels for list for now, but will define properly
+                    selectedSlots = selectedTimeSlots,
+                    onToggleSlot = { slot ->
+                        if (selectedTimeSlots.contains(slot)) {
+                            selectedTimeSlots.remove(slot)
+                        } else {
+                            selectedTimeSlots.add(slot)
+                        }
+                    }
+                )
+            }
+
+            item {
                 SyllabusHeader(
                     onAddSession = {
                         editingSessionIndex = null
@@ -389,12 +404,13 @@ fun CreateCourseScreen(
                 CreateCourseButton(
                     isLoading = createCourseState is Response.Loading,
                     onClick = {
-                        if (name.isBlank() || price.isBlank() || imageUrl.isBlank() || level.isBlank() || language.isBlank() || specialization.isBlank()) {
+                        if (name.isBlank() || price.isBlank() || imageUrl.isBlank() || level.isBlank() || language.isBlank() || specialization.isBlank() || selectedTimeSlots.isEmpty()) {
                             val message = when {
                                 imageUrl.isBlank() -> "Please upload a course image"
                                 specialization.isBlank() -> "Please select a specialization"
                                 level.isBlank() -> "Please select a course level"
                                 language.isBlank() -> "Please select a course language"
+                                selectedTimeSlots.isEmpty() -> "Please select at least one teaching slot"
                                 else -> "Please fill required fields"
                             }
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -407,7 +423,8 @@ fun CreateCourseScreen(
                                 level = level,
                                 language = language,
                                 description = description,
-                                imageUrl = imageUrl
+                                imageUrl = imageUrl,
+                                availableTimeSlots = selectedTimeSlots.toList()
                             )
                         }
                     }
@@ -620,6 +637,55 @@ private fun BasicInfoSection(
                 menuItems = languages,
                 showIcon = false
             )
+        }
+    }
+}
+
+@Composable
+private fun TimeSlotSection(
+    availableSlots: List<String>,
+    selectedSlots: List<String>,
+    onToggleSlot: (String) -> Unit
+) {
+    val actualSlots = remember { listOf("Morning", "Afternoon", "Night") }
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Teaching Availability",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = HoloCyan
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                "Select the time slots you are available to teach. Students will be automatically grouped into batches.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                actualSlots.forEach { slot ->
+                    val isSelected = selectedSlots.contains(slot)
+                    androidx.compose.material3.FilterChip(
+                        selected = isSelected,
+                        onClick = { onToggleSlot(slot) },
+                        label = { Text(slot) },
+                        colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = HoloPurple,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+            }
         }
     }
 }

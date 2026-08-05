@@ -21,6 +21,7 @@ data class Courses(
     val imageUrl: String = "",
     val completionRate: Double = 0.0,
     val averageProgress: Double = 0.0,
+    val availableTimeSlots: List<String> = emptyList(), // e.g., ["Morning", "Afternoon", "Night"]
     val sessions: List<CourseSession> = emptyList(),
     val quizzes: List<Quiz> = emptyList()
 )

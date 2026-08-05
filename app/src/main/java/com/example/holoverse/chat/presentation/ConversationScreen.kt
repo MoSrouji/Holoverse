@@ -58,6 +58,7 @@ import coil3.compose.AsyncImage
 import com.example.holoverse.R
 import com.example.holoverse.chat.presentation.components.AttachmentSheet
 import com.example.holoverse.chat.presentation.components.ChatInput
+import com.example.holoverse.chat.presentation.components.CreateBookingDialog
 import com.example.holoverse.chat.presentation.components.CreatePollDialog
 import com.example.holoverse.chat.presentation.components.EmojiPicker
 import com.example.holoverse.chat.presentation.components.MessageBubble
@@ -79,6 +80,7 @@ fun ConversationScreen(
     var showEmojiPicker by remember { mutableStateOf(false) }
     var showAttachmentSheet by remember { mutableStateOf(false) }
     var showPollDialog by remember { mutableStateOf(false) }
+    var showBookingDialog by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val context = LocalContext.current
     val headerBrush = remember(darkTheme) { Brush(darkTheme) }
@@ -340,7 +342,20 @@ fun ConversationScreen(
                         isPlaying = uiState.playingAudioUrl == message.audioUrl && message.audioUrl != null,
                         onPlayClick = { message.audioUrl?.let { viewModel.playAudio(it) } },
                         onGlbClick = onGlbClick,
-                        onVoteClick = { optionIdx -> viewModel.voteOnPoll(message.id, optionIdx) },
+                        onVoteClick = { optionIdx -> 
+                            if (message.poll != null) viewModel.voteOnPoll(message.id, optionIdx) 
+                            // Add logic for booking vote if needed
+                        },
+                        onFinalizeBooking = { selectedTime -> 
+                            message.bookingRequest?.let { request ->
+                                viewModel.respondToBookingRequest(
+                                    messageId = message.id, 
+                                    status = "CONFIRMED",
+                                    sessionId = request.sessionId,
+                                    selectedTime = selectedTime
+                                )
+                            }
+                        },
                         senderImageUrl = senderImageUrl,
                         showSenderInfo = isGroup,
                         currentUserId = uiState.currentUser?.userId ?: ""
@@ -375,6 +390,7 @@ fun ConversationScreen(
                         }
                     },
                     onPollClick = { showPollDialog = true },
+                    onBookingClick = if (uiState.currentUserIsMentor) { { showBookingDialog = true } } else null,
                     darkTheme = darkTheme
                 )
             }
@@ -385,6 +401,23 @@ fun ConversationScreen(
                     onCreate = { question, options ->
                         viewModel.sendPoll(question, options)
                         showPollDialog = false
+                    },
+                    darkTheme = darkTheme
+                )
+            }
+            if (showBookingDialog) {
+                CreateBookingDialog(
+                    onDismiss = { showBookingDialog = false },
+                    onCreate = { times ->
+                        uiState.currentChatId?.let { chatId ->
+                            val batchId = chatId.removePrefix("group_")
+                            viewModel.sendBookingRequest(
+                                batchId = batchId,
+                                sessionId = "session_${System.currentTimeMillis()}", // Generate a real ID in repo
+                                proposedTimes = times
+                            )
+                        }
+                        showBookingDialog = false
                     },
                     darkTheme = darkTheme
                 )

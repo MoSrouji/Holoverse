@@ -54,6 +54,7 @@ fun MessageBubble(
     onPlayClick: () -> Unit = {},
     onGlbClick: ((String, String) -> Unit)? = null,
     onVoteClick: (Int) -> Unit = {},
+    onFinalizeBooking: (Long) -> Unit = {},
     senderImageUrl: String? = null,
     showSenderInfo: Boolean = false,
     currentUserId: String = ""
@@ -128,6 +129,16 @@ fun MessageBubble(
                         poll = message.poll,
                         isCurrentUser = isCurrentUser,
                         currentUserId = currentUserId,
+                        onVoteClick = onVoteClick
+                    )
+                }
+
+                if (message.bookingRequest != null) {
+                    BookingCard(
+                        bookingRequest = message.bookingRequest,
+                        isCurrentUser = isCurrentUser,
+                        isMentor = showSenderInfo, // Simplified check, ideally pass explicitly
+                        onFinalizeClick = onFinalizeBooking,
                         onVoteClick = onVoteClick
                     )
                 }

@@ -10,6 +10,8 @@ import com.example.holoverse.chat.domain.repository.ChatRepository
 import com.example.holoverse.course.data.CourseRepo
 import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.course.domain.QuizResult
+import com.example.holoverse.course.domain.Batch
+import com.example.holoverse.course.domain.repository.BatchRepository
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.core.utils.Response
 import com.example.holoverse.core.utils.TranslationManager
@@ -22,6 +24,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CourseDetailViewModel @Inject constructor(
     private val repository: CourseRepo,
+    private val batchRepository: BatchRepository,
     private val authRepository: AuthRepository,
     private val chatRepository: ChatRepository,
     private val fetchDataRepository: FetchDataRepository,
@@ -31,6 +34,9 @@ class CourseDetailViewModel @Inject constructor(
 
     private val _courseState = mutableStateOf<Response<Courses?>>(Response.Loading)
     val courseState: State<Response<Courses?>> = _courseState
+
+    private val _batchesState = mutableStateOf<Response<List<Batch>>>(Response.Loading)
+    val batchesState: State<Response<List<Batch>>> = _batchesState
 
     private val _instructorState = mutableStateOf<Response<User.Mentor?>>(Response.Loading)
     val instructorState: State<Response<User.Mentor?>> = _instructorState
@@ -50,18 +56,90 @@ class CourseDetailViewModel @Inject constructor(
     private val _quizResults = mutableStateOf<Response<List<QuizResult>>>(Response.Loading)
     val quizResults: State<Response<List<QuizResult>>> = _quizResults
 
+    private val _currentUser = mutableStateOf<User?>(null)
+    val currentUser: State<User?> = _currentUser
+
     private var currentCourseId: String? = null
 
     init {
+        _currentUser.value = authRepository.getCachedUser()
     }
 
     fun initialize(courseId: String) {
         if (currentCourseId == courseId) return
         currentCourseId = courseId
         getCourseById(courseId)
+        fetchBatches(courseId)
         checkEnrollmentStatus(courseId)
         checkSavedStatus(courseId)
         fetchQuizResults(courseId)
+    }
+
+    private fun fetchBatches(courseId: String) {
+        viewModelScope.launch {
+            batchRepository.getBatchesForCourse(courseId).collectLatest { response ->
+                _batchesState.value = response
+            }
+        }
+    }
+
+    fun createBatch(courseId: String) {
+        val user = authRepository.getCachedUser() ?: return
+        val mentorId = user.userId ?: return
+        viewModelScope.launch {
+            val newBatch = Batch(
+                courseId = courseId,
+                mentorId = mentorId,
+                capacity = 10
+            )
+            batchRepository.createBatch(newBatch).collectLatest { response ->
+                if (response is Response.Success) {
+                    val batchId = response.data
+                    val course = (courseState.value as? Response.Success)?.data
+                    if (course != null) {
+                        chatRepository.createOrJoinGroupChat(
+                            courseId = batchId,
+                            courseName = "${course.name} (Batch ${batchId.takeLast(4).uppercase()})",
+                            courseImageUrl = course.imageUrl,
+                            participantId = mentorId,
+                            participantName = user.fullName ?: "Mentor",
+                            participantImageUrl = (user as? User.Mentor)?.profileImageUrl
+                        )
+                    }
+                    fetchBatches(courseId)
+                }
+            }
+        }
+    }
+
+    fun joinBatch(batchId: String) {
+        val user = authRepository.getCachedUser() ?: return
+        val userId = user.userId ?: return
+        viewModelScope.launch {
+            batchRepository.joinBatch(batchId, userId).collectLatest { response ->
+                if (response is Response.Success) {
+                    // Join group chat for this batch
+                    val course = (courseState.value as? Response.Success)?.data
+                    if (course != null) {
+                        val profileImageUrl = when (user) {
+                            is User.Student -> user.profileImageUrl
+                            is User.Mentor -> user.profileImageUrl
+                            is User.Admin -> null
+                        }
+                        chatRepository.createOrJoinGroupChat(
+                            courseId = batchId, // Use batchId as the ID for the group chat
+                            courseName = "${course.name} (Batch ${batchId.takeLast(4).uppercase()})",
+                            courseImageUrl = course.imageUrl,
+                            participantId = userId,
+                            participantName = user.fullName ?: "Student",
+                            participantImageUrl = profileImageUrl
+                        )
+                    }
+                    // Refresh batches
+                    currentCourseId?.let { fetchBatches(it) }
+                }
+            }
+        }
     }
 
     private fun fetchQuizResults(courseId: String) {
@@ -147,7 +225,7 @@ class CourseDetailViewModel @Inject constructor(
         }
     }
 
-    fun enrollInCourse(courseId: String) {
+    fun enrollInCourse(courseId: String, preferredTimeSlot: String? = null) {
         val user = authRepository.getCachedUser()
         val userId = user?.userId
         
@@ -168,22 +246,33 @@ class CourseDetailViewModel @Inject constructor(
                 if (response is Response.Success) {
                     _isEnrolled.value = true
                     
-                    // Add user to course group chat
-                    val course = (courseState.value as? Response.Success)?.data
-                    if (course != null) {
-                        val profileImageUrl = when (user) {
-                            is User.Student -> user.profileImageUrl
-                            is User.Mentor -> user.profileImageUrl
-                            is User.Admin -> null
+                    // If a preferred time slot is provided, automatically join/create a batch
+                    if (preferredTimeSlot != null && course != null) {
+                        batchRepository.joinOrCreateBatch(
+                            courseId = courseId,
+                            mentorId = course.instructorId,
+                            userId = userId,
+                            timeSlot = preferredTimeSlot
+                        ).collectLatest { batchResponse ->
+                            if (batchResponse is Response.Success) {
+                                val batchId = batchResponse.data
+                                val profileImageUrl = when (user) {
+                                    is User.Student -> user.profileImageUrl
+                                    is User.Mentor -> user.profileImageUrl
+                                    is User.Admin -> null
+                                }
+                                chatRepository.createOrJoinGroupChat(
+                                    courseId = batchId,
+                                    courseName = "${course.name} ($preferredTimeSlot)",
+                                    courseImageUrl = course.imageUrl,
+                                    participantId = userId,
+                                    participantName = user.fullName ?: "Student",
+                                    participantImageUrl = profileImageUrl,
+                                    mentorId = course.instructorId,
+                                    mentorName = course.instructorName
+                                )
+                            }
                         }
-                        chatRepository.createOrJoinGroupChat(
-                            courseId = course.id,
-                            courseName = course.name,
-                            courseImageUrl = course.imageUrl,
-                            participantId = userId,
-                            participantName = user.fullName ?: "Student",
-                            participantImageUrl = profileImageUrl
-                        )
                     }
                 }
             }
