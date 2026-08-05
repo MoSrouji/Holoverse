@@ -113,32 +113,40 @@ class PreferenceManager @Inject constructor(@ApplicationContext context: Context
         }
     }
 
+    private val listeners = mutableListOf<SharedPreferences.OnSharedPreferenceChangeListener>()
+
     val themeModeFlow: Flow<String> = callbackFlow {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
             if (key == KEY_THEME_MODE) {
                 trySend(prefs.getString(KEY_THEME_MODE, "system") ?: "system")
             }
         }
+        listeners.add(listener)
         sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
         awaitClose {
             sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener)
+            listeners.remove(listener)
         }
     }.onStart { emit(getThemeMode()) }
 
     val userFlow: Flow<User?> = callbackFlow {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             if (key == KEY_USER || key == KEY_USER_TYPE || key == KEY_PROFILE_COMPLETE) {
-                trySend(getUser())
+                val user = getUser()
+                android.util.Log.d("PreferenceManager", "userFlow: emitting user update for key $key, user=$user")
+                trySend(user)
             }
         }
+        listeners.add(listener)
         sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
         awaitClose {
             sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener)
+            listeners.remove(listener)
         }
     }.onStart { emit(getUser()) }
 
     fun clearData() {
-        sharedPreferences.edit {
+        sharedPreferences.edit(commit = true) {
             remove(KEY_USER)
             remove(KEY_USER_TYPE)
             remove(KEY_PROFILE_COMPLETE)

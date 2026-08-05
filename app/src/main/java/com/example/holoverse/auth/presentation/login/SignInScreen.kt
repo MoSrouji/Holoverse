@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,7 +60,7 @@ fun SignInScreen(
 ) {
 
     val context = LocalContext.current
-    val signInState = viewModel.signInState.value
+    val signInState by viewModel.signInState
 
     LaunchedEffect(key1 = context) {
         viewModel.validationEvent.collect { event ->
@@ -75,9 +76,10 @@ fun SignInScreen(
     }
 
     LaunchedEffect(signInState) {
-        when (signInState) {
+        val state = signInState
+        when (state) {
             is Response.Success -> {
-                if (signInState.data) {
+                if (state.data) {
                     Toast.makeText(context, R.string.sign_in_successfully, Toast.LENGTH_LONG).show()
                     if (viewModel.userType.value == UserType.Admin) {
                         navToAdminPanel()
@@ -87,7 +89,7 @@ fun SignInScreen(
                 }
             }
             is Response.Error -> {
-                Toast.makeText(context, signInState.toString(), Toast.LENGTH_LONG).show()
+                Toast.makeText(context, state.toString(), Toast.LENGTH_LONG).show()
             }
             is Response.Loading -> {}
         }
@@ -206,7 +208,7 @@ fun SignInScreen(
             Text(
                 modifier = Modifier
                     .align(Alignment.End)
-                    .clickable { navToHomeScreen() },
+                    .clickable { /* TODO: Implement Forget Password */ },
                 text = stringResource(id = R.string.forget_password),
                 color = if (darkTheme) HoloCyan else MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodySmall

@@ -37,14 +37,13 @@ class SignInViewModel @Inject constructor(
     init {
         forms[SignInTextFieldId.EMAIL] = emailValidationState
         forms[SignInTextFieldId.PASSWORD] = passwordValidationState
-        checkUserSession()
+        android.util.Log.d("SignInViewModel", "init: SignInViewModel created ${hashCode()}")
     }
 
-    private fun checkUserSession() {
-        val user = preferenceManager.getUser()
-        if (user != null) {
-            _signInState.value = Response.Success(true)
-        }
+
+    override fun onCleared() {
+        super.onCleared()
+        android.util.Log.d("SignInViewModel", "onCleared: SignInViewModel destroyed ${hashCode()}")
     }
 
 
@@ -65,8 +64,13 @@ class SignInViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    fun restUser() {
+    fun resetState() {
+        clearForms()
         _signInState.value = Response.Success(false)
+        _userType.value = null
+        // Re-initialize mandatory forms
+        forms[SignInTextFieldId.EMAIL] = emailValidationState
+        forms[SignInTextFieldId.PASSWORD] = passwordValidationState
     }
 
 }

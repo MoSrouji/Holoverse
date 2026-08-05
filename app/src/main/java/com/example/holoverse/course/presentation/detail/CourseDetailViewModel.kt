@@ -16,8 +16,11 @@ import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.core.utils.Response
 import com.example.holoverse.core.utils.TranslationManager
 import com.example.holoverse.core.utils.PreferenceManager
+import com.example.holoverse.payment.domain.model.TransactionType
+import com.example.holoverse.payment.domain.repository.PaymentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,6 +31,7 @@ class CourseDetailViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val chatRepository: ChatRepository,
     private val fetchDataRepository: FetchDataRepository,
+    private val paymentRepository: PaymentRepository,
     private val translationManager: TranslationManager,
     private val preferenceManager: PreferenceManager
 ) : ViewModel() {
@@ -241,6 +245,42 @@ class CourseDetailViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            _enrollmentState.value = Response.Loading
+            
+            // Payment Logic (98/2 Split)
+            if (course != null && course.price > 0) {
+                try {
+                    val adminResponse = authRepository.getSupportAdmin().first { it !is Response.Loading }
+                    val adminId = if (adminResponse is Response.Success) adminResponse.data.userId ?: "" else ""
+                    
+                    val mentorShare = course.price * 0.98
+                    val adminCommission = course.price * 0.02
+                    
+                    // Transfer to Mentor
+                    paymentRepository.transferFunds(
+                        senderId = userId,
+                        receiverId = course.instructorId,
+                        amount = mentorShare,
+                        type = TransactionType.ENROLLMENT,
+                        metadata = mapOf("courseId" to courseId, "courseName" to course.name)
+                    )
+                    
+                    // Transfer to Admin
+                    if (adminId.isNotEmpty()) {
+                        paymentRepository.transferFunds(
+                            senderId = userId,
+                            receiverId = adminId,
+                            amount = adminCommission,
+                            type = TransactionType.ENROLLMENT,
+                            metadata = mapOf("courseId" to courseId, "courseName" to course.name, "role" to "commission")
+                        )
+                    }
+                } catch (e: Exception) {
+                    _enrollmentState.value = Response.Error("Payment failed: ${e.message}")
+                    return@launch
+                }
+            }
+
             authRepository.enrollInCourse(userId, courseId, course?.instructorId ?: "").let { response ->
                 _enrollmentState.value = response
                 if (response is Response.Success) {

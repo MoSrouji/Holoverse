@@ -15,8 +15,11 @@ import com.example.holoverse.material.domain.model.Material
 import com.example.holoverse.material.domain.model.MaterialType
 import com.example.holoverse.material.domain.usecase.CheckMaterialSavedUseCase
 import com.example.holoverse.material.domain.usecase.SaveMaterialUseCase
+import com.example.holoverse.payment.domain.model.TransactionType
+import com.example.holoverse.payment.domain.repository.PaymentRepository
 import com.example.holoverse.core.utils.TranslationManager
 import com.example.holoverse.core.utils.PreferenceManager
+import com.example.holoverse.core.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +39,7 @@ class ModelViewModel @Inject constructor(
     private val uploadModelUseCase: UploadModelUseCase,
     private val saveMaterialUseCase: SaveMaterialUseCase,
     private val checkMaterialSavedUseCase: CheckMaterialSavedUseCase,
+    private val paymentRepository: PaymentRepository,
     private val getCurrentUser: GetCurrentUser,
     private val cloudinaryRepository: CloudinaryRepository,
     private val translationManager: TranslationManager,
@@ -234,6 +238,34 @@ class ModelViewModel @Inject constructor(
                 _uiState.update { it.copy(selectedModelPath = path) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Failed to load model: ${e.message}") }
+            }
+        }
+    }
+
+    fun purchaseModel(model: Model) {
+        viewModelScope.launch {
+            val user = _currentUser.value ?: return@launch
+            val uid = user.userId ?: return@launch
+            val mentorId = model.uploadedById ?: return@launch
+            
+            if (model.price <= 0) {
+                saveModelToMaterial(model)
+                return@launch
+            }
+
+            _uiState.update { it.copy(isLoading = true) }
+            val result = paymentRepository.transferFunds(
+                senderId = uid,
+                receiverId = mentorId,
+                amount = model.price,
+                type = TransactionType.MODEL_PURCHASE,
+                metadata = mapOf("modelId" to model.id, "modelName" to model.name)
+            )
+
+            if (result is Response.Success) {
+                saveModelToMaterial(model)
+            } else {
+                _uiState.update { it.copy(isLoading = false, error = (result as Response.Error).message) }
             }
         }
     }

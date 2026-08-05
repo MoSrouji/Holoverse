@@ -81,8 +81,7 @@ fun StudentProfileInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: StudentProfileViewModel = hiltViewModel(),
-    studentStates: MutableStateFlow<User.Student>,
-    passwordState: MutableStateFlow<String>,
+    registrationViewModel: com.example.holoverse.auth.presentation.signup.RegistrationViewModel,
     darkTheme: Boolean
 ) {
     val genderItems = listOf("Male", "Female")
@@ -90,13 +89,14 @@ fun StudentProfileInput(
     var showAlert by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var isMenuExpanded by remember { mutableStateOf(false) }
-    val signUpState = viewModel.signUpState.value
+    val signUpState by viewModel.signUpState
 
     LaunchedEffect(signUpState) {
-        if (signUpState is Response.Success && signUpState.data) {
+        val state = signUpState
+        if (state is Response.Success && state.data) {
             navToHomeScreen()
-        } else if (signUpState is Response.Error) {
-            Toast.makeText(context, signUpState.message, Toast.LENGTH_LONG).show()
+        } else if (state is Response.Error) {
+            Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -110,7 +110,8 @@ fun StudentProfileInput(
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    studentStates.value = studentStates.value.copy(
+                    val currentStudent = registrationViewModel.studentState.value
+                    registrationViewModel.updateStudent(currentStudent.copy(
                         phoneNumber = viewModel.forms[StudentSignUpTextField.PHONE_NUMBER]?.text
                             ?: "",
                         address = viewModel.forms[StudentSignUpTextField.ADDRESS]?.text ?: "",
@@ -118,7 +119,7 @@ fun StudentProfileInput(
                         dateOfBirth = viewModel.forms[StudentSignUpTextField.DATE_OF_BIRTH]?.text
                             ?: "",
                         profileImageUrl = viewModel.selectedImageUri?.toString()
-                    )
+                    ))
                     navController.navigateTo(AppDestination.SignUpStudentPreference)
                 }
             }
@@ -180,8 +181,8 @@ fun StudentProfileInput(
                 TextButton(
                     onClick = {
                         viewModel.firebaseSignUp(
-                            userDto = studentStates.value,
-                            password = passwordState.value
+                            userDto = registrationViewModel.studentState.value,
+                            password = registrationViewModel.password.value
                         )
                     }
                 ) {

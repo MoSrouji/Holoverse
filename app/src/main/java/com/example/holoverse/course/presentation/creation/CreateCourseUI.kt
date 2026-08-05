@@ -210,6 +210,12 @@ fun CreateCourseScreen(
                         else -> 7
                     }
                     val endTimestamp = System.currentTimeMillis() + (durationDays * 24 * 60 * 60 * 1000L)
+                    val planPrice = when (selectedPlanDuration) {
+                        "7 Days" -> 5.0
+                        "1 Month" -> 15.0
+                        "3 Months" -> 40.0
+                        else -> 5.0
+                    }
                     viewModel.boostCourse(
                         BoostedCourse(
                             courseId = course.id,
@@ -220,7 +226,8 @@ fun CreateCourseScreen(
                             courseImageUrl = course.imageUrl,
                             courseDescription = course.description,
                             instructorName = course.instructorName
-                        )
+                        ),
+                        planPrice = planPrice
                     )
                 }
             },

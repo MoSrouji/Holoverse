@@ -80,8 +80,7 @@ fun TeacherProfileInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: TeacherProfileViewModel = hiltViewModel(),
-    mentorStates: MutableStateFlow<User.Mentor>,
-    passwordState: MutableStateFlow<String>,
+    registrationViewModel: com.example.holoverse.auth.presentation.signup.RegistrationViewModel,
     darkTheme: Boolean
 ) {
     val genderItems = listOf("Male", "Female")
@@ -109,14 +108,15 @@ fun TeacherProfileInput(
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    mentorStates.value = mentorStates.value.copy(
+                    val currentMentor = registrationViewModel.mentorState.value
+                    registrationViewModel.updateMentor(currentMentor.copy(
                         bio = viewModel.forms[SignUpTextField.Bio]?.text ?: "",
                         phoneNumber = viewModel.forms[SignUpTextField.PHONE_NUMBER]?.text ?: "",
                         address = viewModel.forms[SignUpTextField.ADDRESS]?.text ?: "",
                         gender = viewModel.forms[SignUpTextField.Gender]?.text ?: "",
                         dateOfBirth = viewModel.forms[SignUpTextField.DATE_OF_BIRTH]?.text ?: "",
                         profileImageUrl = viewModel.selectedImageUri?.toString()
-                    )
+                    ))
                     navController.navigateTo(AppDestination.SignUpTeacherProfessional)
                 }
             }
@@ -178,8 +178,8 @@ fun TeacherProfileInput(
                 TextButton(
                     onClick = {
                         viewModel.firebaseSignUp(
-                            userDto = mentorStates.value,
-                            password = passwordState.value
+                            userDto = registrationViewModel.mentorState.value,
+                            password = registrationViewModel.password.value
                         )
                     }
                 ) {

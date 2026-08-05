@@ -3,9 +3,12 @@ package com.example.holoverse.admin.data.repository
 import com.example.holoverse.admin.domain.repository.AdminRepository
 import com.example.holoverse.admin.domain.repository.Timeframe
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_ADMINS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_TRANSACTIONS
 import com.example.holoverse.core.utils.Response
+import com.example.holoverse.payment.domain.model.Transaction
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.Query
@@ -118,15 +121,32 @@ class AdminRepositoryImpl @Inject constructor(
     override fun getTotalRevenue(): Flow<Response<Double>> = flow {
         emit(Response.Loading)
         try {
-            val snapshot = firestore.collection("courses").get().await()
-            val totalRevenue = snapshot.documents.sumOf { 
-                val price = it.getDouble("price") ?: 0.0
-                val numEnrolled = it.getLong("numEnrolled") ?: 0
-                price * numEnrolled
-            }
+            val adminsSnapshot = firestore.collection(COLLECTION_NAME_ADMINS).get().await()
+            val adminIds = adminsSnapshot.documents.map { it.id }
+            
+            val transactionsSnapshot = firestore.collection(COLLECTION_NAME_TRANSACTIONS).get().await()
+            val totalRevenue = transactionsSnapshot.toObjects(Transaction::class.java)
+                .filter { adminIds.contains(it.receiverId) }
+                .sumOf { it.amount }
+                
             emit(Response.Success(totalRevenue))
         } catch (e: Exception) {
             emit(Response.Error(e.message ?: "Failed to calculate revenue"))
+        }
+    }
+
+    override fun getRecentTransactions(): Flow<Response<List<Transaction>>> = flow {
+        emit(Response.Loading)
+        try {
+            val snapshot = firestore.collection(COLLECTION_NAME_TRANSACTIONS)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(10)
+                .get()
+                .await()
+            val transactions = snapshot.toObjects(Transaction::class.java)
+            emit(Response.Success(transactions))
+        } catch (e: Exception) {
+            emit(Response.Error(e.message ?: "Failed to fetch recent transactions"))
         }
     }
 

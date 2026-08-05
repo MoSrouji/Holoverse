@@ -17,9 +17,12 @@ import com.example.holoverse.course.domain.CourseSession
 import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.course.domain.Quiz
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
+import com.example.holoverse.payment.domain.model.TransactionType
+import com.example.holoverse.payment.domain.repository.PaymentRepository
 import com.example.holoverse.core.utils.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -30,7 +33,8 @@ class CreateCourseViewModel @Inject constructor(
     private val authRepo: AuthRepository,
     private val chatRepository: ChatRepository,
     private val uploadPhotoUseCase: UploadPhotoUseCase,
-    private val notificationRepo: NotificationRepository
+    private val notificationRepo: NotificationRepository,
+    private val paymentRepository: PaymentRepository
 ) : ViewModel() {
 
     private val _createCourseState = mutableStateOf<Response<Boolean>?>(null)
@@ -178,9 +182,31 @@ class CreateCourseViewModel @Inject constructor(
         }
     }
 
-    fun boostCourse(boostedCourse: BoostedCourse) {
+    fun boostCourse(boostedCourse: BoostedCourse, planPrice: Double) {
         viewModelScope.launch {
             _boostCourseState.value = Response.Loading
+            val currentUser = authRepo.getCurrentUser()
+            val mentorId = currentUser?.userId ?: ""
+
+            // Payment for boosting
+            try {
+                val adminResponse = authRepo.getSupportAdmin().first { it !is Response.Loading }
+                val adminId = if (adminResponse is Response.Success) adminResponse.data.userId ?: "" else ""
+
+                if (adminId.isNotEmpty() && planPrice > 0) {
+                    paymentRepository.transferFunds(
+                        senderId = mentorId,
+                        receiverId = adminId,
+                        amount = planPrice,
+                        type = TransactionType.COURSE_BOOST,
+                        metadata = mapOf("courseId" to boostedCourse.courseId, "planDuration" to boostedCourse.planDuration)
+                    )
+                }
+            } catch (e: Exception) {
+                _boostCourseState.value = Response.Error("Payment for boost failed: ${e.message}")
+                return@launch
+            }
+
             courseRepo.boostCourse(boostedCourse).collectLatest { response ->
                 _boostCourseState.value = response
             }

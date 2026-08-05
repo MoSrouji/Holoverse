@@ -48,6 +48,7 @@ import com.example.holoverse.auth.presentation.common.widget.CheckBoxMenu
 import com.example.holoverse.auth.presentation.common.widget.RadioButtonMenu
 import com.example.holoverse.auth.presentation.common.widget.button.AuthenticationButton
 import com.example.holoverse.auth.presentation.common.widget.textfield.AuthenticationTextField
+import com.example.holoverse.payment.presentation.components.MentorPaymentConfirmationDialog
 import com.example.holoverse.core.ui.theme.IbarraNovaBoldPlatinum18
 import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.holoverse.core.ui.theme.HoloBlack
@@ -72,8 +73,7 @@ fun TeacherProfessionalInfoInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: TeacherProfessionalViewModel = hiltViewModel(),
-    mentorStates: MutableStateFlow<User.Mentor>,
-    passwordState: MutableStateFlow<String>,
+    registrationViewModel: com.example.holoverse.auth.presentation.signup.RegistrationViewModel,
     darkTheme: Boolean
 ) {
     val yearsItems = listOf("0", "+1", "+4", "+8", "+10")
@@ -88,29 +88,29 @@ fun TeacherProfessionalInfoInput(
     var isSpecializationsExpanded by remember { mutableStateOf(false) }
     var isSubjectExpanded by remember { mutableStateOf(false) }
     var isCertificateExpanded by remember { mutableStateOf(false) }
+    var showPaymentDialog by remember { mutableStateOf(false) }
 
-    val signUpState = viewModel.signUpState.value
+    val signUpState by viewModel.signUpState
 
-    LaunchedEffect(mentorStates) {
-        mentorStates.collect { teacher ->
-            viewModel.updateState(teacher)
-        }
+    LaunchedEffect(Unit) {
+        viewModel.updateState(registrationViewModel.mentorState.value)
     }
 
     LaunchedEffect(key1 = context) {
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
+                    val currentMentor = registrationViewModel.mentorState.value
                     val userState = User.Mentor(
-                        fullName = mentorStates.value.fullName,
-                        email = mentorStates.value.email,
+                        fullName = currentMentor.fullName,
+                        email = currentMentor.email,
                         accountType = UserType.Mentor,
-                        bio = mentorStates.value.bio,
-                        dateOfBirth = mentorStates.value.dateOfBirth,
-                        phoneNumber = mentorStates.value.phoneNumber,
-                        address = mentorStates.value.address,
-                        gender = mentorStates.value.gender,
-                        profileImageUrl = mentorStates.value.profileImageUrl,
+                        bio = currentMentor.bio,
+                        dateOfBirth = currentMentor.dateOfBirth,
+                        phoneNumber = currentMentor.phoneNumber,
+                        address = currentMentor.address,
+                        gender = currentMentor.gender,
+                        profileImageUrl = currentMentor.profileImageUrl,
                         yearsOfExperience = viewModel.forms[SignUpTextFields.YEARS_OF_EXPERIENCE]!!.text,
                         specialization = viewModel.specializations,
                         subjects = listOf(viewModel.selectSubjects),
@@ -120,7 +120,7 @@ fun TeacherProfessionalInfoInput(
                     )
                     viewModel.firebaseSingUp(
                         userDto = userState,
-                        password = passwordState.value
+                        password = registrationViewModel.password.value
                     )
                 }
             }
@@ -128,15 +128,16 @@ fun TeacherProfessionalInfoInput(
     }
 
     LaunchedEffect(signUpState) {
-        when (signUpState) {
+        val state = signUpState
+        when (state) {
             is Response.Success -> {
-                if (signUpState.data) {
+                if (state.data) {
                     navToHomeScreen()
                 }
             }
 
             is Response.Error -> {
-                Toast.makeText(context, signUpState.toString(), Toast.LENGTH_LONG).show()
+                Toast.makeText(context, state.toString(), Toast.LENGTH_LONG).show()
             }
 
             is Response.Loading -> {}
@@ -188,10 +189,7 @@ fun TeacherProfessionalInfoInput(
 
                 TextButton(
                     onClick = {
-                        viewModel.firebaseSingUp(
-                            userDto = mentorStates.value,
-                            password = passwordState.value
-                        )
+                        showPaymentDialog = true
                     },
                 ) {
                     Text(
@@ -356,10 +354,20 @@ fun TeacherProfessionalInfoInput(
                     .height(56.dp),
                 textId = R.string.sign_up,
                 onClick = {
-                    viewModel.onEvent(ValidationEvent.Submit)
+                    showPaymentDialog = true
                 },
             )
             Spacer(modifier = Modifier.height(40.dp))
+        }
+
+        if (showPaymentDialog) {
+            MentorPaymentConfirmationDialog(
+                onConfirm = {
+                    showPaymentDialog = false
+                    viewModel.onEvent(ValidationEvent.Submit)
+                },
+                onDismiss = { showPaymentDialog = false }
+            )
         }
     }
 

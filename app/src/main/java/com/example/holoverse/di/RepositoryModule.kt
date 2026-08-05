@@ -11,6 +11,8 @@ import com.example.holoverse.course.data.CourseRepoImpl
 import com.example.holoverse.course.domain.repository.BatchRepository
 import com.example.holoverse.notifications.data.repository.NotificationRepositoryImpl
 import com.example.holoverse.notifications.domain.repository.NotificationRepository
+import com.example.holoverse.payment.data.repository.PaymentRepositoryImpl
+import com.example.holoverse.payment.domain.repository.PaymentRepository
 import com.example.holoverse.reviews.data.ReviewRepositoryImpl
 import com.example.holoverse.reviews.domain.ReviewRepository
 import com.example.holoverse.search.data.local.dao.RecentSearchDao
@@ -74,6 +76,12 @@ object RepositoryModule {
     @Singleton
     fun provideAdminRepository(firestore: FirebaseFirestore): AdminRepository {
         return AdminRepositoryImpl(firestore)
+    }
+
+    @Provides
+    @Singleton
+    fun providePaymentRepository(firestore: FirebaseFirestore): PaymentRepository {
+        return PaymentRepositoryImpl(firestore)
     }
 }
 

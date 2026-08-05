@@ -64,8 +64,12 @@ import com.example.holoverse.R
 import com.example.holoverse.admin.domain.repository.Timeframe
 import com.example.holoverse.admin.presentation.viewmodel.AdminUiState
 import com.example.holoverse.admin.presentation.viewmodel.AdminViewModel
+import com.example.holoverse.payment.domain.model.Transaction
 import com.example.holoverse.core.ui.spatial.Brush
 import com.example.holoverse.core.ui.theme.HoloverseTheme
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,6 +152,10 @@ fun AdminControlPanelContent(
 
                     item {
                         ChartSection(uiState)
+                    }
+
+                    item {
+                        RecentTransactionsSection(uiState.recentTransactions)
                     }
 
                     item {
@@ -588,6 +596,96 @@ fun LegendItem(label: String, value: String, color: Color) {
             text = "$label ($value)",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun RecentTransactionsSection(transactions: List<Transaction>) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            "Recent Transactions",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+            )
+        ) {
+            if (transactions.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No transactions yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                Column {
+                    transactions.take(5).forEachIndexed { index, transaction ->
+                        TransactionItem(transaction)
+                        if (index < transactions.size.coerceAtMost(5) - 1) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TransactionItem(transaction: Transaction) {
+    val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.MonetizationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    transaction.type.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+                Text(
+                    dateFormat.format(Date(transaction.timestamp)),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Text(
+            "+$${transaction.amount}",
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF4CAF50),
+            fontSize = 16.sp
         )
     }
 }

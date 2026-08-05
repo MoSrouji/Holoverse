@@ -100,7 +100,6 @@ fun ProfileScreen(
     onAdminClick: () -> Unit,
     onTermsAndConditionsClick: () -> Unit,
     onHelpCenterClick: () -> Unit,
-    onSignOutSuccess: () -> Unit,
     darkTheme: Boolean,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -109,12 +108,6 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         viewModel.updateLanguageName()
-    }
-
-    LaunchedEffect(uiState.isSignedOut) {
-        if (uiState.isSignedOut) {
-            onSignOutSuccess()
-        }
     }
 
     var showLanguageSheet by remember { mutableStateOf(false) }
@@ -634,7 +627,6 @@ fun ProfileScreenPreview() {
             onAdminClick = {},
             onTermsAndConditionsClick = {},
             onHelpCenterClick = {},
-            onSignOutSuccess = {},
             darkTheme = true,
         )
     }

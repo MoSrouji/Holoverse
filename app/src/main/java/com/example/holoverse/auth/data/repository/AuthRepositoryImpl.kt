@@ -8,6 +8,8 @@ import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
 import com.example.holoverse.core.utils.PreferenceManager
 import com.example.holoverse.core.utils.Response
+import com.example.holoverse.payment.domain.model.TransactionType
+import com.example.holoverse.payment.domain.repository.PaymentRepository
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -21,7 +23,8 @@ class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val preferenceManager: PreferenceManager,
-    private val fetchDataRepository: com.example.holoverse.fetch.domain.FetchDataRepository
+    private val fetchDataRepository: com.example.holoverse.fetch.domain.FetchDataRepository,
+    private val paymentRepository: PaymentRepository
 ) : AuthRepository {
     override suspend fun firebaseSignUp(
         userDto: User,
@@ -67,6 +70,24 @@ class AuthRepositoryImpl @Inject constructor(
                         createdAt = System.currentTimeMillis()
                     )
                     userDoc.set(mentor).await()
+
+                    // Mentor Signup Fee ($10)
+                    try {
+                        val adminSnapshot = firestore.collection(COLLECTION_NAME_ADMINS).limit(1).get().await()
+                        val adminId = adminSnapshot.documents.firstOrNull()?.id
+                        if (adminId != null) {
+                            paymentRepository.transferFunds(
+                                senderId = userId,
+                                receiverId = adminId,
+                                amount = 10.0,
+                                type = TransactionType.MENTOR_SIGNUP,
+                                metadata = mapOf("mentorName" to (mentor.fullName ?: "Unknown"))
+                            )
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AuthRepository", "Failed to process signup fee: ${e.message}")
+                    }
+
                     mentor
                 }
 
@@ -108,8 +129,8 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun firebaseSignOut(): Flow<Response<Boolean>> = flow {
         emit(Response.Loading)
         try {
-            firebaseAuth.signOut()
             preferenceManager.clearData()
+            firebaseAuth.signOut()
             fetchDataRepository.clearCache()
             emit(Response.Success(true))
         } catch (e: Exception) {

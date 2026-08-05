@@ -140,7 +140,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Use a stable key for the entire App content to force a full reset on auth change
-            key(isLoggedIn) {
+            // We use both isLoggedIn and userId to ensure session isolation
+            Log.d(TAG, "Recomposing key block: isLoggedIn=$isLoggedIn, userId=${currentUser?.userId}")
+            key(isLoggedIn, currentUser?.userId) {
+                Log.d(TAG, "INSIDE KEY BLOCK: isLoggedIn=$isLoggedIn")
                 HoloverseTheme(darkTheme = darkTheme) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),

@@ -92,6 +92,7 @@ import com.example.holoverse.transaction.presentation.TransactionScreen
 import com.example.holoverse.webrtc.presentation.IncomingCallScreen
 import com.example.holoverse.webrtc.presentation.OutgoingCallScreen
 import kotlinx.coroutines.delay
+import com.example.holoverse.auth.presentation.signup.RegistrationViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.time.Duration.Companion.milliseconds
@@ -121,7 +122,8 @@ fun AppNavHost(
 
     val navigationState = rememberNavigationState(
         startRoute = startRoute,
-        topLevelRoutes = topLevelRoutes
+        topLevelRoutes = topLevelRoutes,
+        sessionKey = currentUser?.userId
     )
     val nav3Navigator = remember { Navigator(navigationState) }
 
@@ -147,9 +149,14 @@ fun AppNavHost(
         }
     }
 
-    val mentorState = remember { MutableStateFlow(User.Mentor()) }
-    val studentState = remember { MutableStateFlow(User.Student()) }
-    val signUpPassword = remember { MutableStateFlow("") }
+    val registrationViewModel: RegistrationViewModel = hiltViewModel()
+    
+    // Ensure registration state is cleared when not in registration or on logout
+    LaunchedEffect(currentUser) {
+        if (currentUser == null) {
+            registrationViewModel.reset()
+        }
+    }
 
     val modelViewModel: ModelViewModel = hiltViewModel()
 
@@ -225,9 +232,7 @@ fun AppNavHost(
                         inclusive = true
                     )
                 },
-                mentorStates = mentorState,
-                studentStates = studentState,
-                passwordState = signUpPassword,
+                registrationViewModel = registrationViewModel,
                 darkTheme = darkTheme
             )
         }
@@ -241,8 +246,7 @@ fun AppNavHost(
                         inclusive = true
                     )
                 },
-                mentorStates = mentorState,
-                passwordState = signUpPassword,
+                registrationViewModel = registrationViewModel,
                 darkTheme = darkTheme
             )
         }
@@ -256,8 +260,7 @@ fun AppNavHost(
                         inclusive = true
                     )
                 },
-                mentorStates = mentorState,
-                passwordState = signUpPassword,
+                registrationViewModel = registrationViewModel,
                 darkTheme = darkTheme
             )
         }
@@ -271,8 +274,7 @@ fun AppNavHost(
                         inclusive = true
                     )
                 },
-                studentStates = studentState,
-                passwordState = signUpPassword,
+                registrationViewModel = registrationViewModel,
                 darkTheme = darkTheme
             )
         }
@@ -286,8 +288,7 @@ fun AppNavHost(
                         inclusive = true
                     )
                 },
-                studentStates = studentState,
-                passwordState = signUpPassword,
+                registrationViewModel = registrationViewModel,
                 darkTheme = darkTheme
             )
         }
@@ -337,7 +338,6 @@ fun AppNavHost(
                 onAdminClick = { navigator.navigateTo(AppDestination.AdminControlPanel) },
                 onTermsAndConditionsClick = { navigator.navigateTo(AppDestination.TermsAndConditions) },
                 onHelpCenterClick = { navigator.navigateTo(AppDestination.HelpCenter) },
-                onSignOutSuccess = { navigator.navigateTo(AppDestination.HoloIntro) },
                 darkTheme = darkTheme
             )
         }

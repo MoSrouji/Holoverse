@@ -63,7 +63,7 @@ class SignUpViewModel @Inject constructor(
         forms[SignUpTextFieldId.PASSWORD] = passwordValidationState
         forms[SignUpTextFieldId.CONFIRM_PASSWORD] = confirmPasswordValidationState
         forms[SignUpTextFieldId.ACCOUNT_TYPE] = accountValidationState
-        checkUserSession()
+        // Auto-redirect removed to prevent logout loops; AppNavHost handles start destination
     }
 
     override fun onEvent(event: com.example.holoverse.auth.presentation.common.validation.event.ValidationEvent) {
@@ -76,8 +76,8 @@ class SignUpViewModel @Inject constructor(
     }
 
     private fun validateConfirmPassword() {
-        val password = forms[SignUpTextFieldId.PASSWORD]?.text ?: ""
-        val confirmPassword = forms[SignUpTextFieldId.CONFIRM_PASSWORD]?.text ?: ""
+        val password = forms[SignUpTextFieldId.PASSWORD]!!.text
+        val confirmPassword = forms[SignUpTextFieldId.CONFIRM_PASSWORD]!!.text
 
         if (confirmPassword.isNotEmpty() && password != confirmPassword) {
             forms[SignUpTextFieldId.CONFIRM_PASSWORD] = forms[SignUpTextFieldId.CONFIRM_PASSWORD]!!.copy(
@@ -88,16 +88,16 @@ class SignUpViewModel @Inject constructor(
     }
 
 
-    private fun checkUserSession() {
-        val user = preferenceManager.getUser()
-        if (user != null) {
-            _signUpState.value = Response.Success(true)
-        }
-    }
-
-
-    fun restUser() {
+    fun resetState() {
+        clearForms()
         _signUpState.value = Response.Success(false)
+        selectedItem = "Select User Type"
+        // Re-initialize mandatory forms
+        forms[SignUpTextFieldId.FULL_NAME] = fullNameValidationState
+        forms[SignUpTextFieldId.EMAIL] = emailValidationState
+        forms[SignUpTextFieldId.PASSWORD] = passwordValidationState
+        forms[SignUpTextFieldId.CONFIRM_PASSWORD] = confirmPasswordValidationState
+        forms[SignUpTextFieldId.ACCOUNT_TYPE] = accountValidationState
     }
 
     suspend fun firebaseSingUp(

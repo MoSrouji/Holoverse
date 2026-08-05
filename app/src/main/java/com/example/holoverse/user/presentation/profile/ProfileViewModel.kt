@@ -27,8 +27,7 @@ data class ProfileUiState(
     val error: String? = null,
     val selectedLanguageName: String = "",
     val selectedLanguageCode: String? = null,
-    val selectedThemeMode: String = "system",
-    val isSignedOut: Boolean = false
+    val selectedThemeMode: String = "system"
 )
 
 @HiltViewModel
@@ -122,9 +121,7 @@ class ProfileViewModel @Inject constructor(
                     }
 
                     is Response.Success -> {
-                        _uiState.update { it.copy(isLoading = false, isSignedOut = true) }
-                        // Explicitly clear profile complete flag in case repository didn't or for redundancy
-                        preferenceManager.setProfileComplete(false)
+                        _uiState.update { it.copy(isLoading = false) }
                     }
 
                     is Response.Error -> {

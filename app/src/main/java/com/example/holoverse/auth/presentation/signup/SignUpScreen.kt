@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -41,6 +42,15 @@ import com.example.holoverse.auth.presentation.common.widget.loading.LoadingScre
 import com.example.holoverse.auth.presentation.common.widget.textfield.AuthenticationTextField
 import com.example.holoverse.core.ui.theme.IbarraNovaBoldPlatinum18
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Info
 import com.example.holoverse.core.ui.theme.HoloBlack
 import com.example.holoverse.core.ui.theme.HoloCyan
 import com.example.holoverse.core.ui.theme.HoloPurple
@@ -66,13 +76,11 @@ fun SignUpScreen(
     onNavigateToStudentProfile: () -> Unit,
     navToHomeScreen: () -> Unit,
     viewModel: SignUpViewModel = hiltViewModel(),
-    mentorStates: MutableStateFlow<User.Mentor>,
-    studentStates: MutableStateFlow<User.Student>,
-    passwordState: MutableStateFlow<String>,
+    registrationViewModel: RegistrationViewModel,
     darkTheme: Boolean
 ) {
     val menuItems = listOf("Mentor", "Student")
-    val signUpState = viewModel.signUpState.value
+    val signUpState by viewModel.signUpState
     val context = LocalContext.current
     var isMenuExpanded by remember { mutableStateOf(false) }
 
@@ -84,23 +92,25 @@ fun SignUpScreen(
                     val email = viewModel.forms[SignUpTextFieldId.EMAIL]!!.text
                     val password = viewModel.forms[SignUpTextFieldId.PASSWORD]!!.text
 
-                    passwordState.value = password
+                    registrationViewModel.updatePassword(password)
 
                     when (viewModel.getUserType()) {
                         UserType.Mentor -> {
-                            mentorStates.value = mentorStates.value.copy(
+                            val currentMentor = registrationViewModel.mentorState.value
+                            registrationViewModel.updateMentor(currentMentor.copy(
                                 fullName = fullName,
                                 email = email,
                                 accountType = UserType.Mentor
-                            )
+                            ))
                             onNavigateToTeacherProfile()
                         }
                         UserType.Student -> {
-                            studentStates.value = studentStates.value.copy(
+                            val currentStudent = registrationViewModel.studentState.value
+                            registrationViewModel.updateStudent(currentStudent.copy(
                                 fullName = fullName,
                                 email = email,
                                 accountType = UserType.Student
-                            )
+                            ))
                             onNavigateToStudentProfile()
                         }
                         UserType.Admin -> throw IllegalStateException("Admin sign up is not allowed")
@@ -262,6 +272,39 @@ fun SignUpScreen(
                 state = viewModel.forms[SignUpTextFieldId.ACCOUNT_TYPE]!!,
                 menuItems = menuItems
             )
+
+            AnimatedVisibility(
+                visible = viewModel.getUserType() == UserType.Mentor,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(HoloCyan.copy(alpha = 0.1f))
+                            .padding(16.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = HoloCyan,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Mentors are charged a one-time setup fee of $10 USD upon registration to maintain platform quality.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = contentColor.copy(alpha = 0.8f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(60.dp))
 

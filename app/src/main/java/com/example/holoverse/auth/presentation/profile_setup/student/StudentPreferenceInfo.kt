@@ -69,8 +69,7 @@ fun StudentPreferenceInfoInput(
     navController: AppNavigator,
     navToHomeScreen: () -> Unit,
     viewModel: StudentPreferenceViewModel = hiltViewModel(),
-    studentStates: MutableStateFlow<User.Student>,
-    passwordState: MutableStateFlow<String>,
+    registrationViewModel: com.example.holoverse.auth.presentation.signup.RegistrationViewModel,
     darkTheme: Boolean
 ) {
     val gradeItems = listOf(
@@ -89,19 +88,17 @@ fun StudentPreferenceInfoInput(
     var isLearningTimeExpanded by remember { mutableStateOf(false) }
     var isInterestsExpanded by remember { mutableStateOf(false) }
 
-    val signUpState = viewModel.signUpState.value
+    val signUpState by viewModel.signUpState
 
-    LaunchedEffect(studentStates) {
-        studentStates.collect { student ->
-            viewModel.updateState(student)
-        }
+    LaunchedEffect(Unit) {
+        viewModel.updateState(registrationViewModel.studentState.value)
     }
 
     LaunchedEffect(key1 = context) {
         viewModel.validationEvent.collect { event ->
             when (event) {
                 ValidationResultEvent.Success -> {
-                    val userState = studentStates.value.copy(
+                    val userState = registrationViewModel.studentState.value.copy(
                         currentGradeLevel = viewModel.forms[StudentPreferenceTextField.GRADE_LEVEL]!!.text,
                         universityName = viewModel.forms[StudentPreferenceTextField.UNIVERSITY_NAME]!!.text,
                         faculty = viewModel.forms[StudentPreferenceTextField.FACULTY]!!.text,
@@ -110,7 +107,7 @@ fun StudentPreferenceInfoInput(
                     )
                     viewModel.firebaseSignUp(
                         userDto = userState,
-                        password = passwordState.value
+                        password = registrationViewModel.password.value
                     )
                 }
             }
@@ -118,15 +115,16 @@ fun StudentPreferenceInfoInput(
     }
 
     LaunchedEffect(signUpState) {
-        when (signUpState) {
+        val state = signUpState
+        when (state) {
             is Response.Success -> {
-                if (signUpState.data) {
+                if (state.data) {
                     navToHomeScreen()
                 }
             }
 
             is Response.Error -> {
-                Toast.makeText(context, signUpState.message, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
             }
 
             is Response.Loading -> {}
@@ -179,8 +177,8 @@ fun StudentPreferenceInfoInput(
                 TextButton(
                     onClick = {
                         viewModel.firebaseSignUp(
-                            userDto = studentStates.value,
-                            password = passwordState.value
+                            userDto = registrationViewModel.studentState.value,
+                            password = registrationViewModel.password.value
                         )
                     }
                 ) {

@@ -6,6 +6,8 @@ import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.course.data.CourseRepo
 import com.example.holoverse.course.domain.Courses
+import com.example.holoverse.payment.domain.model.Transaction
+import com.example.holoverse.payment.domain.repository.PaymentRepository
 import com.example.holoverse.core.utils.Response
 import com.example.holoverse.core.utils.TranslationManager
 import com.example.holoverse.core.utils.PreferenceManager
@@ -28,13 +30,15 @@ data class MentorAnalysisUiState(
     val totalRevenue: Double = 0.0,
     val averageRating: Double = 0.0,
     val averageCompletionRate: Double = 0.0,
-    val averageProgress: Double = 0.0
+    val averageProgress: Double = 0.0,
+    val transactions: List<Transaction> = emptyList()
 )
 
 @HiltViewModel
 class MentorAnalysisViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val courseRepo: CourseRepo,
+    private val paymentRepository: PaymentRepository,
     private val translationManager: TranslationManager,
     private val preferenceManager: PreferenceManager
 ) : ViewModel() {
@@ -64,6 +68,7 @@ class MentorAnalysisViewModel @Inject constructor(
                 }
                 _uiState.update { it.copy(mentor = translatedMentor) }
                 fetchCourses(currentUser.userId ?: "")
+                fetchTransactions(currentUser.userId ?: "")
             } else {
                 _uiState.update { it.copy(isLoading = false, error = "User not found or not a mentor") }
             }
@@ -99,11 +104,21 @@ class MentorAnalysisViewModel @Inject constructor(
         }
     }
 
+    private suspend fun fetchTransactions(mentorId: String) {
+        paymentRepository.getTransactionsForUser(mentorId).collectLatest { response ->
+            if (response is Response.Success) {
+                val transactions = response.data
+                val earnings = transactions.filter { it.receiverId == mentorId }.sumOf { it.amount }
+                _uiState.update { it.copy(transactions = transactions, totalRevenue = earnings) }
+            }
+        }
+    }
+
     private fun calculateStats(courses: List<Courses>) {
         val mentor = _uiState.value.mentor
         val totalStudents = mentor?.totalStudentsTaught ?: courses.sumOf { it.numEnrolled }
         val totalFollowers = mentor?.followersCount ?: mentor?.followers?.size ?: 0
-        val totalRevenue = courses.sumOf { it.price * it.numEnrolled }
+        // totalRevenue is now fetched from transactions in fetchTransactions
         val avgRating = if (courses.isNotEmpty()) courses.sumOf { it.rating } / courses.size else 0.0
         val avgCompletion = if (courses.isNotEmpty()) courses.sumOf { it.completionRate } / courses.size else 0.0
         val avgProgress = if (courses.isNotEmpty()) courses.sumOf { it.averageProgress } / courses.size else 0.0
@@ -114,7 +129,6 @@ class MentorAnalysisViewModel @Inject constructor(
                 isLoading = false,
                 totalStudents = totalStudents,
                 totalFollowers = totalFollowers,
-                totalRevenue = totalRevenue,
                 averageRating = mentor?.averageRating ?: avgRating,
                 averageCompletionRate = avgCompletion,
                 averageProgress = avgProgress

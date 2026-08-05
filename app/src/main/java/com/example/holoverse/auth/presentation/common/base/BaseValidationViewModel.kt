@@ -94,5 +94,9 @@ open class BaseValidationViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun clearForms() {
+        forms.clear()
+    }
+
 
 }

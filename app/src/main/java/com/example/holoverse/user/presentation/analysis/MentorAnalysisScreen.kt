@@ -36,11 +36,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -48,8 +51,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.course.domain.Courses
+import com.example.holoverse.payment.domain.model.Transaction
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,6 +128,70 @@ fun MentorAnalysisScreen(
 
                     items(uiState.courses) { course ->
                         CourseAnalysisCard(course)
+                    }
+
+                    item {
+                        Text(
+                            "Earning History",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    item {
+                        TransactionHistorySection(uiState.transactions, uiState.mentor?.userId ?: "")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TransactionHistorySection(transactions: List<Transaction>, currentUserId: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        if (transactions.isEmpty()) {
+            Box(modifier = Modifier.padding(32.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("No transactions found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else {
+            Column {
+                transactions.take(10).forEachIndexed { index, transaction ->
+                    val isEarning = transaction.receiverId == currentUserId
+                    val amountText = if (isEarning) "+$${transaction.amount}" else "-$${transaction.amount}"
+                    val amountColor = if (isEarning) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
+                    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                transaction.type.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                dateFormat.format(Date(transaction.timestamp)),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text(
+                            amountText,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = amountColor,
+                            fontSize = 16.sp
+                        )
+                    }
+                    if (index < transactions.size.coerceAtMost(10) - 1) {
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.surfaceVariant)
                     }
                 }
             }

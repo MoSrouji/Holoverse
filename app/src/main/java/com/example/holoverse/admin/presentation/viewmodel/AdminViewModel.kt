@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.holoverse.admin.domain.repository.AdminRepository
 import com.example.holoverse.admin.domain.repository.Timeframe
 import com.example.holoverse.core.utils.Response
+import com.example.holoverse.payment.domain.model.Transaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ data class AdminUiState(
     val categoryDistribution: Map<String, Int> = emptyMap(),
     val userGrowthData: List<Pair<String, Int>> = emptyList(),
     val totalRevenue: Double = 0.0,
+    val recentTransactions: List<Transaction> = emptyList(),
     val selectedTimeframe: Timeframe = Timeframe.WEEK,
     val error: String? = null
 )
@@ -67,6 +69,11 @@ class AdminViewModel @Inject constructor(
             launch {
                 adminRepository.getTotalRevenue().collect { response ->
                     handleResponse(response) { rev -> _uiState.update { it.copy(totalRevenue = rev) } }
+                }
+            }
+            launch {
+                adminRepository.getRecentTransactions().collect { response ->
+                    handleResponse(response) { transactions -> _uiState.update { it.copy(recentTransactions = transactions) } }
                 }
             }
             

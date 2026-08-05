@@ -11,6 +11,7 @@ sealed interface User {
     val profileImageUrl: String?
     val accountType: UserType
     val fcmToken: String?
+    val walletBalance: Double
 
     @Serializable
     data class Student(
@@ -19,6 +20,7 @@ sealed interface User {
         override val email: String? = null,
         override val accountType: UserType = UserType.Student,
         override val fcmToken: String? = null,
+        override val walletBalance: Double = 0.0,
 
         // Personal Information
         override val profileImageUrl: String? = null,
@@ -69,6 +71,7 @@ sealed interface User {
         override val email: String? = null,
         override val accountType: UserType = UserType.Mentor,
         override val fcmToken: String? = null,
+        override val walletBalance: Double = 0.0,
 
         // Personal Information
         override val profileImageUrl: String? = null,
@@ -129,6 +132,7 @@ sealed interface User {
         override val accountType: UserType = UserType.Admin,
         override val fcmToken: String? = null,
         override val profileImageUrl: String? = null,
+        override val walletBalance: Double = 0.0,
         val createdAt: Long? = null
     ) : User
 }

@@ -193,7 +193,7 @@ fun ViewerScreen(
                     ),
                     onConfirm = {
                         showPaymentDialog = false
-                        viewModel.saveModelToMaterial(uiState.selectedModel!!)
+                        viewModel.purchaseModel(uiState.selectedModel!!)
                     },
                     onDismiss = { showPaymentDialog = false }
                 )

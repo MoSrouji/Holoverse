@@ -7,6 +7,7 @@ import com.example.holoverse.auth.domain.use_cases.FirebaseSignIn
 import com.example.holoverse.auth.domain.use_cases.FirebaseSignUp
 import com.example.holoverse.auth.domain.use_cases.GetCurrentUser
 import com.example.holoverse.core.utils.PreferenceManager
+import com.example.holoverse.payment.domain.repository.PaymentRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -27,14 +28,16 @@ object AuthModule {
         firebaseAuth: FirebaseAuth,
         firebaseFirestore: FirebaseFirestore,
         preferenceManager: PreferenceManager,
-        fetchDataRepository: com.example.holoverse.fetch.domain.FetchDataRepository
+        fetchDataRepository: com.example.holoverse.fetch.domain.FetchDataRepository,
+        paymentRepository: PaymentRepository
     ): AuthRepository {
 
         return AuthRepositoryImpl(
             firebaseAuth = firebaseAuth,
             firestore = firebaseFirestore,
             preferenceManager = preferenceManager,
-            fetchDataRepository = fetchDataRepository
+            fetchDataRepository = fetchDataRepository,
+            paymentRepository = paymentRepository
         )
     }
 

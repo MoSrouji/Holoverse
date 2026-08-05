@@ -1,7 +1,6 @@
 package com.example.holoverse.navigation
 
 import androidx.navigation3.runtime.NavKey
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,7 +22,9 @@ sealed interface NavigationIntent {
 @Singleton
 class AppNavigator @Inject constructor() {
 
-    private val _navigationIntents = Channel<NavigationIntent>(Channel.CONFLATED)
+    private val _navigationIntents = kotlinx.coroutines.channels.Channel<NavigationIntent>(
+        capacity = kotlinx.coroutines.channels.Channel.CONFLATED
+    )
     val navigationIntents = _navigationIntents.receiveAsFlow()
 
     fun navigateTo(
