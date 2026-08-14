@@ -42,8 +42,12 @@ interface ChatRepository {
         videoUrl: String? = null,
         glbUrl: String? = null,
         fileUrl: String? = null,
-        fileName: String? = null
+        fileName: String? = null,
+        isCallMessage: Boolean = false
     )
+
+    fun getCallMessages(chatId: String): Flow<List<Message>>
+    suspend fun cleanupCallMessages(chatId: String)
 
     suspend fun sendCallNotification(
         chatId: String,

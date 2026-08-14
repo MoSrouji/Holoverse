@@ -5,6 +5,7 @@ import com.example.holoverse.reviews.domain.ReviewRepository
 import com.example.holoverse.core.utils.Response
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -39,6 +40,7 @@ class ReviewRepositoryImpl(private val firestore: FirebaseFirestore) : ReviewRep
             
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to add review"))
         }
     }
@@ -77,6 +79,7 @@ class ReviewRepositoryImpl(private val firestore: FirebaseFirestore) : ReviewRep
                 emit(Response.Success(average))
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Error calculating average rating"))
         }
     }

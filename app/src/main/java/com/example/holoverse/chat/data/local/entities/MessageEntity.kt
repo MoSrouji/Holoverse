@@ -23,6 +23,7 @@ data class MessageEntity(
     val poll: com.example.holoverse.chat.domain.model.Poll? = null,
     val bookingRequest: com.example.holoverse.chat.domain.model.BookingRequest? = null,
     val timestamp: Long,
-    val status: MessageStatus = MessageStatus.SENT
+    val status: MessageStatus = MessageStatus.SENT,
+    val isCallMessage: Boolean = false
 )
 

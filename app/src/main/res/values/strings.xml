@@ -146,6 +146,10 @@
     <string name="tab_explore">Explore</string>
     <string name="tab_your_courses">Your Courses</string>
 
+    <!-- Chat Tabs -->
+    <string name="tab_chats">Chats</string>
+    <string name="tab_groups_batches">Groups</string>
+
     <!-- Home Screen -->
     <string name="create_course">Create Course</string>
     <string name="analytics">Analytics</string>

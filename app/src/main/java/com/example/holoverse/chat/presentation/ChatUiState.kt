@@ -4,6 +4,10 @@ import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.chat.domain.model.Chat
 import com.example.holoverse.chat.domain.model.Message
 
+enum class ChatTab {
+    Personal, Groups
+}
+
 data class ChatUiState(
     val chats: List<Chat> = emptyList(),
     val messages: List<Message> = emptyList(),
@@ -23,6 +27,7 @@ data class ChatUiState(
     val incomingCallId: String? = null,
     val currentChat: Chat? = null,
     val currentUserIsMentor: Boolean = false,
-    val isRestricted: Boolean = false
+    val isRestricted: Boolean = false,
+    val selectedTab: ChatTab = ChatTab.Personal
 )
 

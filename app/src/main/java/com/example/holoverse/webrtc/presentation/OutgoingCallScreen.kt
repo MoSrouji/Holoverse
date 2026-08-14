@@ -23,11 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
-import org.webrtc.PeerConnection
 
 @Composable
 fun OutgoingCallScreen(
     callId: String,
+    roomId: String,
     receiverName: String,
     receiverImageUrl: String?,
     viewModel: VideoCallViewModel = hiltViewModel(),
@@ -36,12 +36,12 @@ fun OutgoingCallScreen(
 ) {
     val connectionState by viewModel.connectionState.collectAsState(initial = null)
 
-    LaunchedEffect(callId) {
-        viewModel.initCall(callId, isOffer = true)
+    LaunchedEffect(callId, roomId) {
+        viewModel.initCall(roomId = roomId, inviteId = callId, isOffer = true)
     }
 
     LaunchedEffect(connectionState) {
-        if (connectionState == PeerConnection.PeerConnectionState.CONNECTED) {
+        if (connectionState == "CONNECTED") {
             onCallConnected()
         }
     }
@@ -66,7 +66,7 @@ fun OutgoingCallScreen(
 fun OutgoingCallContent(
     receiverName: String,
     receiverImageUrl: String?,
-    connectionState: PeerConnection.PeerConnectionState?,
+    connectionState: String?,
     onEndCall: () -> Unit
 ) {
     Box(
@@ -112,8 +112,8 @@ fun OutgoingCallContent(
 
             Text(
                 text = when (connectionState) {
-                    PeerConnection.PeerConnectionState.CONNECTING -> "Connecting..."
-                    PeerConnection.PeerConnectionState.CONNECTED -> "Connected"
+                    "CONNECTING" -> "Connecting..."
+                    "CONNECTED" -> "Connected"
                     else -> "Calling..."
                 },
                 color = Color.White.copy(alpha = 0.7f),
@@ -154,7 +154,7 @@ fun OutgoingCallScreenPreview() {
     OutgoingCallContent(
         receiverName = "John Smith",
         receiverImageUrl = null,
-        connectionState = PeerConnection.PeerConnectionState.CONNECTING,
+        connectionState = "CONNECTING",
         onEndCall = {}
     )
 }

@@ -1,6 +1,8 @@
 package com.example.holoverse.di
 
 import android.content.Context
+import com.example.holoverse.core.utils.ConnectivityObserver
+import com.example.holoverse.core.utils.NetworkConnectivityObserver
 import com.example.holoverse.core.utils.PreferenceManager
 import dagger.Module
 import dagger.Provides
@@ -17,6 +19,12 @@ object AppModule {
     @Provides
     fun providePreferenceManager(@ApplicationContext context: Context): PreferenceManager {
         return PreferenceManager(context)
+    }
+
+    @Singleton
+    @Provides
+    fun provideConnectivityObserver(@ApplicationContext context: Context): ConnectivityObserver {
+        return NetworkConnectivityObserver(context)
     }
 }
 

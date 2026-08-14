@@ -10,12 +10,12 @@ import com.example.holoverse.chat.data.remote.FcmApi
 import com.example.holoverse.chat.data.remote.FcmMessage
 import com.example.holoverse.chat.data.remote.FcmV1Request
 import com.example.holoverse.chat.data.remote.NotificationData
-import com.example.holoverse.notifications.domain.models.Notification
-import com.example.holoverse.notifications.domain.repository.BroadcastTarget
-import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
 import com.example.holoverse.core.utils.Response
+import com.example.holoverse.notifications.domain.models.Notification
+import com.example.holoverse.notifications.domain.repository.BroadcastTarget
+import com.example.holoverse.notifications.domain.repository.NotificationRepository
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -44,7 +44,8 @@ class NotificationRepositoryImpl @Inject constructor(
     ): Response<Boolean> {
         return try {
             // 1. Get followers and mentor info from mentor document
-            val mentorDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId).get().await()
+            val mentorDoc =
+                firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId).get().await()
             val followers = mentorDoc.get("followers") as? List<String> ?: emptyList()
             val mentorImageUrl = mentorDoc.getString("profileImageUrl")
 
@@ -75,7 +76,7 @@ class NotificationRepositoryImpl @Inject constructor(
 
             // 3. Send FCM notifications to each follower
             try {
-                val authHeader = getAccessToken()
+                val (authHeader, projectId) = getAccessToken()
                 Log.d("NotificationRepo", "Sending FCM to ${followers.size} followers")
                 followers.forEach { followerId ->
                     val token = authRepository.getFcmToken(followerId)
@@ -100,7 +101,7 @@ class NotificationRepositoryImpl @Inject constructor(
                                 )
                             )
                         )
-                        fcmApi.sendNotification(authHeader, request)
+                        fcmApi.sendNotification(authHeader, request, projectId)
                     }
                 }
             } catch (e: Exception) {
@@ -113,14 +114,18 @@ class NotificationRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun getAccessToken(): String {
+    private suspend fun getAccessToken(): Pair<String, String> {
         return withContext(Dispatchers.IO) {
             try {
                 val stream = context.assets.open("service-account.json")
-                val credentials = GoogleCredentials.fromStream(stream)
+                val jsonString = stream.bufferedReader().use { it.readText() }
+                val jsonObject = org.json.JSONObject(jsonString)
+                val projectId = jsonObject.getString("project_id")
+
+                val credentials = GoogleCredentials.fromStream(jsonString.byteInputStream())
                     .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
                 credentials.refreshIfExpired()
-                "Bearer ${credentials.accessToken.tokenValue}"
+                Pair("Bearer ${credentials.accessToken.tokenValue}", projectId)
             } catch (e: Exception) {
                 Log.e("NotificationRepo", "Error getting access token: ${e.message}")
                 throw e
@@ -128,29 +133,30 @@ class NotificationRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getNotifications(userId: String): Flow<Response<List<Notification>>> = callbackFlow {
-        trySend(Response.Loading)
-        
-        // Use a snapshot listener to get real-time updates
-        val query = firestore.collection("notifications")
-            .whereEqualTo("recipientId", userId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
+    override fun getNotifications(userId: String): Flow<Response<List<Notification>>> =
+        callbackFlow {
+            trySend(Response.Loading)
 
-        val listener = query.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                trySend(Response.Error(error.message ?: "Unknown error"))
-                return@addSnapshotListener
+            // Use a snapshot listener to get real-time updates
+            val query = firestore.collection("notifications")
+                .whereEqualTo("recipientId", userId)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+
+            val listener = query.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(Response.Error(error.message ?: "Unknown error"))
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val notifications = snapshot.toObjects(Notification::class.java)
+                    // Filter out nulls if any document failed to parse
+                    trySend(Response.Success(notifications.filterNotNull()))
+                }
             }
 
-            if (snapshot != null) {
-                val notifications = snapshot.toObjects(Notification::class.java)
-                // Filter out nulls if any document failed to parse
-                trySend(Response.Success(notifications.filterNotNull()))
-            }
+            awaitClose { listener.remove() }
         }
-
-        awaitClose { listener.remove() }
-    }
 
     override suspend fun markAsRead(notificationId: String): Response<Boolean> {
         return try {
@@ -169,7 +175,7 @@ class NotificationRepositoryImpl @Inject constructor(
     ): Response<Boolean> {
         return try {
             val recipientIds = mutableListOf<String>()
-            
+
             when (target) {
                 BroadcastTarget.ALL -> {
                     val students = firestore.collection(COLLECTION_NAME_STUDENTS).get().await()
@@ -177,10 +183,12 @@ class NotificationRepositoryImpl @Inject constructor(
                     recipientIds.addAll(students.documents.map { it.id })
                     recipientIds.addAll(mentors.documents.map { it.id })
                 }
+
                 BroadcastTarget.STUDENTS -> {
                     val students = firestore.collection(COLLECTION_NAME_STUDENTS).get().await()
                     recipientIds.addAll(students.documents.map { it.id })
                 }
+
                 BroadcastTarget.MENTORS -> {
                     val mentors = firestore.collection(COLLECTION_NAME_MENTORS).get().await()
                     recipientIds.addAll(mentors.documents.map { it.id })
@@ -213,7 +221,7 @@ class NotificationRepositoryImpl @Inject constructor(
 
             // Send FCM notifications
             try {
-                val authHeader = getAccessToken()
+                val (authHeader, projectId) = getAccessToken()
                 recipientIds.forEach { recipientId ->
                     val token = authRepository.getFcmToken(recipientId)
                     if (!token.isNullOrBlank()) {
@@ -234,7 +242,7 @@ class NotificationRepositoryImpl @Inject constructor(
                                 )
                             )
                         )
-                        fcmApi.sendNotification(authHeader, request)
+                        fcmApi.sendNotification(authHeader, request, projectId)
                     }
                 }
             } catch (e: Exception) {
@@ -273,7 +281,7 @@ class NotificationRepositoryImpl @Inject constructor(
             try {
                 val token = authRepository.getFcmToken(mentorId)
                 if (!token.isNullOrBlank()) {
-                    val authHeader = getAccessToken()
+                    val (authHeader, projectId) = getAccessToken()
                     val request = FcmV1Request(
                         message = FcmMessage(
                             token = token,
@@ -291,7 +299,7 @@ class NotificationRepositoryImpl @Inject constructor(
                             )
                         )
                     )
-                    fcmApi.sendNotification(authHeader, request)
+                    fcmApi.sendNotification(authHeader, request, projectId)
                 }
             } catch (e: Exception) {
                 Log.e("NotificationRepo", "FCM for mentor failed: ${e.message}")

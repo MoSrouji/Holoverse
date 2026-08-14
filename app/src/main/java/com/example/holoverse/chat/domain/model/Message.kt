@@ -1,6 +1,7 @@
 package com.example.holoverse.chat.domain.model
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.PropertyName
 import kotlinx.serialization.Serializable
 
 data class Message(
@@ -18,7 +19,10 @@ data class Message(
     val poll: Poll? = null,
     val bookingRequest: BookingRequest? = null,
     val timestamp: Timestamp? = null,
-    val status: MessageStatus = MessageStatus.SENT
+    val status: MessageStatus = MessageStatus.SENT,
+    @get:PropertyName("isCallMessage")
+    @set:PropertyName("isCallMessage")
+    var isCallMessage: Boolean = false
 )
 
 enum class MessageStatus {

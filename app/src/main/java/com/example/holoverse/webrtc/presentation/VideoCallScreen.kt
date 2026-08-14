@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -27,9 +28,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CallEnd
@@ -37,12 +44,16 @@ import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.SpeakerNotesOff
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideocamOff
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.rounded.Gesture
 import androidx.compose.material.icons.rounded.ViewInAr
 import androidx.compose.material3.AlertDialog
@@ -85,23 +96,28 @@ import com.example.holoverse.threedmodel.presentation.ar.rememberArStatus
 import com.example.holoverse.ui.three_D_Part.ar.ArStatus
 import com.example.holoverse.ui.three_D_Part.ar.ArViewer
 import com.example.holoverse.ui.three_D_Part.gallery.ModelGalleryOverlay
+import com.example.holoverse.webrtc.domain.model.CallMode
 import com.example.holoverse.whiteboard.presentation.WhiteboardManager
 import com.example.holoverse.whiteboard.presentation.WhiteboardToolbar
-import com.example.holoverse.webrtc.domain.model.CallMode
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import io.livekit.android.compose.local.RoomScope
+import io.livekit.android.compose.ui.ScaleType
+import io.livekit.android.compose.ui.VideoTrackView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.webrtc.EglBase
-import org.webrtc.RendererCommon
-import org.webrtc.SurfaceViewRenderer
-import org.webrtc.VideoTrack
+import livekit.org.webrtc.EglBase
+import livekit.org.webrtc.RendererCommon
+import livekit.org.webrtc.SurfaceViewRenderer
 import kotlin.math.roundToInt
+
+
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun VideoCallScreen(
     callId: String,
+    roomId: String,
     isOffer: Boolean,
     viewModel: VideoCallViewModel = hiltViewModel(),
     onCallEnded: () -> Unit
@@ -114,7 +130,7 @@ fun VideoCallScreen(
     )
 
     if (permissionsState.allPermissionsGranted) {
-        VideoCallContent(callId, isOffer, viewModel, onCallEnded)
+        VideoCallContent(callId, roomId, isOffer, viewModel, onCallEnded)
     } else {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -143,6 +159,7 @@ fun VideoCallScreen(
 @Composable
 fun VideoCallContent(
     callId: String,
+    roomId: String,
     isOffer: Boolean,
     viewModel: VideoCallViewModel,
     onCallEnded: () -> Unit,
@@ -150,12 +167,21 @@ fun VideoCallContent(
 ) {
     val localTrack by viewModel.localVideoTrack.collectAsState()
     val remoteTrack by viewModel.remoteVideoTrack.collectAsState()
+    val remoteParticipants by viewModel.remoteParticipants.collectAsState()
     val connectionState by viewModel.connectionState.collectAsState(initial = null)
     val isCallEnded by viewModel.isCallEnded.collectAsState()
     val isPdfEnabled by viewModel.isPdfEnabled.collectAsState()
     val callMode by viewModel.callMode.collectAsState()
     val pdfBitmap by viewModel.pdfBitmap.collectAsState()
     val arMirrorSurface by viewModel.arMirrorSurface.collectAsState()
+    val syntheticResolution by viewModel.syntheticResolution.collectAsState()
+    val room by viewModel.room.collectAsState()
+    val messages by viewModel.messages.collectAsState()
+    val isChatVisible by viewModel.isChatVisible.collectAsState()
+    val isMessagingRestricted by viewModel.isMessagingRestricted.collectAsState()
+    val currentUserIsMentor by viewModel.currentUserIsMentor.collectAsState()
+    val isGridViewEnabled by viewModel.isGridViewEnabled.collectAsState()
+    val mentorId by viewModel.mentorId.collectAsState()
     val eglContext = viewModel.getEglContext()
 
     val arStatus = rememberArStatus()
@@ -202,9 +228,10 @@ fun VideoCallContent(
         }
     }
 
-    LaunchedEffect(callId) {
+    LaunchedEffect(callId, roomId) {
         viewModel.initCall(
-            callId,
+            roomId = roomId,
+            inviteId = callId,
             isOffer = isOffer
         ) // Explicit boolean to be sure
     }
@@ -214,279 +241,563 @@ fun VideoCallContent(
         onCallEnded()
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val screenWidth = maxWidth
-        val screenHeight = maxHeight
-        val density = LocalDensity.current
+    RoomScope(
+        passedRoom = room,
+        connect = false,
+        disconnectOnDispose = false
+    ) { lkRoom ->
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val screenWidth = maxWidth
+            val screenHeight = maxHeight
+            val density = LocalDensity.current
 
-        // Main View (Remote Video, Whiteboard, or PDF)
-        when (callMode) {
-            CallMode.WHITEBOARD -> {
-                WhiteboardView(whiteboardManager)
-            }
+            // Main View (Remote Video, Whiteboard, or PDF)
+            val mentorParticipant = remoteParticipants.find { it.identity == mentorId }
+            val mentorTrack = mentorParticipant?.livekitVideoTrack
 
-            CallMode.PDF -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    // Draw PDF background locally
-                    pdfBitmap?.let { bitmap ->
-                        androidx.compose.foundation.Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "PDF Page",
-                            modifier = Modifier.fillMaxSize(),
-                            //   contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                        )
-                    }
-
-                    // Draw Whiteboard overlay on top of PDF
-                    WhiteboardView(whiteboardManager)
-
-                    // PDF Controls (Overlay)
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        IconButton(onClick = { viewModel.pdfPreviousPage() }) {
-                            Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Page")
-                        }
-                        IconButton(onClick = { viewModel.pdfNextPage() }) {
-                            Icon(Icons.Default.ChevronRight, contentDescription = "Next Page")
-                        }
-                    }
-                }
-            }
-
-            CallMode.AR -> {
-                ArViewer(
-                    modelPath = cachedModelPath,
-                    modifier = Modifier.fillMaxSize(),
-                    rotation = modelUiState.modelRotation,
-                    scale = modelUiState.modelScale,
-                    mirrorSurface = arMirrorSurface
-                )
-            }
-
-            else -> {
-                remoteTrack?.let { track ->
-                    VideoRenderer(
-                        track = track,
-                        eglContext = eglContext,
-                        modifier = Modifier.fillMaxSize(),
-                        isMirror = false,
-                        scalingType = RendererCommon.ScalingType.SCALE_ASPECT_FILL
-                    )
-                } ?: Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "Waiting for remote video...", color = Color.White)
-                }
-            }
-        }
-
-        val isArMode = callMode == CallMode.AR
-
-        // Connection State overlay
-        if (!isArMode) {
-            connectionState?.let { state ->
-                GlassySurface(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .statusBarsPadding()
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "Status: $state",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
-        // Local Video / Remote Video Overlay (DRAGGABLE)
-        DraggableVideoOverlay(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding()
-                .padding(16.dp),
-            screenSize = screenWidth to screenHeight
-        ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.DarkGray)
-                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                    .align(Alignment.Center)
             ) {
-                if (callMode == CallMode.WHITEBOARD || callMode == CallMode.PDF || callMode == CallMode.AR) {
-                    // When whiteboard, PDF or AR is full screen, show remote video in the small overlay
-                    remoteTrack?.let { track ->
-                        VideoRenderer(
-                            track = track,
-                            eglContext = eglContext,
-                            modifier = Modifier.fillMaxSize(),
-                            isMirror = false,
-                            scalingType = RendererCommon.ScalingType.SCALE_ASPECT_FILL
-                        )
-                    }
-                } else {
-                    localTrack?.let { track ->
-                        if (isCameraEnabled) {
-                            VideoRenderer(
-                                track = track,
-                                eglContext = eglContext,
-                                modifier = Modifier.fillMaxSize(),
-                                isMirror = true,
-                                scalingType = RendererCommon.ScalingType.SCALE_ASPECT_BALANCED
-                            )
+                if (currentUserIsMentor && !isGridViewEnabled || !currentUserIsMentor) {
+                    if (!currentUserIsMentor) {
+                        // Student View: Always focus on Mentor
+                        if (mentorParticipant != null) {
+                            if (mentorTrack != null && mentorParticipant.isVideoEnabled) {
+                                VideoRenderer(
+                                    track = mentorTrack,
+                                    eglContext = eglContext,
+                                    modifier = Modifier.fillMaxSize(),
+                                    scalingType = RendererCommon.ScalingType.SCALE_ASPECT_FIT
+                                )
+                            } else {
+                                CameraDisabledPlaceholder(modifier = Modifier.fillMaxSize())
+                            }
                         } else {
                             Box(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.VideocamOff,
-                                    contentDescription = null,
-                                    tint = Color.White
+                                Text(text = "Waiting for mentor...", color = Color.White)
+                            }
+                        }
+                    } else {
+                        // Mentor Focus Mode: See own content
+                        when (callMode) {
+                            CallMode.WHITEBOARD -> {
+                                WhiteboardView(whiteboardManager)
+                            }
+
+                            CallMode.PDF -> {
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    // Draw PDF background locally
+                                    pdfBitmap?.let { bitmap ->
+                                        androidx.compose.foundation.Image(
+                                            bitmap = bitmap.asImageBitmap(),
+                                            contentDescription = "PDF Page",
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+
+                                    // Draw Whiteboard overlay on top of PDF
+                                    WhiteboardView(whiteboardManager)
+
+                                    // PDF Controls (Overlay)
+                                    Column(
+                                        modifier = Modifier
+                                            .align(Alignment.CenterEnd)
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        IconButton(onClick = { viewModel.pdfPreviousPage() }) {
+                                            Icon(
+                                                Icons.Default.ChevronLeft,
+                                                contentDescription = "Previous Page"
+                                            )
+                                        }
+                                        IconButton(onClick = { viewModel.pdfNextPage() }) {
+                                            Icon(
+                                                Icons.Default.ChevronRight,
+                                                contentDescription = "Next Page"
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            CallMode.AR -> {
+                                ArViewer(
+                                    modelPath = cachedModelPath,
+                                    modifier = Modifier.fillMaxSize(),
+                                    rotation = modelUiState.modelRotation,
+                                    scale = modelUiState.modelScale,
+                                    mirrorSurface = arMirrorSurface,
+                                    mirrorResolution = syntheticResolution
+                                )
+                            }
+
+                            else -> {
+                                if (localTrack != null && isCameraEnabled) {
+                                    VideoRenderer(
+                                        track = localTrack!!,
+                                        eglContext = eglContext,
+                                        modifier = Modifier.fillMaxSize(),
+                                        isMirror = true,
+                                        scalingType = RendererCommon.ScalingType.SCALE_ASPECT_FIT
+                                    )
+                                } else {
+                                    CameraDisabledPlaceholder(modifier = Modifier.fillMaxSize())
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Mentor Grid Mode: See all students
+                    if (remoteParticipants.isNotEmpty()) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(if (remoteParticipants.size > 1) 2 else 1),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            items(remoteParticipants) { participant ->
+                                val lkTrack = participant.livekitVideoTrack
+                                if (lkTrack != null && participant.isVideoEnabled) {
+                                    VideoRenderer(
+                                        track = lkTrack,
+                                        eglContext = eglContext,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(if (remoteParticipants.size > 2) 200.dp else 400.dp)
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        scalingType = RendererCommon.ScalingType.SCALE_ASPECT_FIT
+                                    )
+                                } else {
+                                    CameraDisabledPlaceholder(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(if (remoteParticipants.size > 2) 200.dp else 400.dp)
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        iconSize = 32.dp
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "Waiting for students...", color = Color.White)
+                        }
+                    }
+                }
+            }
+
+            val isArMode = callMode == CallMode.AR
+
+            // In-Call Chat Overlay (Top Right)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(top = 16.dp, end = 16.dp)
+                    .width(260.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    AnimatedVisibility(
+                        visible = isChatVisible,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    Color.Black.copy(alpha = 0.6f),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    Color.White.copy(alpha = 0.1f),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .padding(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // Header with Sender name and Eye Icon
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "In-Call Chat",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color.White.copy(alpha = 0.6f)
+                                    )
+                                    IconButton(
+                                        onClick = { viewModel.toggleChatVisibility() },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Visibility,
+                                            contentDescription = "Hide Chat",
+                                            tint = Color.White.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+
+                                // Message List
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    messages.forEach { message ->
+                                        Column {
+                                            Text(
+                                                text = message.senderName,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color.Cyan,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = message.text,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color.White
+                                            )
+                                        }
+                                    }
+
+                                    if (messages.isEmpty()) {
+                                        Text(
+                                            "No messages yet",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.Gray,
+                                            modifier = Modifier.padding(vertical = 8.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                // Input or Restricted Label
+                                if (!isMessagingRestricted) {
+                                    var chatText by remember { mutableStateOf("") }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(
+                                                Color.White.copy(alpha = 0.1f),
+                                                RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        androidx.compose.foundation.text.BasicTextField(
+                                            value = chatText,
+                                            onValueChange = { chatText = it },
+                                            textStyle = MaterialTheme.typography.bodySmall.copy(
+                                                color = Color.White
+                                            ),
+                                            modifier = Modifier.weight(1f),
+                                            cursorBrush = androidx.compose.ui.graphics.SolidColor(
+                                                Color.White
+                                            )
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                if (chatText.isNotBlank()) {
+                                                    viewModel.sendMessage(chatText)
+                                                    chatText = ""
+                                                }
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.AutoMirrored.Filled.Send,
+                                                contentDescription = "Send",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Text(
+                                        "Messaging restricted by owner",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.Red.copy(alpha = 0.7f),
+                                        modifier = Modifier
+                                            .align(Alignment.CenterHorizontally)
+                                            .padding(vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Show button when hidden
+                    if (!isChatVisible) {
+                        IconButton(
+                            onClick = { viewModel.toggleChatVisibility() },
+                            modifier = Modifier
+                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                .size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.VisibilityOff,
+                                contentDescription = "Show Chat",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Connection State overlay
+            if (!isArMode) {
+                connectionState?.let { state ->
+                    GlassySurface(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .statusBarsPadding()
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = "Status: $state",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            // Local Video / Remote Video Overlay (DRAGGABLE)
+            val showOverlay = if (currentUserIsMentor) isGridViewEnabled else true
+
+            if (showOverlay) {
+                DraggableVideoOverlay(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .statusBarsPadding()
+                        .padding(16.dp),
+                    screenSize = screenWidth to screenHeight
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.DarkGray)
+                            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                    ) {
+                        if (callMode == CallMode.WHITEBOARD || callMode == CallMode.PDF || callMode == CallMode.AR || !currentUserIsMentor) {
+                            // When whiteboard, PDF or AR is full screen, show remote video in the small overlay
+                            // For students, they might want to see themselves even if mentor is full screen
+                            if (currentUserIsMentor) {
+                                val studentParticipant = remoteParticipants.firstOrNull()
+                                val overlayTrack = studentParticipant?.livekitVideoTrack
+                                if (overlayTrack != null && studentParticipant.isVideoEnabled) {
+                                    VideoTrackView(
+                                        videoTrack = overlayTrack,
+                                        modifier = Modifier.fillMaxSize(),
+                                        mirror = false,
+                                        scaleType = ScaleType.FitInside
+                                    )
+                                } else {
+                                    CameraDisabledPlaceholder(
+                                        modifier = Modifier.fillMaxSize(),
+                                        iconSize = 24.dp
+                                    )
+                                }
+                            } else {
+                                if (localTrack != null && isCameraEnabled) {
+                                    VideoTrackView(
+                                        videoTrack = localTrack!!,
+                                        modifier = Modifier.fillMaxSize(),
+                                        mirror = true,
+                                        scaleType = ScaleType.Fill
+                                    )
+                                } else {
+                                    CameraDisabledPlaceholder(
+                                        modifier = Modifier.fillMaxSize(),
+                                        iconSize = 24.dp
+                                    )
+                                }
+                            }
+                        } else {
+                            if (localTrack != null && isCameraEnabled) {
+                                VideoTrackView(
+                                    videoTrack = localTrack!!,
+                                    modifier = Modifier.fillMaxSize(),
+                                    mirror = true,
+                                    scaleType = ScaleType.FitInside
+                                )
+                            } else {
+                                CameraDisabledPlaceholder(
+                                    modifier = Modifier.fillMaxSize(),
+                                    iconSize = 24.dp
                                 )
                             }
                         }
                     }
                 }
             }
-        }
 
-        // AR Tools Sidebar
-        AnimatedVisibility(
-            visible = isArMode && !modelUiState.showModelGallery,
-            enter = fadeIn() + slideInVertically { it / 2 },
-            exit = fadeOut() + slideOutVertically { it / 2 },
-            modifier = Modifier.align(Alignment.CenterStart)
-        ) {
-            ArToolsSidebar(
-                rotation = modelUiState.modelRotation,
-                scale = modelUiState.modelScale,
-                onRotationChange = { modelViewModel.updateRotation(it) },
-                onScaleChange = { modelViewModel.updateScale(it) },
-                onReset = { modelViewModel.resetTransformations() },
-                onToggleGallery = { modelViewModel.setShowModelGallery(true) }
-            )
-        }
-
-        // Model Gallery Overlay (Integrated for AR)
-        AnimatedVisibility(
-            visible = isArMode && modelUiState.showModelGallery,
-            enter = fadeIn() + slideInVertically { it },
-            exit = fadeOut() + slideOutVertically { it },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                // Background scrim to close gallery
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable { modelViewModel.setShowModelGallery(false) }
+            // AR Tools Sidebar
+            AnimatedVisibility(
+                visible = isArMode && !modelUiState.showModelGallery,
+                enter = fadeIn() + slideInVertically { h: Int -> h / 2 },
+                exit = fadeOut() + slideOutVertically { h: Int -> h / 2 },
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                ArToolsSidebar(
+                    rotation = modelUiState.modelRotation,
+                    scale = modelUiState.modelScale,
+                    onRotationChange = { rot: Float -> modelViewModel.updateRotation(rot) },
+                    onScaleChange = { sc: Float -> modelViewModel.updateScale(sc) },
+                    onReset = { modelViewModel.resetTransformations() },
+                    onToggleGallery = { modelViewModel.setShowModelGallery(true) }
                 )
+            }
 
-                ModelGalleryOverlay(
-                    models = modelUiState.models,
-                    selectedModel = modelUiState.selectedModel,
-                    downloadProgress = modelUiState.downloadProgress,
-                    onModelSelected = { modelViewModel.selectModel(it) },
-                    onAddLocalModel = { /* Handle local model add if needed */ },
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                )
-
-                IconButton(
-                    onClick = { modelViewModel.setShowModelGallery(false) },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .statusBarsPadding()
-                        .padding(16.dp)
-                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Close Gallery",
-                        tint = Color.White
+            // Model Gallery Overlay (Integrated for AR)
+            AnimatedVisibility(
+                visible = isArMode && modelUiState.showModelGallery,
+                enter = fadeIn() + slideInVertically { h: Int -> h },
+                exit = fadeOut() + slideOutVertically { h: Int -> h },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Background scrim to close gallery
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { modelViewModel.setShowModelGallery(false) }
                     )
+
+                    ModelGalleryOverlay(
+                        models = modelUiState.models,
+                        selectedModel = modelUiState.selectedModel,
+                        downloadProgress = modelUiState.downloadProgress,
+                        onModelSelected = { model: com.example.holoverse.threedmodel.domain.model.Model ->
+                            modelViewModel.selectModel(
+                                model
+                            )
+                        },
+                        onAddLocalModel = { /* Handle local model add if needed */ },
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
+
+                    IconButton(
+                        onClick = { modelViewModel.setShowModelGallery(false) },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .statusBarsPadding()
+                            .padding(16.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close Gallery",
+                            tint = Color.White
+                        )
+                    }
                 }
             }
-        }
 
-        // Controls (ENSURE THEY ARE ON TOP)
-        Box(
-            modifier = Modifier
-                .align(if (isArMode) Alignment.TopCenter else Alignment.BottomCenter)
-                .then(
-                    if (isArMode) Modifier
-                        .statusBarsPadding()
-                        .padding(top = 16.dp)
-                    else Modifier.padding(bottom = 48.dp) // Increased padding for better visibility
-                )
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                if (isArMode) {
-                    connectionState?.let { state ->
-                        GlassySurface(modifier = Modifier.padding(bottom = 12.dp)) {
-                            Text(
-                                text = "Status: $state",
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold
-                            )
+            // Controls (ENSURE THEY ARE ON TOP)
+            Box(
+                modifier = Modifier
+                    .align(if (isArMode) Alignment.TopCenter else Alignment.BottomCenter)
+                    .then(
+                        if (isArMode) Modifier
+                            .statusBarsPadding()
+                            .padding(top = 16.dp)
+                        else Modifier.padding(bottom = 48.dp) // Increased padding for better visibility
+                    )
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (isArMode) {
+                        connectionState?.let { state ->
+                            GlassySurface(modifier = Modifier.padding(bottom = 12.dp)) {
+                                Text(
+                                    text = "Status: $state",
+                                    modifier = Modifier.padding(
+                                        horizontal = 12.dp,
+                                        vertical = 6.dp
+                                    ),
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
+
+                    CallControlRow(
+                        isMuted = isMuted,
+                        isCameraEnabled = isCameraEnabled,
+                        isSpeakerOn = isSpeakerOn,
+                        callMode = callMode,
+                        arStatus = arStatus,
+                        onToggleMute = {
+                            isMuted = !isMuted
+                            viewModel.toggleMute(isMuted)
+                        },
+                        onToggleCamera = {
+                            isCameraEnabled = !isCameraEnabled
+                            viewModel.toggleCamera(isCameraEnabled)
+                        },
+                        onToggleSpeaker = {
+                            isSpeakerOn = !isSpeakerOn
+                            viewModel.toggleSpeaker(isSpeakerOn)
+                        },
+                        onSwitchCamera = { viewModel.switchCamera() },
+                        onToggleWhiteboard = {
+                            val nextMode =
+                                if (callMode == CallMode.WHITEBOARD) CallMode.VIDEO else CallMode.WHITEBOARD
+                            viewModel.setCallMode(nextMode)
+                        },
+                        onTogglePdf = {
+                            if (callMode == CallMode.PDF) {
+                                viewModel.setCallMode(CallMode.VIDEO)
+                            } else {
+                                pdfPickerLauncher.launch("application/pdf")
+                            }
+                        },
+                        onToggleAr = {
+                            val nextMode =
+                                if (callMode == CallMode.AR) CallMode.VIDEO else CallMode.AR
+                            viewModel.setCallMode(nextMode)
+                        },
+                        onToggleChatLock = {
+                            viewModel.toggleMessagingRestriction()
+                        },
+                        isMessagingRestricted = isMessagingRestricted,
+                        showChatLock = currentUserIsMentor,
+                        isGridViewEnabled = isGridViewEnabled,
+                        onToggleGridView = { viewModel.toggleGridView() },
+                        showGridView = currentUserIsMentor,
+                        onEndCall = {
+                            viewModel.endCall()
+                            onCallEnded()
+                        }
+                    )
                 }
-
-                CallControlRow(
-                    isMuted = isMuted,
-                    isCameraEnabled = isCameraEnabled,
-                    isSpeakerOn = isSpeakerOn,
-                    callMode = callMode,
-                    arStatus = arStatus,
-                    onToggleMute = {
-                        isMuted = !isMuted
-                        viewModel.toggleMute(isMuted)
-                    },
-                    onToggleCamera = {
-                        isCameraEnabled = !isCameraEnabled
-                        viewModel.toggleCamera(isCameraEnabled)
-                    },
-                    onToggleSpeaker = {
-                        isSpeakerOn = !isSpeakerOn
-                        viewModel.toggleSpeaker(isSpeakerOn)
-                    },
-                    onSwitchCamera = { viewModel.switchCamera() },
-                    onToggleWhiteboard = {
-                        val nextMode =
-                            if (callMode == CallMode.WHITEBOARD) CallMode.VIDEO else CallMode.WHITEBOARD
-                        viewModel.setCallMode(nextMode)
-                    },
-                    onTogglePdf = {
-                        if (callMode == CallMode.PDF) {
-                            viewModel.setCallMode(CallMode.VIDEO)
-                        } else {
-                            pdfPickerLauncher.launch("application/pdf")
-                        }
-                    },
-                    onToggleAr = {
-                        val nextMode =
-                            if (callMode == CallMode.AR) CallMode.VIDEO else CallMode.AR
-                        viewModel.setCallMode(nextMode)
-                    },
-                    onEndCall = {
-                        viewModel.endCall()
-                        onCallEnded()
-                    }
-                )
             }
         }
     }
@@ -521,82 +832,137 @@ fun CallControlRow(
     onToggleWhiteboard: () -> Unit,
     onTogglePdf: () -> Unit,
     onToggleAr: () -> Unit,
+    onToggleChatLock: () -> Unit = {},
+    isMessagingRestricted: Boolean = false,
+    showChatLock: Boolean = false,
+    isGridViewEnabled: Boolean = false,
+    onToggleGridView: () -> Unit = {},
+    showGridView: Boolean = false,
     onEndCall: () -> Unit
 ) {
     val isArMode = callMode == CallMode.AR
+    val scrollState = rememberScrollState()
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ControlIcon(
-            icon = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
-            contentDescription = "Mute",
-            isActive = isMuted,
-            activeColor = Color.Red,
-            onClick = onToggleMute
-        )
-
-        ControlIcon(
-            icon = if (isCameraEnabled) Icons.Default.Videocam else Icons.Default.VideocamOff,
-            contentDescription = "Camera",
-            isActive = !isCameraEnabled,
-            activeColor = Color.Red,
-            onClick = onToggleCamera
-        )
-
-        if (!isArMode) {
-            ControlIcon(
-                icon = if (isSpeakerOn) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                contentDescription = "Speaker",
-                isActive = isSpeakerOn,
-                activeColor = Color.Green,
-                onClick = onToggleSpeaker
-            )
-
-            ControlIcon(
-                icon = Icons.Default.Cameraswitch,
-                contentDescription = "Switch Camera",
-                onClick = onSwitchCamera
-            )
-
-            ControlIcon(
-                icon = Icons.Rounded.Gesture,
-                contentDescription = "Whiteboard",
-                isActive = callMode == CallMode.WHITEBOARD,
-                activeColor = Color.Magenta,
-                onClick = onToggleWhiteboard
-            )
-
-            ControlIcon(
-                icon = Icons.Default.PictureAsPdf,
-                contentDescription = "PDF",
-                isActive = callMode == CallMode.PDF,
-                activeColor = Color.Red,
-                onClick = onTogglePdf
-            )
-        }
-
-        if (arStatus == ArStatus.SUPPORTED) {
-            ControlIcon(
-                icon = Icons.Rounded.ViewInAr,
-                contentDescription = "AR",
-                isActive = isArMode,
-                activeColor = Color.Blue,
-                onClick = onToggleAr
-            )
-        }
-
-        FloatingActionButton(
-            onClick = onEndCall,
-            containerColor = Color.Red,
-            modifier = Modifier.size(56.dp),
-            shape = CircleShape
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.CallEnd, contentDescription = "End", tint = Color.White)
+            if (showChatLock) {
+                ControlIcon(
+                    icon = if (isMessagingRestricted) Icons.Default.SpeakerNotesOff else Icons.AutoMirrored.Filled.Chat,
+                    contentDescription = "Toggle Chat Lock",
+                    isActive = isMessagingRestricted,
+                    activeColor = Color.Yellow,
+                    onClick = onToggleChatLock
+                )
+            }
+
+            if (showGridView) {
+                ControlIcon(
+                    icon = Icons.Default.GridView,
+                    contentDescription = "Toggle Grid View",
+                    isActive = isGridViewEnabled,
+                    activeColor = Color.Cyan,
+                    onClick = onToggleGridView
+                )
+            }
+
+            ControlIcon(
+                icon = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
+                contentDescription = "Mute",
+                isActive = isMuted,
+                activeColor = Color.Red,
+                onClick = onToggleMute
+            )
+
+            ControlIcon(
+                icon = if (isCameraEnabled) Icons.Default.Videocam else Icons.Default.VideocamOff,
+                contentDescription = "Camera",
+                isActive = !isCameraEnabled,
+                activeColor = Color.Red,
+                onClick = onToggleCamera
+            )
+
+            if (!isArMode) {
+                ControlIcon(
+                    icon = if (isSpeakerOn) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                    contentDescription = "Speaker",
+                    isActive = isSpeakerOn,
+                    activeColor = Color.Green,
+                    onClick = onToggleSpeaker
+                )
+
+                ControlIcon(
+                    icon = Icons.Default.Cameraswitch,
+                    contentDescription = "Switch Camera",
+                    onClick = onSwitchCamera
+                )
+
+                ControlIcon(
+                    icon = Icons.Rounded.Gesture,
+                    contentDescription = "Whiteboard",
+                    isActive = callMode == CallMode.WHITEBOARD,
+                    activeColor = Color.Magenta,
+                    onClick = onToggleWhiteboard
+                )
+
+                ControlIcon(
+                    icon = Icons.Default.PictureAsPdf,
+                    contentDescription = "PDF",
+                    isActive = callMode == CallMode.PDF,
+                    activeColor = Color.Red,
+                    onClick = onTogglePdf
+                )
+            }
+
+            if (arStatus == ArStatus.SUPPORTED) {
+                ControlIcon(
+                    icon = Icons.Rounded.ViewInAr,
+                    contentDescription = "AR",
+                    isActive = isArMode,
+                    activeColor = Color.Blue,
+                    onClick = onToggleAr
+                )
+            }
+
+            FloatingActionButton(
+                onClick = onEndCall,
+                containerColor = Color.Red,
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape
+            ) {
+                Icon(Icons.Default.CallEnd, contentDescription = "End", tint = Color.White)
+            }
+        }
+
+        if (scrollState.maxValue > 0) {
+            Row(
+                modifier = Modifier.padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                repeat(2) { index ->
+                    val isActive = if (index == 0) {
+                        scrollState.value < scrollState.maxValue / 2
+                    } else {
+                        scrollState.value >= scrollState.maxValue / 2
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isActive) Color.White else Color.White.copy(
+                                    alpha = 0.3f
+                                )
+                            )
+                    )
+                }
+            }
         }
     }
 }
@@ -795,8 +1161,27 @@ fun WhiteboardView(whiteboardManager: WhiteboardManager, modifier: Modifier = Mo
 }
 
 @Composable
+fun CameraDisabledPlaceholder(
+    modifier: Modifier = Modifier,
+    iconSize: androidx.compose.ui.unit.Dp = 48.dp
+) {
+    Box(
+        modifier = modifier
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.VideocamOff,
+            contentDescription = "Camera is off",
+            tint = Color.White.copy(alpha = 0.6f),
+            modifier = Modifier.size(iconSize)
+        )
+    }
+}
+
+@Composable
 fun VideoRenderer(
-    track: VideoTrack,
+    track: io.livekit.android.room.track.VideoTrack,
     eglContext: EglBase.Context?,
     modifier: Modifier = Modifier,
     isMirror: Boolean = false,
@@ -812,16 +1197,16 @@ fun VideoRenderer(
         },
         modifier = modifier,
         update = { view ->
-            val oldTrack = view.tag as? VideoTrack
+            val oldTrack = view.tag as? io.livekit.android.room.track.VideoTrack
             if (oldTrack != track) {
-                oldTrack?.removeSink(view)
+                oldTrack?.removeRenderer(view)
                 view.tag = track
-                track.addSink(view)
+                track.addRenderer(view)
             }
         },
         onRelease = { view ->
-            val oldTrack = view.tag as? VideoTrack
-            oldTrack?.removeSink(view)
+            val oldTrack = view.tag as? io.livekit.android.room.track.VideoTrack
+            oldTrack?.removeRenderer(view)
             view.release()
         }
     )

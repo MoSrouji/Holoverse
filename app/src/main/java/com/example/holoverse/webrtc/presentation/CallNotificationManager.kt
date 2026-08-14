@@ -30,6 +30,7 @@ class CallNotificationManager @Inject constructor(
         const val ACTION_ANSWER = "com.example.holoverse.ACTION_ANSWER_CALL"
         const val ACTION_DECLINE = "com.example.holoverse.ACTION_DECLINE_CALL"
         const val EXTRA_CALL_ID = "call_id"
+        const val EXTRA_ROOM_ID = "room_id"
         const val EXTRA_CALLER_NAME = "caller_name"
         const val EXTRA_CALLER_IMAGE = "caller_image"
     }
@@ -69,7 +70,7 @@ class CallNotificationManager @Inject constructor(
         }
     }
 
-    fun showIncomingCallNotification(callId: String, callerName: String, callerImageUrl: String?) {
+    fun showIncomingCallNotification(callId: String, roomId: String, callerName: String, callerImageUrl: String?) {
         if (!preferenceManager.getNotificationSetting(PreferenceManager.KEY_CALL_NOTIFICATIONS)) {
             Log.d(TAG, "Call notifications disabled by user in-app")
             return
@@ -91,6 +92,7 @@ class CallNotificationManager @Inject constructor(
             action = "com.example.holoverse.INCOMING_CALL"
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_CALL_ID, callId)
+            putExtra(EXTRA_ROOM_ID, roomId)
             putExtra(EXTRA_CALLER_NAME, callerName)
             putExtra(EXTRA_CALLER_IMAGE, callerImageUrl)
         }
@@ -102,6 +104,7 @@ class CallNotificationManager @Inject constructor(
         val answerIntent = Intent(context, CallActionReceiver::class.java).apply {
             action = ACTION_ANSWER
             putExtra(EXTRA_CALL_ID, callId)
+            putExtra(EXTRA_ROOM_ID, roomId)
             putExtra(EXTRA_CALLER_NAME, callerName)
             putExtra(EXTRA_CALLER_IMAGE, callerImageUrl)
         }
@@ -113,6 +116,7 @@ class CallNotificationManager @Inject constructor(
         val declineIntent = Intent(context, CallActionReceiver::class.java).apply {
             action = ACTION_DECLINE
             putExtra(EXTRA_CALL_ID, callId)
+            putExtra(EXTRA_ROOM_ID, roomId)
         }
         val declinePendingIntent = PendingIntent.getBroadcast(
             context, 2, declineIntent,
@@ -121,8 +125,8 @@ class CallNotificationManager @Inject constructor(
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Incoming Call")
-            .setContentText("$callerName is calling you")
+            .setContentTitle("Group Call Invite")
+            .setContentText("$callerName is inviting you to a group session")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setFullScreenIntent(fullScreenPendingIntent, true)

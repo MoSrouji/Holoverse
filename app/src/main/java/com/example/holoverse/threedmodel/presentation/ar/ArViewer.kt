@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.rememberLifecycleOwner
+import com.google.android.filament.Viewport
 import com.google.ar.core.Anchor
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
@@ -78,7 +79,8 @@ fun ArViewer(
     verticalRotation: Float = 0f,
     scale: Float = 1f,
     isLoading: Boolean = false,
-    mirrorSurface: Surface? = null
+    mirrorSurface: Surface? = null,
+    mirrorResolution: Pair<Int, Int>? = null
 ) {
     val engine = rememberEngine()
     val renderer = rememberRenderer(engine)
@@ -103,11 +105,17 @@ fun ArViewer(
 
     // Mirroring SwapChain for WebRTC
     val mirrorSwapChain = remember(mirrorSurface) {
-        mirrorSurface?.let { engine.createSwapChain(it) }
+        if (mirrorSurface != null) {
+            android.util.Log.d("ArViewer", "Creating mirror SwapChain for surface")
+            engine.createSwapChain(mirrorSurface)
+        } else null
     }
     DisposableEffect(mirrorSwapChain) {
         onDispose {
-            mirrorSwapChain?.let { engine.destroySwapChain(it) }
+            if (mirrorSwapChain != null) {
+                android.util.Log.d("ArViewer", "Destroying mirror SwapChain")
+                engine.destroySwapChain(mirrorSwapChain)
+            }
         }
     }
 
@@ -216,7 +224,12 @@ fun ArViewer(
                     // Mirroring logic
                     mirrorSwapChain?.let { sc ->
                         if (renderer.beginFrame(sc, System.nanoTime())) {
+                            val originalViewport = view.viewport
+                            mirrorResolution?.let { (w, h) ->
+                                view.viewport = Viewport(0, 0, w, h)
+                            }
                             renderer.render(view)
+                            view.viewport = originalViewport
                             renderer.endFrame()
                         }
                     }

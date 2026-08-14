@@ -1,5 +1,12 @@
 package com.example.holoverse.chat.presentation
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.holoverse.R
 import com.example.holoverse.chat.presentation.components.ChatListItem
+import com.example.holoverse.chat.presentation.components.ChatTabRow
 import com.example.holoverse.chat.presentation.components.ContactListItem
 import com.example.holoverse.core.ui.spatial.Brush
 import com.example.holoverse.core.ui.theme.IbarraNovaFont
@@ -113,74 +121,107 @@ fun ChatListScreen(
                 }
             }
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    if (uiState.chats.isNotEmpty()) {
-                        item {
-                            Text(
-                                stringResource(R.string.recent_chats),
-                                modifier = Modifier.padding(16.dp),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        items(
-                            items = uiState.chats,
-                            key = { it.id },
-                            contentType = { "chat_item" }
-                        ) { chat ->
-                            val currentUserId = uiState.currentUser?.userId ?: ""
-                            val isGroup = chat.id.startsWith("group_")
+            ChatTabRow(
+                selectedTab = uiState.selectedTab,
+                onTabSelected = viewModel::onTabSelected
+            )
 
-                            val partnerId =
-                                if (isGroup) null else chat.participants.find { it != currentUserId }
-                                    ?: chat.participants.firstOrNull { it != "user1" }
-
-                            val chatName = if (isGroup) {
-                                chat.participantNames[chat.id] ?: chat.id.removePrefix("group_")
-                            } else {
-                                chat.participantNames[partnerId]
-                                    ?: stringResource(R.string.chat_fallback)
+            AnimatedContent(
+                targetState = uiState.selectedTab,
+                transitionSpec = {
+                    if (targetState.ordinal > initialState.ordinal) {
+                        (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> -width } + fadeOut()
+                        )
+                    } else {
+                        (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> width } + fadeOut()
+                        )
+                    }.using(
+                        SizeTransform(clip = false)
+                    )
+                },
+                label = "ChatTabTransition",
+                modifier = Modifier.fillMaxSize()
+            ) { targetTab ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    val filteredChats = remember(uiState.chats, targetTab) {
+                        uiState.chats.filter { chat ->
+                            when (targetTab) {
+                                ChatTab.Personal -> !chat.isGroup
+                                ChatTab.Groups -> chat.isGroup
                             }
-
-                            val chatImageUrl =
-                                if (isGroup) null else chat.participantProfileImages[partnerId]
-
-                            ChatListItem(
-                                name = chatName,
-                                lastMessage = chat.lastMessage,
-                                imageUrl = chatImageUrl,
-                                onClick = {
-                                    onContactSelected(chat.id)
-                                }
-                            )
                         }
                     }
 
-                    if (uiState.filteredContacts.isNotEmpty()) {
-                        item {
-                            Text(
-                                if (uiState.searchQuery.isEmpty()) stringResource(R.string.suggested_contacts) else stringResource(
-                                    R.string.search_results_title
-                                ),
-                                modifier = Modifier.padding(16.dp),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        items(
-                            items = uiState.filteredContacts,
-                            key = { it.userId ?: it.hashCode() },
-                            contentType = { "contact_item" }
-                        ) { mentor ->
-                            ContactListItem(
-                                mentor = mentor,
-                                onClick = {
-                                    mentor.userId?.let { onContactSelected(it) }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (filteredChats.isNotEmpty()) {
+                            item {
+                                Text(
+                                    stringResource(R.string.recent_chats),
+                                    modifier = Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            items(
+                                items = filteredChats,
+                                key = { it.id },
+                                contentType = { "chat_item" }
+                            ) { chat ->
+                                val currentUserId = uiState.currentUser?.userId ?: ""
+                                val isGroup = chat.id.startsWith("group_")
+
+                                val partnerId =
+                                    if (isGroup) null else chat.participants.find { it != currentUserId }
+                                        ?: chat.participants.firstOrNull { it != "user1" }
+
+                                val chatName = if (isGroup) {
+                                    chat.participantNames[chat.id] ?: chat.id.removePrefix("group_")
+                                } else {
+                                    chat.participantNames[partnerId]
+                                        ?: stringResource(R.string.chat_fallback)
                                 }
-                            )
+
+                                val chatImageUrl =
+                                    if (isGroup) null else chat.participantProfileImages[partnerId]
+
+                                ChatListItem(
+                                    name = chatName,
+                                    lastMessage = chat.lastMessage,
+                                    imageUrl = chatImageUrl,
+                                    onClick = {
+                                        onContactSelected(chat.id)
+                                    }
+                                )
+                            }
+                        }
+
+                        if (uiState.filteredContacts.isNotEmpty()) {
+                            item {
+                                Text(
+                                    if (uiState.searchQuery.isEmpty()) stringResource(R.string.suggested_contacts) else stringResource(
+                                        R.string.search_results_title
+                                    ),
+                                    modifier = Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            items(
+                                items = uiState.filteredContacts,
+                                key = { it.userId ?: it.hashCode() },
+                                contentType = { "contact_item" }
+                            ) { mentor ->
+                                ContactListItem(
+                                    mentor = mentor,
+                                    onClick = {
+                                        mentor.userId?.let { onContactSelected(it) }
+                                    }
+                                )
+                            }
                         }
                     }
                 }

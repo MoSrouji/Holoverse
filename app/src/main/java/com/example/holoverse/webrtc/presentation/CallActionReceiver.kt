@@ -32,10 +32,12 @@ class CallActionReceiver : BroadcastReceiver() {
                 // Launch MainActivity with Answer Action
                 val callerName = intent.getStringExtra(CallNotificationManager.EXTRA_CALLER_NAME)
                 val callerImage = intent.getStringExtra(CallNotificationManager.EXTRA_CALLER_IMAGE)
+                val roomId = intent.getStringExtra(CallNotificationManager.EXTRA_ROOM_ID)
                 
                 val mainIntent = Intent(context, MainActivity::class.java).apply {
                     this.action = CallNotificationManager.ACTION_ANSWER
                     putExtra(CallNotificationManager.EXTRA_CALL_ID, callId)
+                    putExtra(CallNotificationManager.EXTRA_ROOM_ID, roomId)
                     putExtra(CallNotificationManager.EXTRA_CALLER_NAME, callerName)
                     putExtra(CallNotificationManager.EXTRA_CALLER_IMAGE, callerImage)
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -45,7 +47,9 @@ class CallActionReceiver : BroadcastReceiver() {
             }
             CallNotificationManager.ACTION_DECLINE -> {
                 // Clear the call in signaling
-                signalingClient.clearCall(callId)
+                CoroutineScope(Dispatchers.IO).launch {
+                    signalingClient.clearCall(callId)
+                }
                 callNotificationManager.cancelNotification()
             }
         }

@@ -4,25 +4,24 @@ import com.example.holoverse.webrtc.domain.repository.WebRtcRepository
 import com.example.holoverse.whiteboard.presentation.WhiteboardManager
 import javax.inject.Inject
 
-class InitCallUseCase @Inject constructor(private val repository: WebRtcRepository) {
-    operator fun invoke(callId: String, isOffer: Boolean): Boolean =
-        repository.init(callId, isOffer)
-}
-
-class StartCallUseCase @Inject constructor(private val repository: WebRtcRepository) {
-    operator fun invoke(callId: String) = repository.startCall(callId)
+class SendInviteUseCase @Inject constructor(private val repository: WebRtcRepository) {
+    operator fun invoke(roomId: String, recipientId: String) = repository.sendInvite(roomId, recipientId)
 }
 
 class EndCallUseCase @Inject constructor(private val repository: WebRtcRepository) {
-    operator fun invoke() = repository.disconnect()
+    suspend operator fun invoke() = repository.disconnect()
 }
 
 class ObserveLocalVideoTrackUseCase @Inject constructor(private val repository: WebRtcRepository) {
-    operator fun invoke() = repository.localVideoTrack
+    operator fun invoke(): kotlinx.coroutines.flow.StateFlow<io.livekit.android.room.track.VideoTrack?> = repository.localVideoTrack
 }
 
 class ObserveRemoteVideoTrackUseCase @Inject constructor(private val repository: WebRtcRepository) {
-    operator fun invoke() = repository.remoteVideoTrack
+    operator fun invoke(): kotlinx.coroutines.flow.StateFlow<livekit.org.webrtc.VideoTrack?> = repository.remoteVideoTrack
+}
+
+class ObserveRemoteParticipantsUseCase @Inject constructor(private val repository: WebRtcRepository) {
+    operator fun invoke() = repository.remoteParticipants
 }
 
 class ObserveIsCallEndedUseCase @Inject constructor(private val repository: WebRtcRepository) {
@@ -109,4 +108,8 @@ class ObserveArMirrorSurfaceUseCase @Inject constructor(private val repository: 
 
 class ObservePdfBitmapUseCase @Inject constructor(private val repository: WebRtcRepository) {
     operator fun invoke() = repository.pdfBitmap
+}
+
+class ObserveSyntheticResolutionUseCase @Inject constructor(private val repository: WebRtcRepository) {
+    operator fun invoke() = repository.syntheticResolution
 }

@@ -14,6 +14,7 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
@@ -98,6 +99,7 @@ class AuthRepositoryImpl @Inject constructor(
             emit(Response.Success(true))
 
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Sign up failed"))
         }
     }
@@ -120,6 +122,7 @@ class AuthRepositoryImpl @Inject constructor(
                 emit(Response.Error("Sign in failed - no user returned"))
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Sign in failed"))
         }
 
@@ -134,6 +137,7 @@ class AuthRepositoryImpl @Inject constructor(
             fetchDataRepository.clearCache()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.localizedMessage ?: "Sign out failed"))
         }
     }
@@ -188,6 +192,7 @@ class AuthRepositoryImpl @Inject constructor(
                 emit(Response.Success(true))
 
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 emit(Response.Error(e.message ?: "Profile update failed"))
             }
         }
@@ -238,6 +243,7 @@ class AuthRepositoryImpl @Inject constructor(
                 emit(Response.Success(true))
 
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 emit(Response.Error(e.message ?: "Profile update failed"))
             }
 
@@ -269,6 +275,7 @@ class AuthRepositoryImpl @Inject constructor(
             
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to update email"))
         }
     }
@@ -288,6 +295,7 @@ class AuthRepositoryImpl @Inject constructor(
             
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to change password"))
         }
     }
@@ -556,6 +564,7 @@ class AuthRepositoryImpl @Inject constructor(
                 emit(Response.Error("No support admin available"))
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get support admin"))
         }
     }

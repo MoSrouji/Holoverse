@@ -10,6 +10,8 @@ import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,14 +28,23 @@ import coil3.compose.AsyncImage
 @Composable
 fun IncomingCallScreen(
     callId: String,
+    roomId: String,
     callerName: String,
     callerImageUrl: String?,
     viewModel: VideoCallViewModel = hiltViewModel(),
     onAnswer: () -> Unit,
     onDecline: () -> Unit
 ) {
-    LaunchedEffect(callId) {
-        viewModel.initCall(callId, isOffer = false)
+    val isCallEnded by viewModel.isCallEnded.collectAsState()
+
+    LaunchedEffect(callId, roomId) {
+        viewModel.startSignaling(callId = callId, isOffer = false)
+    }
+
+    LaunchedEffect(isCallEnded) {
+        if (isCallEnded) {
+            onDecline()
+        }
     }
 
     BackHandler {

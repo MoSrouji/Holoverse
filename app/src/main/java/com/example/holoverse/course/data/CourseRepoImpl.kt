@@ -6,6 +6,7 @@ import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.course.domain.QuizResult
 import com.example.holoverse.core.utils.Response
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
@@ -21,6 +22,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                 .await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error adding course: ${e.message}", e)
             emit(Response.Error(e.message ?: "Unknown error occurred"))
         }
@@ -32,6 +34,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
             firestore.collection("courses").document(course.id).delete().await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error deleting course", e)
             emit(Response.Error(e.message ?: "Error deleting course"))
         }
@@ -43,6 +46,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
             firestore.collection("courses").document(course.id).set(course).await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error updating course", e)
             emit(Response.Error(e.message ?: "Error updating course"))
         }
@@ -67,6 +71,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                 emit(Response.Success(null))
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error getting course by id", e)
             emit(Response.Error(e.message ?: "Error fetching course"))
         }
@@ -93,6 +98,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                 }
                 emit(Response.Success(courses))
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("CourseRepoImpl", "Error getting courses by category", e)
                 emit(Response.Error(e.message ?: "Error fetching courses"))
             }
@@ -119,6 +125,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                 }
                 emit(Response.Success(courses))
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("CourseRepoImpl", "Error getting courses by instructor id", e)
                 emit(Response.Error(e.message ?: "Error fetching courses"))
             }
@@ -133,6 +140,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                 .await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error boosting course", e)
             emit(Response.Error(e.message ?: "Error boosting course"))
         }
@@ -145,6 +153,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
             val boostedCourses = snapshot.toObjects(BoostedCourse::class.java)
             emit(Response.Success(boostedCourses))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error getting boosted courses", e)
             emit(Response.Error(e.message ?: "Error fetching boosted courses"))
         }
@@ -156,6 +165,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
             firestore.collection("boostedCourses").document(courseId).delete().await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error deleting boosted course", e)
             emit(Response.Error(e.message ?: "Error deleting boosted course"))
         }
@@ -170,6 +180,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
                 .await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error saving quiz result: ${e.message}", e)
             emit(Response.Error(e.message ?: "Unknown error occurred"))
         }
@@ -186,6 +197,7 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
             val results = snapshot.toObjects(QuizResult::class.java)
             emit(Response.Success(results))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("CourseRepoImpl", "Error getting quiz results: ${e.message}", e)
             emit(Response.Error(e.message ?: "Error fetching quiz results"))
         }

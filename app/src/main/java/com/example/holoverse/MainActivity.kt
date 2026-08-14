@@ -27,6 +27,7 @@ import com.example.holoverse.navigation.AppDestination
 import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.core.ui.theme.HoloverseTheme
+import com.example.holoverse.core.utils.ConnectivityObserver
 import com.example.holoverse.core.utils.LanguageManager
 import com.example.holoverse.core.utils.SplashViewModel
 import com.example.holoverse.webrtc.data.datasource.SignalingClient
@@ -46,10 +47,13 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
 
     @Inject
+    lateinit var connectivityObserver: ConnectivityObserver
+
+    @Inject
     lateinit var signalingClient: SignalingClient
 
     @Inject
-    lateinit var sessionManager: com.example.holoverse.webrtc.data.datasource.WebRtcSessionManager
+    lateinit var sessionManager: com.example.holoverse.webrtc.data.datasource.LiveKitSessionManager
 
     @Inject
     lateinit var callNotificationManager: CallNotificationManager
@@ -121,6 +125,7 @@ class MainActivity : AppCompatActivity() {
         }
         setContent {
             val themeMode by splashViewModel.themeMode.collectAsStateWithLifecycle()
+            val connectivityStatus by connectivityObserver.observe().collectAsStateWithLifecycle(initialValue = ConnectivityObserver.Status.Available)
 
             val darkTheme = when (themeMode) {
                 "light" -> false
@@ -154,7 +159,8 @@ class MainActivity : AppCompatActivity() {
                                 navigator = navigator,
                                 currentUser = currentUser,
                                 isLoggedIn = isLoggedIn,
-                                darkTheme = darkTheme
+                                darkTheme = darkTheme,
+                                connectivityStatus = connectivityStatus
                             )
                         }
                     }
@@ -188,13 +194,22 @@ class MainActivity : AppCompatActivity() {
         callObservationJob?.cancel()
         callObservationJob = lifecycleScope.launch {
             Log.d(TAG, "observeIncomingCalls: Listening for calls for $userId")
-            signalingClient.observeGlobalCalls(userId).collectLatest { callId ->
-                Log.d(TAG, "In-app call detected: $callId")
-                callNotificationManager.showIncomingCallNotification(
-                    callId = callId,
-                    callerName = "Someone",
-                    callerImageUrl = null
-                )
+            signalingClient.observeGlobalCalls(userId).collectLatest { event ->
+                when (event) {
+                    is com.example.holoverse.webrtc.data.datasource.GlobalCallEvent.IncomingCall -> {
+                        Log.d(TAG, "In-app call detected: ${event.inviteId}, room: ${event.roomId}")
+                        callNotificationManager.showIncomingCallNotification(
+                            callId = event.inviteId,
+                            roomId = event.roomId,
+                            callerName = event.callerName ?: "Someone",
+                            callerImageUrl = event.callerImageUrl
+                        )
+                    }
+                    is com.example.holoverse.webrtc.data.datasource.GlobalCallEvent.CallCancelled -> {
+                        Log.d(TAG, "Call cancelled: ${event.inviteId}")
+                        callNotificationManager.cancelNotification()
+                    }
+                }
             }
         }
     }
@@ -205,26 +220,55 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
+        intent?.extras?.let { extras ->
+            Log.d(TAG, "handleIntent extras: ${extras.keySet().associateWith { extras.get(it) }}")
+        }
         val chatId = intent?.getStringExtra("chatId")
         val courseId = intent?.getStringExtra("courseId")
         val callId = intent?.getStringExtra(CallNotificationManager.EXTRA_CALL_ID)
+        val roomId = intent?.getStringExtra(CallNotificationManager.EXTRA_ROOM_ID)
         val callerName = intent?.getStringExtra(CallNotificationManager.EXTRA_CALLER_NAME)
         val callerImage = intent?.getStringExtra(CallNotificationManager.EXTRA_CALLER_IMAGE)
         val action = intent?.action
 
         Log.d(
             TAG,
-            "handleIntent: action=$action, callId=$callId, chatId=$chatId, courseId=$courseId"
+            "handleIntent: action=$action, callId=$callId, roomId=$roomId, chatId=$chatId, courseId=$courseId"
         )
 
         if (action == CallNotificationManager.ACTION_ANSWER && callId != null) {
-            Log.d(TAG, "Navigating to VideoCall (Answering)")
-            navigator.navigateTo(AppDestination.VideoCall(callId, isOffer = false))
+            val targetRoomId = roomId ?: run {
+                Log.w(TAG, "ACTION_ANSWER: roomId is null! Attempting to extract from callId: $callId")
+                if (callId.startsWith("invite_")) {
+                    // callId is invite_ROOMID_RECIPIENTID. RoomID might contain underscores.
+                    // We remove "invite_" and everything after the LAST underscore.
+                    val raw = callId.removePrefix("invite_")
+                    if (raw.contains("_")) {
+                        raw.substringBeforeLast("_")
+                    } else {
+                        raw
+                    }
+                } else callId
+            }
+            Log.d(TAG, "Navigating to VideoCall (Answering) with roomId: $targetRoomId")
+            navigator.navigateTo(AppDestination.VideoCall(callId = callId, roomId = targetRoomId, isOffer = false))
         } else if (callId != null) {
-            Log.d(TAG, "Navigating to IncomingCall")
+            val targetRoomId = roomId ?: run {
+                Log.w(TAG, "INCOMING_CALL: roomId is null! Attempting to extract from callId: $callId")
+                if (callId.startsWith("invite_")) {
+                    val raw = callId.removePrefix("invite_")
+                    if (raw.contains("_")) {
+                        raw.substringBeforeLast("_")
+                    } else {
+                        raw
+                    }
+                } else callId
+            }
+            Log.d(TAG, "Navigating to IncomingCall with roomId: $targetRoomId")
             navigator.navigateTo(
                 AppDestination.IncomingCall(
                     callId = callId,
+                    roomId = targetRoomId,
                     callerName = callerName ?: "Someone",
                     callerImageUrl = callerImage
                 )
@@ -271,7 +315,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        sessionManager.disconnect()
+        lifecycleScope.launch {
+            sessionManager.disconnect()
+        }
         callObservationJob?.cancel()
         notificationObservationJob?.cancel()
     }

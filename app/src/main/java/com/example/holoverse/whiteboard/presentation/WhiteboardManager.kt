@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -27,12 +26,12 @@ class WhiteboardManager {
 
     // Tracks the element currently being drawn
     var currentDrawingElement by mutableStateOf<WhiteboardElement?>(null)
-    
+
     // Tracks where text should be added
     var pendingTextPosition by mutableStateOf<Offset?>(null)
-    
+
     private var startOffset = Offset.Zero
-    
+
     // The size of the screen where drawing happens
     private var sourceSize by mutableStateOf(Size.Zero)
 
@@ -191,11 +190,15 @@ class WhiteboardManager {
             }
 
             is WhiteboardElement.Rectangle -> {
-                val left = kotlin.math.min(element.topLeft.x, element.topLeft.x + element.size.width)
-                val right = kotlin.math.max(element.topLeft.x, element.topLeft.x + element.size.width)
-                val top = kotlin.math.min(element.topLeft.y, element.topLeft.y + element.size.height)
-                val bottom = kotlin.math.max(element.topLeft.y, element.topLeft.y + element.size.height)
-                
+                val left =
+                    kotlin.math.min(element.topLeft.x, element.topLeft.x + element.size.width)
+                val right =
+                    kotlin.math.max(element.topLeft.x, element.topLeft.x + element.size.width)
+                val top =
+                    kotlin.math.min(element.topLeft.y, element.topLeft.y + element.size.height)
+                val bottom =
+                    kotlin.math.max(element.topLeft.y, element.topLeft.y + element.size.height)
+
                 val rect = android.graphics.RectF(left, top, right, bottom)
                 // Inset by negative radius to check proximity
                 rect.inset(-radius, -radius)
@@ -210,11 +213,19 @@ class WhiteboardManager {
             }
 
             is WhiteboardElement.Line -> {
-                distancePointToLine(point, element.start, element.end) <= radius + element.strokeWidth / 2
+                distancePointToLine(
+                    point,
+                    element.start,
+                    element.end
+                ) <= radius + element.strokeWidth / 2
             }
 
             is WhiteboardElement.Arrow -> {
-                distancePointToLine(point, element.start, element.end) <= radius + element.strokeWidth / 2
+                distancePointToLine(
+                    point,
+                    element.start,
+                    element.end
+                ) <= radius + element.strokeWidth / 2
             }
 
             is WhiteboardElement.Text -> {
@@ -258,7 +269,7 @@ class WhiteboardManager {
     }
 
     fun draw(drawScope: DrawScope) {
-        val allElements = synchronized(_elements) { 
+        val allElements = synchronized(_elements) {
             _elements.toList() + listOfNotNull(currentDrawingElement)
         }
         allElements.forEach { element ->
@@ -377,7 +388,7 @@ class WhiteboardManager {
             strokeJoin = android.graphics.Paint.Join.ROUND
         }
 
-        val allElements = synchronized(_elements) { 
+        val allElements = synchronized(_elements) {
             _elements.toList() + listOfNotNull(currentDrawingElement)
         }
         allElements.forEach { element ->
@@ -386,7 +397,11 @@ class WhiteboardManager {
         canvas.restore()
     }
 
-    private fun drawElementToNative(canvas: android.graphics.Canvas, element: WhiteboardElement, paint: android.graphics.Paint) {
+    private fun drawElementToNative(
+        canvas: android.graphics.Canvas,
+        element: WhiteboardElement,
+        paint: android.graphics.Paint
+    ) {
         when (element) {
             is WhiteboardElement.Freehand -> {
                 paint.color = element.color.toArgb()
@@ -445,10 +460,10 @@ class WhiteboardManager {
                     atan2(element.end.y - element.start.y, element.end.x - element.start.x)
                 val headLength = 20f
                 val headAngle = Math.PI / 6
-                val x1 = element.end.x - headLength * kotlin.math.cos(angle - headAngle).toFloat()
-                val y1 = element.end.y - headLength * kotlin.math.sin(angle - headAngle).toFloat()
-                val x2 = element.end.x - headLength * kotlin.math.cos(angle + headAngle).toFloat()
-                val y2 = element.end.y - headLength * kotlin.math.sin(angle + headAngle).toFloat()
+                val x1 = element.end.x - headLength * cos(angle - headAngle).toFloat()
+                val y1 = element.end.y - headLength * sin(angle - headAngle).toFloat()
+                val x2 = element.end.x - headLength * cos(angle + headAngle).toFloat()
+                val y2 = element.end.y - headLength * sin(angle + headAngle).toFloat()
                 canvas.drawLine(element.end.x, element.end.y, x1, y1, paint)
                 canvas.drawLine(element.end.x, element.end.y, x2, y2, paint)
             }

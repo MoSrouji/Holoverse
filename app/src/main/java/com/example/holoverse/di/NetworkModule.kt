@@ -1,6 +1,7 @@
 package com.example.holoverse.di
 
 import android.content.Context
+import com.example.holoverse.core.data.remote.NetworkInterceptor
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -34,7 +35,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(cache: Cache): OkHttpClient {
+    fun provideOkHttpClient(@ApplicationContext context: Context, cache: Cache): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.HEADERS
         }
@@ -42,6 +43,7 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .cache(cache)
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(NetworkInterceptor(context))
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -52,7 +54,7 @@ object NetworkModule {
     @Provides
     @Singleton
     @LongTimeoutClient
-    fun provideLongTimeoutOkHttpClient(cache: Cache): OkHttpClient {
+    fun provideLongTimeoutOkHttpClient(@ApplicationContext context: Context, cache: Cache): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.HEADERS
         }
@@ -60,6 +62,7 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .cache(cache)
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(NetworkInterceptor(context))
             .connectTimeout(5, TimeUnit.MINUTES)
             .readTimeout(5, TimeUnit.MINUTES)
             .writeTimeout(5, TimeUnit.MINUTES)

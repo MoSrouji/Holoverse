@@ -228,7 +228,7 @@ fun ConversationScreen(
                         }
                     },
                     actions = {
-                        if (uiState.currentChatId != null) {
+                        if (uiState.currentChatId != null && uiState.currentUserIsMentor) {
                             IconButton(onClick = {
                                 onVideoCallClick?.invoke(
                                     uiState.currentChatId,

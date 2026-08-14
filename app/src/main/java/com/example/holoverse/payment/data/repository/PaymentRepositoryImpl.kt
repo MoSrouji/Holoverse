@@ -10,6 +10,7 @@ import com.example.holoverse.payment.domain.model.TransactionType
 import com.example.holoverse.payment.domain.repository.PaymentRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -144,6 +145,7 @@ class PaymentRepositoryImpl @Inject constructor(
             
             emit(Response.Success(total))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get revenue"))
         }
     }

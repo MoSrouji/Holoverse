@@ -16,6 +16,7 @@ import com.example.holoverse.notifications.presentation.LessonReminderReceiver
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -42,6 +43,7 @@ class BatchRepositoryImpl @Inject constructor(
             firestore.collection("batches").document(batchId).set(finalBatch).await()
             emit(Response.Success(batchId))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to create batch"))
         }
     }
@@ -85,6 +87,7 @@ class BatchRepositoryImpl @Inject constructor(
             }.await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to join batch"))
         }
     }
@@ -152,6 +155,7 @@ class BatchRepositoryImpl @Inject constructor(
                 emit(Response.Success(newBatchId))
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to join or create batch"))
         }
     }
@@ -164,6 +168,7 @@ class BatchRepositoryImpl @Inject constructor(
                 .await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to propose times"))
         }
     }
@@ -196,6 +201,7 @@ class BatchRepositoryImpl @Inject constructor(
             }.await()
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to vote"))
         }
     }
@@ -227,6 +233,7 @@ class BatchRepositoryImpl @Inject constructor(
 
             emit(Response.Success(true))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to finalize session"))
         }
     }

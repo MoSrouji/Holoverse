@@ -12,6 +12,7 @@ import com.example.holoverse.payment.domain.model.Transaction
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
@@ -33,6 +34,7 @@ class AdminRepositoryImpl @Inject constructor(
                 .count.toInt()
             emit(Response.Success(count))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get student count"))
         }
     }
@@ -47,6 +49,7 @@ class AdminRepositoryImpl @Inject constructor(
                 .count.toInt()
             emit(Response.Success(count))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get mentor count"))
         }
     }
@@ -61,6 +64,7 @@ class AdminRepositoryImpl @Inject constructor(
                 .count.toInt()
             emit(Response.Success(count))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get course count"))
         }
     }
@@ -74,6 +78,7 @@ class AdminRepositoryImpl @Inject constructor(
             }.mapValues { it.value.size }
             emit(Response.Success(distribution))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get category distribution"))
         }
     }
@@ -114,6 +119,7 @@ class AdminRepositoryImpl @Inject constructor(
 
             emit(Response.Success(grouped))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get growth data"))
         }
     }
@@ -131,6 +137,7 @@ class AdminRepositoryImpl @Inject constructor(
                 
             emit(Response.Success(totalRevenue))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to calculate revenue"))
         }
     }
@@ -146,6 +153,7 @@ class AdminRepositoryImpl @Inject constructor(
             val transactions = snapshot.toObjects(Transaction::class.java)
             emit(Response.Success(transactions))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to fetch recent transactions"))
         }
     }
@@ -165,6 +173,7 @@ class AdminRepositoryImpl @Inject constructor(
 
             emit(Response.Success(students + mentors))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to fetch users"))
         }
     }

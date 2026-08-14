@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.holoverse.auth.domain.entities.User
+import com.example.holoverse.auth.domain.entities.UserType
 import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.chat.data.repository.ChatRepositoryImpl
 import com.example.holoverse.chat.domain.model.Chat
@@ -109,10 +110,45 @@ class ChatViewModel @Inject constructor(
                 // 3. Fetch mentors (Repository handles internal caching)
                 val mentors = fetchDataRepository.fetchMentors()
 
+                // 4. Implement recommendation logic matching HomeViewModel
+                val userInterests = when (user) {
+                    is User.Student -> (user.favouriteSubjects
+                        ?: emptyList()) + (user.academicInterests ?: emptyList())
+
+                    is User.Mentor -> user.subjects ?: emptyList()
+                    else -> emptyList()
+                }.distinct().map { it.trim().replace("_", " ").uppercase() }
+
+                val recommendedMentors = mentors.filter { mentor ->
+                    userInterests.any { nFav ->
+                        val nSpecName = mentor.specialization.name
+
+                        nSpecName.contains(nFav, ignoreCase = true) ||
+                                nFav.contains(nSpecName, ignoreCase = true) ||
+                                mentor.specialization.specializations.any { specRes ->
+                                    val spec = context.getString(specRes)
+                                    spec.replace("_", " ").uppercase()
+                                        .contains(nFav, ignoreCase = true) ||
+                                            nFav.contains(
+                                                spec.replace("_", " ").uppercase(),
+                                                ignoreCase = true
+                                            )
+                                }
+                    }
+                }
+
+                // If we have recommended mentors, shuffle and take 10. 
+                // Otherwise, take 10 random mentors from the full list.
+                val suggestedContacts = if (recommendedMentors.isNotEmpty()) {
+                    recommendedMentors.shuffled().take(10)
+                } else {
+                    mentors.shuffled().take(10)
+                }
+
                 _uiState.update {
                     it.copy(
                         contacts = mentors,
-                        filteredContacts = mentors,
+                        filteredContacts = suggestedContacts,
                         isLoading = false
                     )
                 }
@@ -145,13 +181,18 @@ class ChatViewModel @Inject constructor(
                         null
                     }
 
-                    val isMentor = currentChat?.isGroup == true && currentChat.creatorId == currentState.currentUser?.userId
+                    val isMentor = if (currentChat?.isGroup == true) {
+                        currentChat.creatorId == currentState.currentUser?.userId
+                    } else {
+                        currentState.currentUser?.accountType == UserType.Mentor || 
+                                currentState.currentUser is User.Admin
+                    }
                     
                     val isIndividuallyRestricted = currentChat?.isGroup == true && 
-                            currentChat.restrictedParticipants.contains(currentState.currentUser?.userId)
+                            currentChat?.restrictedParticipants?.contains(currentState.currentUser?.userId) == true
                     
                     val isGroupRestricted = currentChat?.isGroup == true && 
-                            currentChat.isOnlyMentorMessaging && !isMentor
+                            currentChat?.isOnlyMentorMessaging == true && !isMentor
                     
                     val isRestricted = isIndividuallyRestricted || isGroupRestricted
 
@@ -176,6 +217,10 @@ class ChatViewModel @Inject constructor(
 
     fun onTextChanged(newText: String) {
         _uiState.update { it.copy(inputText = newText) }
+    }
+
+    fun onTabSelected(tab: ChatTab) {
+        _uiState.update { it.copy(selectedTab = tab) }
     }
 
     fun onSearchQueryChange(query: String) {

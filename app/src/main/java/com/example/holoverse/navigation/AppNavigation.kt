@@ -54,6 +54,8 @@ import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.chat.presentation.ChatScreen
 import com.example.holoverse.chat.presentation.ChatViewModel
 import com.example.holoverse.core.domain.model.AppCategory
+import com.example.holoverse.core.ui.components.ConnectivityStatus
+import com.example.holoverse.core.utils.ConnectivityObserver
 import com.example.holoverse.notifications.presentation.NotificationScreen
 import com.example.holoverse.material.presentation.YourMaterialScreen
 import com.example.holoverse.threedmodel.presentation.ModelViewModel
@@ -104,6 +106,7 @@ fun AppNavHost(
     currentUser: User? = null,
     isLoggedIn: Boolean = false,
     darkTheme: Boolean,
+    connectivityStatus: ConnectivityObserver.Status
 ) {
     val startRoute = when {
         currentUser is User.Admin -> AppDestination.AdminControlPanel
@@ -394,6 +397,7 @@ fun AppNavHost(
                     navigator.navigateTo(
                         AppDestination.OutgoingCall(
                             callId = callId,
+                            roomId = callId,
                             receiverName = partnerName,
                             receiverImageUrl = partnerImageUrl
                         )
@@ -403,6 +407,7 @@ fun AppNavHost(
                     navigator.navigateTo(
                         AppDestination.IncomingCall(
                             callId = chatId,
+                            roomId = chatId,
                             callerName = partnerName,
                             callerImageUrl = partnerImageUrl
                         )
@@ -429,11 +434,12 @@ fun AppNavHost(
         entry<AppDestination.OutgoingCall> { key: AppDestination.OutgoingCall ->
             OutgoingCallScreen(
                 callId = key.callId,
+                roomId = key.roomId,
                 receiverName = key.receiverName,
                 receiverImageUrl = key.receiverImageUrl,
                 onCallConnected = {
                     navigator.navigateAndPopUpTo(
-                        destination = AppDestination.VideoCall(key.callId, isOffer = true),
+                        destination = AppDestination.VideoCall(callId = key.callId, roomId = key.roomId, isOffer = true),
                         popUpTo = key,
                         inclusive = true
                     )
@@ -446,11 +452,12 @@ fun AppNavHost(
         entry<AppDestination.IncomingCall> { key: AppDestination.IncomingCall ->
             IncomingCallScreen(
                 callId = key.callId,
+                roomId = key.roomId,
                 callerName = key.callerName,
                 callerImageUrl = key.callerImageUrl,
                 onAnswer = {
                     navigator.navigateAndPopUpTo(
-                        destination = AppDestination.VideoCall(key.callId, isOffer = false),
+                        destination = AppDestination.VideoCall(callId = key.callId, roomId = key.roomId, isOffer = false),
                         popUpTo = key,
                         inclusive = true
                     )
@@ -462,7 +469,9 @@ fun AppNavHost(
         }
         entry<AppDestination.VideoCall> { key: AppDestination.VideoCall ->
             com.example.holoverse.webrtc.presentation.VideoCallScreen(
-                callId = key.callId, isOffer = key.isOffer,
+                callId = key.callId, 
+                roomId = key.roomId,
+                isOffer = key.isOffer,
                 onCallEnded = { navigator.popBackStack() })
         }
         entry<AppDestination.EditProfile> {
@@ -748,16 +757,18 @@ fun AppNavHost(
                 }
             }
         }) { padding ->
-        NavDisplay(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            entries = navigationState.toEntries(entryProvider),
-            onBack = { nav3Navigator.goBack() },
-            sceneStrategies = listOf(listDetailStrategy),
-            transitionSpec = { NavAnimations.forward() },
-            popTransitionSpec = { NavAnimations.backward() },
-            predictivePopTransitionSpec = { NavAnimations.backward() })
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            NavDisplay(
+                modifier = Modifier.fillMaxSize(),
+                entries = navigationState.toEntries(entryProvider),
+                onBack = { nav3Navigator.goBack() },
+                sceneStrategies = listOf(listDetailStrategy),
+                transitionSpec = { NavAnimations.forward() },
+                popTransitionSpec = { NavAnimations.backward() },
+                predictivePopTransitionSpec = { NavAnimations.backward() })
+
+            ConnectivityStatus(status = connectivityStatus)
+        }
     }
 }
 

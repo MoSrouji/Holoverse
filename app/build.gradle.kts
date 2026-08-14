@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -29,6 +30,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Load LiveKit URL from local.properties
+        val properties = Properties()
+        val propertiesFile = project.rootProject.file("local.properties")
+        if (propertiesFile.exists()) {
+            properties.load(propertiesFile.inputStream())
+        }
+        val livekitUrl = properties.getProperty("LIVEKIT_URL") ?: ""
+        buildConfigField("String", "LIVEKIT_URL", "\"$livekitUrl\"")
+
+        val tokenServerUrl = properties.getProperty("TOKEN_SERVER_URL") ?: ""
+        buildConfigField("String", "TOKEN_SERVER_URL", "\"$tokenServerUrl\"")
     }
 
     buildTypes {
@@ -66,6 +79,7 @@ android {
     
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -110,6 +124,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.functions)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.perf)
     implementation(libs.places)
@@ -202,6 +217,8 @@ dependencies {
     baselineProfile(project(":baselineprofile"))
 
     implementation(libs.compose.auto.shimmer)
+    implementation(libs.livekit.android)
+    implementation(libs.livekit.compose)
     implementation(libs.webrtc)
     implementation(libs.webrtc.ktx)
     debugImplementation(libs.leakcanary.android)

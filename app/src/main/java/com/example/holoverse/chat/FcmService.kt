@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.holoverse.MainActivity
 import com.example.holoverse.R
@@ -13,7 +14,6 @@ import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.core.utils.PreferenceManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import android.util.Log
 import com.example.holoverse.webrtc.presentation.CallNotificationManager
 import com.example.holoverse.notifications.presentation.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -60,12 +60,18 @@ class FcmService : FirebaseMessagingService() {
         
         Log.d(TAG, "onMessageReceived: type=$type, title=$title, chatId=$chatId, courseId=$courseId")
 
-        if (type == "call") {
-            val callId = message.data["callId"] ?: chatId ?: return
-            val callerName = message.data["callerName"] ?: "Someone"
-            val callerImage = message.data["callerImage"]
-            Log.d(TAG, "Triggering call notification: callId=$callId, caller=$callerName")
-            callNotificationManager.showIncomingCallNotification(callId, callerName, callerImage)
+        if (type == "call" || type == "VIDEO_CALL") {
+            val callId = message.data["callId"] ?: message.data["inviteId"] ?: chatId ?: return
+            val roomId = message.data["roomId"] ?: callId
+            val callerName = message.data["callerName"] ?: message.data["senderName"] ?: "Someone"
+            val callerImage = message.data["callerImage"] ?: message.data["senderImageUrl"]
+            Log.d(TAG, "Triggering call notification: callId=$callId, roomId=$roomId, caller=$callerName")
+            callNotificationManager.showIncomingCallNotification(
+                callId = callId,
+                roomId = roomId,
+                callerName = callerName,
+                callerImageUrl = callerImage
+            )
         } else if (type == "course_created") {
             NotificationHelper.showNotification(this, title ?: "New Course", body ?: "A new course is available", courseId, preferenceManager = preferenceManager)
         } else if (title != null || body != null) {

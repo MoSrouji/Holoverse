@@ -5,11 +5,14 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 
+import retrofit2.http.Path
+
 interface FcmApi {
-    @POST("v1/projects/holoversev1/messages:send")
+    @POST("v1/projects/{projectId}/messages:send")
     suspend fun sendNotification(
         @Header("Authorization") authHeader: String,
-        @Body request: FcmV1Request
+        @Body request: FcmV1Request,
+        @Path("projectId") projectId: String = "holoversev1"
     )
 }
 
