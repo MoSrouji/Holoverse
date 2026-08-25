@@ -1,6 +1,6 @@
 [versions]
 adaptiveAndroid = "1.3.0-beta02"
-agp = "9.2.1"
+agp = "9.3.0"
 coilCompose = "3.3.0"
 cloudinaryAndroid = "3.1.2"
 coreSplashscreen = "1.2.0"
@@ -34,6 +34,7 @@ credentials = "1.5.0"
 credentialsPlayServicesAuth = "1.5.0"
 googleid = "1.1.1"
 firebaseFirestore = "26.0.2"
+firebaseFunctions = "21.1.0"
 firebaseCrashlytics = "20.0.3"
 googleFirebaseCrashlytics = "3.0.6"
 firebasePerf = "22.0.4"
@@ -47,6 +48,7 @@ places = "5.1.1"
 foundationVersion = "1.11.2"
 firebaseMessaging = "25.0.1"
 kotlinxCoroutines = "1.10.2"
+kotlinxCoroutinesPlayServices = "1.10.2"
 accompanistPermissions = "0.37.3"
 playServicesLocation = "21.3.0"
 camera = "1.6.0"
@@ -61,12 +63,15 @@ compose-auto-shimmer = "1.0.1"
 testCore = "1.7.0"
 testRunner = "1.7.0"
 webrtc = "1.3.10"
+livekit = "2.27.0"
+livekitCompose = "2.4.1"
 baselineprofile = "1.4.1"
 profileinstaller = "1.4.1"
 uiautomator = "2.3.0"
 benchmarkMacroJunit4 = "1.4.1"
 leakcanary = "2.14"
 graphicsCore = "1.0.4"
+mlkitTranslate = "17.0.3"
 
 [libraries]
 androidx-compose-adaptive-android = { module = "androidx.compose.material3.adaptive:adaptive-android", version.ref = "adaptiveAndroid" }
@@ -109,6 +114,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "converterMoshi" }
 retrofit2-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofit2KotlinxSerializationConverter" }
@@ -117,6 +123,7 @@ androidx-credentials = { group = "androidx.credentials", name = "credentials", v
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
+firebase-functions = { group = "com.google.firebase", name = "firebase-functions", version.ref = "firebaseFunctions" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebaseCrashlytics" }
 firebase-perf = { group = "com.google.firebase", name = "firebase-perf", version.ref = "firebasePerf" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
@@ -157,7 +164,10 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 webrtc = { group = "io.getstream", name = "stream-webrtc-android", version.ref = "webrtc" }
 webrtc-ktx = { group = "io.getstream", name = "stream-webrtc-android-ktx", version.ref = "webrtc" }
+livekit-android = { module = "io.livekit:livekit-android", version.ref = "livekit" }
+livekit-compose = { module = "io.livekit:livekit-android-compose-components", version.ref = "livekitCompose" }
 androidx-graphics-core = { group = "androidx.graphics", name = "graphics-core", version.ref = "graphicsCore" }
+mlkit-translate = { group = "com.google.mlkit", name = "translate", version.ref = "mlkitTranslate" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
