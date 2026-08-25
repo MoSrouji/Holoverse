@@ -24,6 +24,10 @@ data class AdminUiState(
     val totalRevenue: Double = 0.0,
     val recentTransactions: List<Transaction> = emptyList(),
     val selectedTimeframe: Timeframe = Timeframe.WEEK,
+    val isMigrating: Boolean = false,
+    val migrationSuccess: Boolean? = null,
+    val isPopulating: Boolean = false,
+    val populationSuccess: Boolean? = null,
     val error: String? = null
 )
 
@@ -101,6 +105,48 @@ class AdminViewModel @Inject constructor(
             is Response.Success -> onSuccess(response.data)
             is Response.Error -> _uiState.update { it.copy(error = response.message) }
             is Response.Loading -> { /* Handled at start of loadDashboardData */ }
+        }
+    }
+
+    fun runMigration() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isMigrating = true, migrationSuccess = null, error = null) }
+            val result = adminRepository.runMigration()
+            when (result) {
+                is Response.Success -> {
+                    _uiState.update { it.copy(isMigrating = false, migrationSuccess = true) }
+                    loadDashboardData() // Refresh counts
+                }
+                is Response.Error -> {
+                    _uiState.update { it.copy(isMigrating = false, migrationSuccess = false, error = result.message) }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun populateDummyData() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPopulating = true, populationSuccess = null, error = null) }
+            val result = adminRepository.populateDummyData()
+            when (result) {
+                is Response.Success -> {
+                    _uiState.update { it.copy(isPopulating = false, populationSuccess = true) }
+                    loadDashboardData() // Refresh counts
+                }
+
+                is Response.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isPopulating = false,
+                            populationSuccess = false,
+                            error = result.message
+                        )
+                    }
+                }
+
+                else -> {}
+            }
         }
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -73,7 +75,7 @@ fun TopMentorsScreen(
     darkTheme: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val mentors = uiState.mentors
+    val mentors = uiState.allMentors
 
     val categories = remember(mentors) {
         listOf(AppCategory.OTHER) + mentors.map { it.specialization }
@@ -82,13 +84,29 @@ fun TopMentorsScreen(
             .sortedBy { it.name }
     }
     var selectedCategory by remember { mutableStateOf(AppCategory.OTHER) }
-    var searchQuery by remember { mutableStateOf("") }
 
-    val filteredMentors = mentors.filter {
-        (selectedCategory == AppCategory.OTHER || it.specialization == selectedCategory) &&
-                (it.fullName?.contains(searchQuery, ignoreCase = true) == true ||
-                        it.bio?.contains(searchQuery, ignoreCase = true) == true ||
-                        it.specialization.name.contains(searchQuery, ignoreCase = true))
+    val filteredMentors = if (uiState.searchQuery.isBlank()) {
+        mentors.filter {
+            (selectedCategory == AppCategory.OTHER || it.specialization == selectedCategory)
+        }
+    } else {
+        uiState.mentorSearchResults
+    }
+
+    val listState = rememberLazyListState()
+
+    // Infinity Scroll Detection
+    androidx.compose.runtime.LaunchedEffect(listState, filteredMentors) {
+        if (filteredMentors.size < 10 && !uiState.isLoading && uiState.lastMentorDocument != null) {
+            viewModel.loadMoreMentors()
+        }
+
+        androidx.compose.runtime.snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastIndex ->
+                if (lastIndex != null && lastIndex >= filteredMentors.size - 5 && !uiState.isLoading && uiState.lastMentorDocument != null) {
+                    viewModel.loadMoreMentors()
+                }
+            }
     }
 
     Scaffold(
@@ -133,8 +151,8 @@ fun TopMentorsScreen(
         ) {
             // Search Bar
             OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+                value = uiState.searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -152,8 +170,8 @@ fun TopMentorsScreen(
                     )
                 },
                 trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                    if (uiState.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = "Clear",
@@ -211,7 +229,7 @@ fun TopMentorsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (searchQuery.isEmpty()) "Showing ${filteredMentors.size} mentors" else "Search results (${filteredMentors.size})",
+                    text = if (uiState.searchQuery.isEmpty()) "Showing ${filteredMentors.size} mentors" else "Search results (${filteredMentors.size})",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
@@ -220,14 +238,14 @@ fun TopMentorsScreen(
             }
 
             ShimmerBox(
-                isLoading = uiState.isLoading,
+                isLoading = (uiState.isLoading || uiState.isSearching) && filteredMentors.isEmpty(),
                 baseColor = Color.DarkGray,
                 durationMillis = 800
             ) {
-                if (filteredMentors.isEmpty() && !uiState.isLoading) {
+                if (filteredMentors.isEmpty() && !(uiState.isLoading || uiState.isSearching)) {
                     EmptyMentorState()
                 } else {
-                    val displayMentors = if (uiState.isLoading && filteredMentors.isEmpty()) {
+                    val displayMentors = if ((uiState.isLoading || uiState.isSearching) && filteredMentors.isEmpty()) {
                         List(6) {
                             User.Mentor(
                                 userId = "shimmer_$it",
@@ -239,6 +257,7 @@ fun TopMentorsScreen(
                     } else filteredMentors
 
                     LazyColumn(
+                        state = listState,
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
@@ -257,6 +276,22 @@ fun TopMentorsScreen(
                                     }
                                 }
                             )
+                        }
+
+                        if (uiState.isPaginatingMentors) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

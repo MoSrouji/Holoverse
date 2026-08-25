@@ -87,7 +87,6 @@ fun ChatListScreen(
                     Text(
                         text = stringResource(R.string.chat_connect_message),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.7f)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -185,8 +184,11 @@ fun ChatListScreen(
                                         ?: stringResource(R.string.chat_fallback)
                                 }
 
-                                val chatImageUrl =
-                                    if (isGroup) null else chat.participantProfileImages[partnerId]
+                                val chatImageUrl = if (isGroup) {
+                                    chat.participantProfileImages[chat.id]
+                                } else {
+                                    chat.participantProfileImages[partnerId]
+                                }
 
                                 ChatListItem(
                                     name = chatName,

@@ -10,8 +10,7 @@ import com.example.holoverse.chat.data.remote.FcmApi
 import com.example.holoverse.chat.data.remote.FcmMessage
 import com.example.holoverse.chat.data.remote.FcmV1Request
 import com.example.holoverse.chat.data.remote.NotificationData
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_USERS
 import com.example.holoverse.core.utils.Response
 import com.example.holoverse.notifications.domain.models.Notification
 import com.example.holoverse.notifications.domain.repository.BroadcastTarget
@@ -45,7 +44,7 @@ class NotificationRepositoryImpl @Inject constructor(
         return try {
             // 1. Get followers and mentor info from mentor document
             val mentorDoc =
-                firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId).get().await()
+                firestore.collection(COLLECTION_NAME_USERS).document(mentorId).get().await()
             val followers = mentorDoc.get("followers") as? List<String> ?: emptyList()
             val mentorImageUrl = mentorDoc.getString("profileImageUrl")
 
@@ -178,19 +177,21 @@ class NotificationRepositoryImpl @Inject constructor(
 
             when (target) {
                 BroadcastTarget.ALL -> {
-                    val students = firestore.collection(COLLECTION_NAME_STUDENTS).get().await()
-                    val mentors = firestore.collection(COLLECTION_NAME_MENTORS).get().await()
-                    recipientIds.addAll(students.documents.map { it.id })
-                    recipientIds.addAll(mentors.documents.map { it.id })
+                    val users = firestore.collection(COLLECTION_NAME_USERS).get().await()
+                    recipientIds.addAll(users.documents.map { it.id })
                 }
 
                 BroadcastTarget.STUDENTS -> {
-                    val students = firestore.collection(COLLECTION_NAME_STUDENTS).get().await()
+                    val students = firestore.collection(COLLECTION_NAME_USERS)
+                        .whereEqualTo("accountType", "Student")
+                        .get().await()
                     recipientIds.addAll(students.documents.map { it.id })
                 }
 
                 BroadcastTarget.MENTORS -> {
-                    val mentors = firestore.collection(COLLECTION_NAME_MENTORS).get().await()
+                    val mentors = firestore.collection(COLLECTION_NAME_USERS)
+                        .whereEqualTo("accountType", "Mentor")
+                        .get().await()
                     recipientIds.addAll(mentors.documents.map { it.id })
                 }
             }

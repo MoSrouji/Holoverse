@@ -14,8 +14,8 @@ import com.example.holoverse.auth.domain.repository.AuthRepository
 import com.example.holoverse.chat.data.repository.ChatRepositoryImpl
 import com.example.holoverse.chat.domain.model.Chat
 import com.example.holoverse.chat.domain.repository.ChatRepository
-import com.example.holoverse.course.domain.repository.BatchRepository
 import com.example.holoverse.cloudinaryservices.domain.repository.CloudinaryRepository
+import com.example.holoverse.course.domain.repository.BatchRepository
 import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.webrtc.data.datasource.SignalingClient
 import com.example.holoverse.webrtc.data.datasource.SignalingEvent
@@ -108,7 +108,7 @@ class ChatViewModel @Inject constructor(
                 }
 
                 // 3. Fetch mentors (Repository handles internal caching)
-                val mentors = fetchDataRepository.fetchMentors()
+                val (mentors, _) = fetchDataRepository.fetchMentors()
 
                 // 4. Implement recommendation logic matching HomeViewModel
                 val userInterests = when (user) {
@@ -184,16 +184,16 @@ class ChatViewModel @Inject constructor(
                     val isMentor = if (currentChat?.isGroup == true) {
                         currentChat.creatorId == currentState.currentUser?.userId
                     } else {
-                        currentState.currentUser?.accountType == UserType.Mentor || 
+                        currentState.currentUser?.accountType == UserType.Mentor ||
                                 currentState.currentUser is User.Admin
                     }
-                    
-                    val isIndividuallyRestricted = currentChat?.isGroup == true && 
+
+                    val isIndividuallyRestricted = currentChat?.isGroup == true &&
                             currentChat?.restrictedParticipants?.contains(currentState.currentUser?.userId) == true
-                    
-                    val isGroupRestricted = currentChat?.isGroup == true && 
+
+                    val isGroupRestricted = currentChat?.isGroup == true &&
                             currentChat?.isOnlyMentorMessaging == true && !isMentor
-                    
+
                     val isRestricted = isIndividuallyRestricted || isGroupRestricted
 
                     // Filter support chats if current user is not Admin
@@ -355,7 +355,11 @@ class ChatViewModel @Inject constructor(
         } else {
             chat.participantNames[partnerId] ?: "Chat"
         }
-        val partnerImageUrl = if (isGroup) null else chat.participantProfileImages[partnerId]
+        val partnerImageUrl = if (isGroup) {
+            chat.participantProfileImages[chat.id]
+        } else {
+            chat.participantProfileImages[partnerId]
+        }
 
         _uiState.update {
             it.copy(
@@ -670,13 +674,21 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun respondToBookingRequest(messageId: String, status: String, sessionId: String? = null, selectedTime: Long? = null) {
+    fun respondToBookingRequest(
+        messageId: String,
+        status: String,
+        sessionId: String? = null,
+        selectedTime: Long? = null
+    ) {
         val chatId = _uiState.value.currentChatId ?: return
         viewModelScope.launch {
             try {
                 chatRepository.respondToBookingRequest(chatId, messageId, status)
                 if (status == "CONFIRMED" && sessionId != null && selectedTime != null) {
-                    batchRepository.finalizeSessionTime(sessionId, com.google.firebase.Timestamp(selectedTime, 0)).collectLatest { }
+                    batchRepository.finalizeSessionTime(
+                        sessionId,
+                        com.google.firebase.Timestamp(selectedTime, 0)
+                    ).collectLatest { }
                 }
             } catch (e: Exception) {
                 // Handle error

@@ -44,26 +44,18 @@ fun CreatePollDialog(
                     text = "Create Poll",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
                 )
 
                 OutlinedTextField(
                     value = question,
                     onValueChange = { question = it },
-                    label = { Text("Question", color = Color.White.copy(alpha = 0.6f)) },
+                    label = { Text("Question") },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
-                    )
                 )
 
                 Text(
                     text = "Options",
                     style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.7f)
                 )
 
                 LazyColumn(
@@ -82,14 +74,8 @@ fun CreatePollDialog(
                                     newList[index] = newVal
                                     options = newList
                                 },
-                                label = { Text("Option ${index + 1}", color = Color.White.copy(alpha = 0.6f)) },
+                                label = { Text("Option ${index + 1}") },
                                 modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White,
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
-                                )
                             )
                             if (options.size > 2) {
                                 IconButton(onClick = {
@@ -119,7 +105,7 @@ fun CreatePollDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = Color.White.copy(alpha = 0.6f))
+                        Text("Cancel")
                     }
                     Button(
                         onClick = {

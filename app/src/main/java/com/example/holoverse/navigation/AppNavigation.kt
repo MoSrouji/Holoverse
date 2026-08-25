@@ -85,6 +85,7 @@ import com.example.holoverse.search.presentation.SearchScreen
 import com.example.holoverse.core.ui.spatial.Brush
 import com.example.holoverse.core.ui.spatial.HoloIntroScreen
 import com.example.holoverse.course.presentation.creation.CreateCourseScreen
+import com.example.holoverse.course.presentation.creation.EditCourseScreen
 import com.example.holoverse.course.presentation.quiz.QuizScreen
 import com.example.holoverse.course.presentation.students.StudentListScreen
 import com.example.holoverse.ui.three_D_Part.ar.ArScreen
@@ -341,6 +342,7 @@ fun AppNavHost(
                 onAdminClick = { navigator.navigateTo(AppDestination.AdminControlPanel) },
                 onTermsAndConditionsClick = { navigator.navigateTo(AppDestination.TermsAndConditions) },
                 onHelpCenterClick = { navigator.navigateTo(AppDestination.HelpCenter) },
+                onYourMaterialClick = { navigator.navigateTo(AppDestination.YourMaterial) },
                 darkTheme = darkTheme
             )
         }
@@ -501,6 +503,13 @@ fun AppNavHost(
                 onCourseCreated = { navigator.popBackStack() }, darkTheme = darkTheme
             )
         }
+        entry<AppDestination.EditCourse> { key: AppDestination.EditCourse ->
+            EditCourseScreen(
+                courseId = key.courseId,
+                onCourseUpdated = { navigator.popBackStack() },
+                darkTheme = darkTheme
+            )
+        }
         entry<AppDestination.Search> { key: AppDestination.Search ->
             SearchScreen(
                 onBackClick = { navigator.popBackStack() },
@@ -579,7 +588,11 @@ fun AppNavHost(
             )
         }
         entry<AppDestination.MentorAnalysis> {
-            MentorAnalysisScreen(onBackClick = { navigator.popBackStack() }, darkTheme = darkTheme)
+            MentorAnalysisScreen(
+                onBackClick = { navigator.popBackStack() },
+                onCourseClick = { courseId -> navigator.navigateTo(AppDestination.EditCourse(courseId)) },
+                darkTheme = darkTheme
+            )
         }
         entry<AppDestination.StudentsList> {
             StudentListScreen(

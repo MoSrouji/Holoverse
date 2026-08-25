@@ -85,7 +85,6 @@ fun TeacherProfileInput(
 ) {
     val genderItems = listOf("Male", "Female")
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
-    var showAlert by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var isMenuExpanded by remember { mutableStateOf(false) }
     val signUpState = viewModel.signUpState.value
@@ -145,14 +144,6 @@ fun TeacherProfileInput(
                 )
         )
         
-        if (showAlert) {
-            AnimatedAlertDialog(
-                title = stringResource(R.string.Warning),
-                text = stringResource(R.string.skip_pressed_message),
-                onConfirmClick = {},
-                onDismissClick = { showAlert = false }
-            )
-        }
         
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -164,7 +155,7 @@ fun TeacherProfileInput(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
@@ -172,21 +163,6 @@ fun TeacherProfileInput(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "back",
                         tint = contentColor
-                    )
-                }
-
-                TextButton(
-                    onClick = {
-                        viewModel.firebaseSignUp(
-                            userDto = registrationViewModel.mentorState.value,
-                            password = registrationViewModel.password.value
-                        )
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.skip),
-                        color = if (darkTheme) HoloCyan else MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             }

@@ -57,14 +57,13 @@ fun AttachmentSheet(
                     modifier = Modifier
                         .size(40.dp, 4.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
                 )
 
                 Text(
                     text = "Share Content",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
                 )
 
                 Row(
@@ -164,7 +163,7 @@ fun AttachmentItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            color = Color.White.copy(alpha = 0.8f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
             maxLines = 1
         )
     }

@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.holoverse.R
 import com.example.holoverse.core.ui.spatial.Brush
 import com.example.holoverse.core.ui.theme.*
@@ -38,8 +39,10 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun PaymentMethodScreen(
     onBackClick: () -> Unit,
-    darkTheme: Boolean
+    darkTheme: Boolean,
+    viewModel: PaymentViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     var cardNumber by remember { mutableStateOf("") }
     var cardHolder by remember { mutableStateOf("") }
     var expiryDate by remember { mutableStateOf("") }
@@ -71,8 +74,6 @@ fun PaymentMethodScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = if (darkTheme) Color.White else Color.Black,
-                    navigationIconContentColor = if (darkTheme) Color.White else Color.Black
                 )
             )
         },
@@ -91,7 +92,7 @@ fun PaymentMethodScreen(
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-                // Fake Balance Card
+                // Real Balance Card
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Card(
@@ -115,14 +116,17 @@ fun PaymentMethodScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "$12,450.00",
+                                text = "$${String.format("%.2f", uiState.balance)}",
                                 color = if (darkTheme) Color.White else Color.Black,
                                 fontSize = 32.sp,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = IbarraNovaFont
                             )
                             Spacer(modifier = Modifier.weight(1f))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.clickable { viewModel.addFunds(500.0) }
+                            ) {
                                 Box(
                                     modifier = Modifier
                                         .size(40.dp)
@@ -130,11 +134,15 @@ fun PaymentMethodScreen(
                                         .background(HoloCyan.copy(alpha = 0.2f)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, tint = HoloCyan)
+                                    if (uiState.isLoading) {
+                                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                                    } else {
+                                        Icon(Icons.Default.Add, contentDescription = null, tint = HoloCyan)
+                                    }
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Add Funds",
+                                    text = "Add Funds ($500)",
                                     color = if (darkTheme) Color.White else Color.Black,
                                     fontWeight = FontWeight.SemiBold
                                 )

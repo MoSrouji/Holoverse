@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -83,7 +85,7 @@ fun PopularCoursesScreen(
     darkTheme: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val courses = uiState.courses
+    val courses = uiState.allCourses
 
     val categories = remember(courses) {
         listOf(AppCategory.OTHER) + courses.map { it.category }
@@ -92,15 +94,33 @@ fun PopularCoursesScreen(
             .sortedBy { it.name }
     }
     var selectedCategory by remember { mutableStateOf(AppCategory.OTHER) }
-    var searchQuery by remember { mutableStateOf("") }
 
-    val filteredCourses = courses.filter {
-        (selectedCategory == AppCategory.OTHER || it.category == selectedCategory) &&
-                (it.name.contains(searchQuery, ignoreCase = true))
+    val filteredCourses = if (uiState.searchQuery.isBlank()) {
+        courses.filter {
+            (selectedCategory == AppCategory.OTHER || it.category == selectedCategory)
+        }
+    } else {
+        uiState.courseSearchResults
     }
 
     val scrollBehavior =
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+
+    val gridState = rememberLazyGridState()
+
+    // Infinity Scroll Detection
+    androidx.compose.runtime.LaunchedEffect(gridState, filteredCourses) {
+        if (filteredCourses.size < 10 && !uiState.isLoading && uiState.lastCourseDocument != null) {
+            viewModel.loadMoreCourses()
+        }
+        
+        androidx.compose.runtime.snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastIndex ->
+                if (lastIndex != null && lastIndex >= filteredCourses.size - 5 && !uiState.isLoading && uiState.lastCourseDocument != null) {
+                    viewModel.loadMoreCourses()
+                }
+            }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -140,8 +160,8 @@ fun PopularCoursesScreen(
         ) {
             // Search Bar
             OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+                value = uiState.searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -159,8 +179,8 @@ fun PopularCoursesScreen(
                     )
                 },
                 trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                    if (uiState.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = "Clear",
@@ -218,7 +238,7 @@ fun PopularCoursesScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (searchQuery.isEmpty()) "Showing ${filteredCourses.size} courses" else "Search results (${filteredCourses.size})",
+                    text = if (uiState.searchQuery.isEmpty()) "Showing ${filteredCourses.size} courses" else "Search results (${filteredCourses.size})",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
@@ -227,14 +247,14 @@ fun PopularCoursesScreen(
             }
 
             ShimmerBox(
-                isLoading = uiState.isLoading,
+                isLoading = (uiState.isLoading || uiState.isSearching) && filteredCourses.isEmpty(),
                 baseColor = Color.DarkGray,
                 durationMillis = 800
             ) {
-                if (filteredCourses.isEmpty() && !uiState.isLoading) {
+                if (filteredCourses.isEmpty() && !(uiState.isLoading || uiState.isSearching)) {
                     EmptyState()
                 } else {
-                    val displayCourses = if (uiState.isLoading && filteredCourses.isEmpty()) {
+                    val displayCourses = if ((uiState.isLoading || uiState.isSearching) && filteredCourses.isEmpty()) {
                         List(6) {
                             Courses(
                                 id = "shimmer_$it",
@@ -250,6 +270,7 @@ fun PopularCoursesScreen(
                     } else filteredCourses
 
                     LazyVerticalGrid(
+                        state = gridState,
                         columns = GridCells.Adaptive(300.dp),
                         contentPadding = PaddingValues(
                             start = 16.dp,
@@ -271,6 +292,22 @@ fun PopularCoursesScreen(
                                 isSaving = uiState.savingCourseIds.contains(course.id),
                                 onSaveClick = { viewModel.toggleSaveCourse(course.id) }
                             )
+                        }
+
+                        if (uiState.isPaginatingCourses) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

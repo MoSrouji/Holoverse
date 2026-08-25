@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -77,10 +78,26 @@ fun RecommendationScreen(
     val uiState by viewModel.uiState.collectAsState()
     val courses = uiState.recommendedCourses
 
-    var searchQuery by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
 
-    val filteredCourses = courses.filter {
-        it.name.contains(searchQuery, ignoreCase = true)
+    val filteredCourses = if (uiState.searchQuery.isBlank()) {
+        courses
+    } else {
+        uiState.courseSearchResults
+    }
+
+    // Infinity Scroll Detection
+    androidx.compose.runtime.LaunchedEffect(listState, filteredCourses) {
+        if (filteredCourses.size < 10 && !uiState.isLoading && uiState.lastCourseDocument != null) {
+            viewModel.loadMoreCourses()
+        }
+
+        androidx.compose.runtime.snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastIndex ->
+                if (lastIndex != null && lastIndex >= filteredCourses.size - 5 && !uiState.isLoading && uiState.lastCourseDocument != null) {
+                    viewModel.loadMoreCourses()
+                }
+            }
     }
 
     Scaffold(
@@ -120,8 +137,8 @@ fun RecommendationScreen(
         ) {
             // Search Bar
             OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+                value = uiState.searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -139,8 +156,8 @@ fun RecommendationScreen(
                     )
                 },
                 trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                    if (uiState.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = stringResource(R.string.clear),
@@ -167,7 +184,7 @@ fun RecommendationScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (searchQuery.isEmpty()) stringResource(
+                    text = if (uiState.searchQuery.isEmpty()) stringResource(
                         R.string.showing_courses,
                         filteredCourses.size
                     ) else stringResource(R.string.search_results, filteredCourses.size),
@@ -179,14 +196,14 @@ fun RecommendationScreen(
             }
 
             ShimmerBox(
-                isLoading = uiState.isLoading,
+                isLoading = (uiState.isLoading || uiState.isSearching) && filteredCourses.isEmpty(),
                 baseColor = Color.DarkGray,
                 durationMillis = 800
             ) {
-                if (filteredCourses.isEmpty() && !uiState.isLoading) {
+                if (filteredCourses.isEmpty() && !(uiState.isLoading || uiState.isSearching)) {
                     RecommendationEmptyState()
                 } else {
-                    val displayCourses = if (uiState.isLoading && filteredCourses.isEmpty()) {
+                    val displayCourses = if ((uiState.isLoading || uiState.isSearching) && filteredCourses.isEmpty()) {
                         List(6) {
                             Courses(
                                 id = "shimmer_$it",
@@ -202,6 +219,7 @@ fun RecommendationScreen(
                     } else filteredCourses
 
                     LazyColumn(
+                        state = listState,
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
@@ -217,6 +235,22 @@ fun RecommendationScreen(
                                 isSaving = uiState.savingCourseIds.contains(course.id),
                                 onSaveClick = { viewModel.toggleSaveCourse(course.id) }
                             )
+                        }
+
+                        if (uiState.isPaginatingCourses) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

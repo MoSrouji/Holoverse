@@ -8,7 +8,7 @@ import com.example.holoverse.search.domain.model.CourseFilters
 import com.example.holoverse.search.domain.model.MentorFilters
 import com.example.holoverse.search.domain.repository.SearchRepository
 import com.example.holoverse.search.presentation.SearchType
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_USERS
 import com.example.holoverse.core.utils.Response
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,8 +31,13 @@ class SearchRepositoryImpl @Inject constructor(
 
             var query: Query = firestore.collection("courses")
 
+            if (!filters.query.isNullOrBlank()) {
+                query = query.whereGreaterThanOrEqualTo("name", filters.query)
+                    .whereLessThanOrEqualTo("name", filters.query + "\uf8ff")
+            }
+
             filters.category?.let {
-                query = query.whereEqualTo("category", it)
+                query = query.whereEqualTo("category", it.name)
             }
             filters.level?.let {
                 query = query.whereEqualTo("level", it)
@@ -49,17 +54,8 @@ class SearchRepositoryImpl @Inject constructor(
 
                 val courses = snapshot?.toObjects(Courses::class.java) ?: emptyList()
 
-                // In-memory filtering for query (prefix search on name) and price range
+                // In-memory filtering for remaining complex filters
                 var filteredCourses = courses
-
-                if (!filters.query.isNullOrBlank()) {
-                    filteredCourses = filteredCourses.filter {
-                        it.name.contains(
-                            filters.query,
-                            ignoreCase = true
-                        )
-                    }
-                }
 
                 filters.minPrice?.let { min ->
                     filteredCourses = filteredCourses.filter { it.price >= min }
@@ -79,10 +75,16 @@ class SearchRepositoryImpl @Inject constructor(
         callbackFlow {
             trySend(Response.Loading)
 
-            var query: Query = firestore.collection(COLLECTION_NAME_MENTORS)
+            var query: Query = firestore.collection(COLLECTION_NAME_USERS)
+                .whereEqualTo("accountType", "Mentor")
+
+            if (!filters.query.isNullOrBlank()) {
+                query = query.whereGreaterThanOrEqualTo("fullName", filters.query)
+                    .whereLessThanOrEqualTo("fullName", filters.query + "\uf8ff")
+            }
 
             filters.specialization?.let {
-                query = query.whereEqualTo("specialization", it)
+                query = query.whereEqualTo("specialization", it.name)
             }
             filters.minRating?.let {
                 query = query.whereGreaterThanOrEqualTo("averageRating", it)
@@ -96,14 +98,8 @@ class SearchRepositoryImpl @Inject constructor(
 
                 val mentors = snapshot?.toObjects(User.Mentor::class.java) ?: emptyList()
 
-                // In-memory filtering for query, subjects, and hourly rate
+                // In-memory filtering for subjects and hourly rate
                 var filteredMentors = mentors
-
-                if (!filters.query.isNullOrBlank()) {
-                    filteredMentors = filteredMentors.filter {
-                        it.fullName?.contains(filters.query, ignoreCase = true) == true
-                    }
-                }
 
                 if (!filters.subjects.isNullOrEmpty()) {
                     filteredMentors = filteredMentors.filter { mentor ->
@@ -146,8 +142,7 @@ class SearchRepositoryImpl @Inject constructor(
 
         // 2. Save to Firebase
         try {
-            val collection = if (user is User.Student) "students" else "teachers"
-            val userRef = firestore.collection(collection).document(userId)
+            val userRef = firestore.collection(COLLECTION_NAME_USERS).document(userId)
             val searchData = mapOf(
                 "query" to query,
                 "type" to type.name,
@@ -168,8 +163,7 @@ class SearchRepositoryImpl @Inject constructor(
 
         // 2. Remove from Firebase
         try {
-            val collection = if (user is User.Student) "students" else "teachers"
-            val userRef = firestore.collection(collection).document(userId)
+            val userRef = firestore.collection(COLLECTION_NAME_USERS).document(userId)
             val querySnapshot = userRef.collection("recent_searches")
                 .whereEqualTo("query", query)
                 .whereEqualTo("type", type.name)

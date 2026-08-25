@@ -16,6 +16,7 @@ data class Transaction(
 @Serializable
 enum class TransactionType {
     MENTOR_SIGNUP,
+    MENTOR_UPGRADE,
     COURSE_BOOST,
     ENROLLMENT,
     MODEL_PURCHASE

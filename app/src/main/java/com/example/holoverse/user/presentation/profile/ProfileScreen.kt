@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.GppGood
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payment
@@ -100,6 +101,7 @@ fun ProfileScreen(
     onAdminClick: () -> Unit,
     onTermsAndConditionsClick: () -> Unit,
     onHelpCenterClick: () -> Unit,
+    onYourMaterialClick: () -> Unit,
     darkTheme: Boolean,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -141,6 +143,11 @@ fun ProfileScreen(
                 }
                 context.startActivity(intent)
             }
+        ),
+        ProfileItemData(
+            Icons.Default.Inventory2,
+            stringResource(R.string.your_material),
+            onClick = { onYourMaterialClick() }
         ),
         ProfileItemData(Icons.Default.GppGood, stringResource(R.string.security)),
         ProfileItemData(
@@ -369,11 +376,9 @@ fun ProfileScreen(
                             uiState.fullName,
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp,
-                            color = Color.White
                         )
                         Text(
                             uiState.email,
-                            color = Color.White.copy(alpha = 0.7f),
                             fontSize = 14.sp
                         )
                     }
@@ -627,6 +632,7 @@ fun ProfileScreenPreview() {
             onAdminClick = {},
             onTermsAndConditionsClick = {},
             onHelpCenterClick = {},
+            onYourMaterialClick = {},
             darkTheme = true,
         )
     }

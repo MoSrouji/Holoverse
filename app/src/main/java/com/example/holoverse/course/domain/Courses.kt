@@ -1,6 +1,7 @@
 package com.example.holoverse.course.domain
 
 import com.example.holoverse.core.domain.model.AppCategory
+import com.google.firebase.firestore.PropertyName
 
 data class Courses(
     val id: String = "",
@@ -21,6 +22,11 @@ data class Courses(
     val imageUrl: String = "",
     val completionRate: Double = 0.0,
     val averageProgress: Double = 0.0,
+    @get:PropertyName("isBoosted")
+    @set:PropertyName("isBoosted")
+    var isBoosted: Boolean = false,
+    val boostExpiry: Long = 0L,
+    val adCardStyle: String = "STYLE_1",
     val availableTimeSlots: List<String> = emptyList(), // e.g., ["Morning", "Afternoon", "Night"]
     val sessions: List<CourseSession> = emptyList(),
     val quizzes: List<Quiz> = emptyList()

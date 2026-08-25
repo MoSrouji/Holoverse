@@ -2,6 +2,7 @@ package com.example.holoverse.user.presentation.analysis
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ import java.util.Locale
 @Composable
 fun MentorAnalysisScreen(
     onBackClick: () -> Unit,
+    onCourseClick: (String) -> Unit,
     darkTheme: Boolean,
     viewModel: MentorAnalysisViewModel = hiltViewModel(),
 ) {
@@ -127,7 +129,7 @@ fun MentorAnalysisScreen(
                     }
 
                     items(uiState.courses) { course ->
-                        CourseAnalysisCard(course)
+                        CourseAnalysisCard(course, onClick = { onCourseClick(course.id) })
                     }
 
                     item {
@@ -295,9 +297,9 @@ fun StatCard(
 }
 
 @Composable
-fun CourseAnalysisCard(course: Courses) {
+fun CourseAnalysisCard(course: Courses, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {

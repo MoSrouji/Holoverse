@@ -123,10 +123,13 @@ fun VideoCallScreen(
     onCallEnded: () -> Unit
 ) {
     val permissionsState = rememberMultiplePermissionsState(
-        permissions = listOf(
-            android.Manifest.permission.CAMERA,
-            android.Manifest.permission.RECORD_AUDIO
-        )
+        permissions = buildList {
+            add(android.Manifest.permission.CAMERA)
+            add(android.Manifest.permission.RECORD_AUDIO)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                add(android.Manifest.permission.BLUETOOTH_CONNECT)
+            }
+        }
     )
 
     if (permissionsState.allPermissionsGranted) {
@@ -288,11 +291,13 @@ fun VideoCallContent(
                         // Mentor Focus Mode: See own content
                         when (callMode) {
                             CallMode.WHITEBOARD -> {
-                                WhiteboardView(whiteboardManager)
+                                Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
+                                    WhiteboardView(whiteboardManager)
+                                }
                             }
 
                             CallMode.PDF -> {
-                                Box(modifier = Modifier.fillMaxSize()) {
+                                Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
                                     // Draw PDF background locally
                                     pdfBitmap?.let { bitmap ->
                                         androidx.compose.foundation.Image(

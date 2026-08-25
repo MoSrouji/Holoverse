@@ -9,6 +9,7 @@ import com.example.holoverse.chat.data.local.dao.MessageDao
 import com.example.holoverse.chat.data.remote.FcmApi
 import com.example.holoverse.chat.data.repository.ChatRepositoryImpl
 import com.example.holoverse.chat.domain.repository.ChatRepository
+import com.example.holoverse.material.domain.repository.MaterialRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
@@ -65,10 +66,19 @@ object ChatModule {
         chatDao: ChatDao,
         messageDao: MessageDao,
         authRepository: AuthRepository,
+        materialRepository: MaterialRepository,
         fcmApi: FcmApi,
         @ApplicationContext context: Context
     ): ChatRepository {
-        return ChatRepositoryImpl(firestore, chatDao, messageDao, authRepository, fcmApi, context)
+        return ChatRepositoryImpl(
+            firestore,
+            chatDao,
+            messageDao,
+            authRepository,
+            materialRepository,
+            fcmApi,
+            context
+        )
     }
 }
 

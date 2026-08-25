@@ -79,6 +79,9 @@ sealed interface AppDestination : NavKey {
     data object CreateCourse : AppDestination
 
     @Serializable
+    data class EditCourse(val courseId: String) : AppDestination
+
+    @Serializable
     data object MentorAnalysis : AppDestination
 
     @Serializable

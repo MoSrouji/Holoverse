@@ -84,7 +84,6 @@ fun TransactionScreen(
                                     fontFamily = IbarraNovaFont,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 24.sp,
-                                    color = Color.White
                                 )
                             )
                         },
@@ -93,7 +92,6 @@ fun TransactionScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
-                                    tint = Color.White
                                 )
                             }
                         },
@@ -102,15 +100,11 @@ fun TransactionScreen(
                                 Icon(
                                     imageVector = Icons.Default.Search,
                                     contentDescription = "Search",
-                                    tint = Color.White
                                 )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = Color.Transparent,
-                            navigationIconContentColor = Color.White,
-                            titleContentColor = Color.White,
-                            actionIconContentColor = Color.White
                         )
                     )
                 }
@@ -164,7 +158,6 @@ fun TransactionCard(transaction: TransactionItem) {
                     fontFamily = IbarraNovaFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = Color.White
                 )
             )
             Text(

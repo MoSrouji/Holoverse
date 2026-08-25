@@ -14,11 +14,17 @@ import com.example.holoverse.fetch.domain.FetchDataRepository
 import com.example.holoverse.core.utils.PreferenceManager
 import com.example.holoverse.core.utils.Response
 import com.example.holoverse.core.utils.TranslationManager
+import com.example.holoverse.home.domain.use_case.GetBoostedCoursesUseCase
+import com.example.holoverse.home.domain.use_case.GetHomeContentUseCase
+import com.example.holoverse.search.domain.model.CourseFilters
+import com.example.holoverse.search.domain.model.MentorFilters
+import com.example.holoverse.search.domain.repository.SearchRepository
+import com.google.firebase.firestore.DocumentSnapshot
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,18 +40,26 @@ enum class HomeTab {
 
 data class HomeUiState(
     val isLoading: Boolean = false,
+    val isPaginatingCourses: Boolean = false,
+    val isPaginatingMentors: Boolean = false,
     val currentUser: User? = null,
     val courses: List<Courses> = emptyList(),
     val allCourses: List<Courses> = emptyList(),
     val enrolledCourses: List<Courses> = emptyList(),
     val savedCourses: List<Courses> = emptyList(),
-    val categories: List<AppCategory> = listOf(AppCategory.OTHER),
+    val categories: List<AppCategory> = emptyList(),
     val recommendedCourses: List<Courses> = emptyList(),
     val mentors: List<User.Mentor> = emptyList(),
     val allMentors: List<User.Mentor> = emptyList(),
     val recommendedMentors: List<User.Mentor> = emptyList(),
     val boostedCourses: List<BoostedCourse> = emptyList(),
+    val lastCourseDocument: DocumentSnapshot? = null,
+    val lastMentorDocument: DocumentSnapshot? = null,
     val savingCourseIds: Set<String> = emptySet(),
+    val searchQuery: String = "",
+    val courseSearchResults: List<Courses> = emptyList(),
+    val mentorSearchResults: List<User.Mentor> = emptyList(),
+    val isSearching: Boolean = false,
     val selectedTab: HomeTab = HomeTab.Explore,
     val selectedCategory: AppCategory = AppCategory.OTHER,
     val error: String? = null,
@@ -54,7 +68,10 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    private val getHomeContentUseCase: GetHomeContentUseCase,
+    private val getBoostedCoursesUseCase: GetBoostedCoursesUseCase,
     private val fetchDataRepository: FetchDataRepository,
+    private val searchRepository: SearchRepository,
     private val authRepository: AuthRepository,
     private val cloudinaryRepository: CloudinaryRepository,
     private val preferenceManager: PreferenceManager,
@@ -65,6 +82,8 @@ class HomeViewModel @Inject constructor(
     private val _uiState =
         MutableStateFlow(HomeUiState(currentUser = authRepository.getCachedUser()))
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    private var searchJob: Job? = null
 
     init {
         observeUserChanges()
@@ -77,13 +96,51 @@ class HomeViewModel @Inject constructor(
                 val currentUser = _uiState.value.currentUser
                 if (user?.userId != currentUser?.userId) {
                     _uiState.update { it.copy(currentUser = user) }
-                    // If user changed, we should probably re-fetch data to get new recommendations
                     if (currentUser != null && user != null) {
                         fetchHomeData(forceRefresh = false)
                     }
                 } else if (user != currentUser) {
-                    // Same user but fields updated (e.g. name, profile image)
                     _uiState.update { it.copy(currentUser = user) }
+                }
+            }
+        }
+    }
+
+    private suspend fun processCourses(rawCourses: List<Courses>, userInterests: List<String>): List<Courses> {
+        val targetLang = preferenceManager.getLanguage() ?: "en"
+        return withContext(Dispatchers.Default) {
+            rawCourses.map { course ->
+                if (targetLang != "en") {
+                    course.copy(
+                        name = translationManager.translate(course.name, targetLang = targetLang),
+                        description = translationManager.translate(course.description, targetLang = targetLang),
+                        instructorName = translationManager.translate(course.instructorName, targetLang = targetLang)
+                    )
+                } else {
+                    course
+                }
+            }
+        }
+    }
+
+    private suspend fun processMentors(rawMentors: List<User.Mentor>, userInterests: List<String>): List<User.Mentor> {
+        val targetLang = preferenceManager.getLanguage() ?: "en"
+        return withContext(Dispatchers.Default) {
+            rawMentors.map { mentor ->
+                val mentorWithUrl = if (mentor.profileImageUrl != null && !mentor.profileImageUrl.startsWith("http")) {
+                    mentor.copy(profileImageUrl = cloudinaryRepository.getPhotoUrl(mentor.profileImageUrl))
+                } else {
+                    mentor
+                }
+
+                if (targetLang != "en") {
+                    mentorWithUrl.copy(
+                        fullName = mentorWithUrl.fullName?.let { translationManager.translate(it, targetLang = targetLang) },
+                        bio = mentorWithUrl.bio?.let { translationManager.translate(it, targetLang = targetLang) },
+                        certifications = mentorWithUrl.certifications?.let { translationManager.translate(it, targetLang = targetLang) }
+                    )
+                } else {
+                    mentorWithUrl
                 }
             }
         }
@@ -95,189 +152,64 @@ class HomeViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = true, error = null) }
             }
             try {
-                // Cleanup expired boosts first
-                fetchDataRepository.cleanupExpiredBoosts()
+                val homeContent = getHomeContentUseCase(forceRefresh)
+                val boostedCourses = getBoostedCoursesUseCase()
 
-                // Start fetching courses, mentors, and boosted courses in parallel
-                val coursesDeferred = async { fetchDataRepository.fetchCourses(forceRefresh) }
-                val mentorsDeferred = async { fetchDataRepository.fetchMentors(forceRefresh) }
-                val boostedCoursesDeferred = async { fetchDataRepository.fetchBoostedCourses() }
-
-                // Fetch user info from cache
-                val user = authRepository.getCachedUser()
-
-                // Await results
-                val rawCourses = coursesDeferred.await()
-                val rawMentors = mentorsDeferred.await()
-                val rawBoostedCourses = boostedCoursesDeferred.await()
-
-                // Move heavy processing to Background thread to avoid UI jank
-                val processedData = withContext(Dispatchers.Default) {
-                    val targetLang = preferenceManager.getLanguage() ?: "en"
-
-                    coroutineScope {
-                        val mentorsDeferred = rawMentors.map { mentor ->
-                            async {
-                                val mentorWithUrl = if (mentor.profileImageUrl != null && !mentor.profileImageUrl.startsWith("http")) {
-                                    mentor.copy(profileImageUrl = cloudinaryRepository.getPhotoUrl(mentor.profileImageUrl))
-                                } else {
-                                    mentor
-                                }
-
-                                if (targetLang != "en") {
-                                    mentorWithUrl.copy(
-                                        fullName = mentorWithUrl.fullName?.let { translationManager.translate(it, targetLang = targetLang) },
-                                        bio = mentorWithUrl.bio?.let { translationManager.translate(it, targetLang = targetLang) },
-                                        certifications = mentorWithUrl.certifications?.let { translationManager.translate(it, targetLang = targetLang) }
-                                    )
-                                } else {
-                                    mentorWithUrl
-                                }
-                            }
-                        }
-
-                        val coursesDeferred = rawCourses.map { course ->
-                            async {
-                                if (targetLang != "en") {
-                                    course.copy(
-                                        name = translationManager.translate(course.name, targetLang = targetLang),
-                                        description = translationManager.translate(course.description, targetLang = targetLang),
-                                        instructorName = translationManager.translate(course.instructorName, targetLang = targetLang)
-                                    )
-                                } else {
-                                    course
-                                }
-                            }
-                        }
-
-                        val boostedDeferred = rawBoostedCourses.map { boost ->
-                            async {
-                                if (targetLang != "en") {
-                                    boost.copy(
-                                        courseName = translationManager.translate(boost.courseName, targetLang = targetLang),
-                                        courseDescription = translationManager.translate(boost.courseDescription, targetLang = targetLang),
-                                        instructorName = translationManager.translate(boost.instructorName, targetLang = targetLang)
-                                    )
-                                } else {
-                                    boost
-                                }
-                            }
-                        }
-
-                        val mentors = mentorsDeferred.awaitAll()
-                        val translatedCourses = coursesDeferred.awaitAll()
-                        val boostedCourses = boostedDeferred.awaitAll()
-
-                        val userInterests = when (user) {
-                            is User.Student -> (user.favouriteSubjects
-                                ?: emptyList()) + (user.academicInterests ?: emptyList())
-
-                            is User.Mentor -> user.subjects ?: emptyList()
-                            else -> emptyList()
-                        }.distinct().map { it.trim().replace("_", " ").uppercase() }
-
-                        val recommendedCourses = translatedCourses.filter { course ->
-                            userInterests.any { nFav ->
-                                val nCat = course.category.name
-
-                                if (nCat.contains(nFav, ignoreCase = true) || nFav.contains(
-                                        nCat,
-                                        ignoreCase = true
-                                    )
-                                ) return@any true
-
-                                course.category.specializations.any { specRes ->
-                                    val spec = application.getString(specRes)
-                                    spec.replace("_", " ").uppercase()
-                                        .contains(nFav, ignoreCase = true) ||
-                                            nFav.contains(
-                                                spec.replace("_", " ").uppercase(),
-                                                ignoreCase = true
-                                            )
-                                } == true
-                            }
-                        }
-
-                        val recommendedMentors = mentors.filter { mentor ->
-                            userInterests.any { nFav ->
-                                val nSpecName = mentor.specialization.name
-
-                                nSpecName.contains(nFav, ignoreCase = true) ||
-                                        nFav.contains(nSpecName, ignoreCase = true) ||
-                                        mentor.specialization.specializations.any { specRes ->
-                                            val spec = application.getString(specRes)
-                                            spec.replace("_", " ").uppercase()
-                                                .contains(nFav, ignoreCase = true) ||
-                                                    nFav.contains(
-                                                        spec.replace("_", " ").uppercase(),
-                                                        ignoreCase = true
-                                                    )
-                                        }
-                            }
-                        }
-
-                        Triple(mentors, translatedCourses, boostedCourses) to (recommendedCourses to recommendedMentors)
-                    }
-                }
-
-                val (mainData, recommendedData) = processedData
-                val (mentors, courses, boostedCourses) = mainData
-                val (recommendedCourses, recommendedMentors) = recommendedData
-
-                val enrolledCoursesIds = when (user) {
-                    is User.Student -> user.enrolledCourses ?: emptyList()
-                    is User.Mentor -> user.enrolledCourses ?: emptyList()
+                val userInterests = when (val user = homeContent.currentUser) {
+                    is User.Student -> (user.favouriteSubjects ?: emptyList()) + (user.academicInterests ?: emptyList())
+                    is User.Mentor -> user.subjects ?: emptyList()
                     else -> emptyList()
-                }
-                val enrolledCourses = courses.filter { it.id in enrolledCoursesIds }
+                }.distinct().map { it.trim().replace(" ", "_").uppercase() }
 
-                val savedCoursesIds = when (user) {
-                    is User.Student -> user.savedCourses ?: emptyList()
-                    is User.Mentor -> user.savedCourses ?: emptyList()
-                    else -> emptyList()
-                }
-                val savedCourses = courses.filter { it.id in savedCoursesIds }
+                val processedCourses = processCourses(homeContent.popularCourses, userInterests)
+                val processedMentors = processMentors(homeContent.popularMentors, userInterests)
+                
+                val recommendedCourses = processCourses(homeContent.recommendedCourses, userInterests)
+                val recommendedMentors = processMentors(homeContent.recommendedMentors, userInterests)
 
-                val categories = listOf(AppCategory.OTHER) + courses
-                    .map { it.category }
-                    .distinct()
-                    .filter { it != AppCategory.OTHER }
-                    .sortedBy { it.name }
+                val allProcessedCourses = (processedCourses + recommendedCourses).distinctBy { it.id }
+                val allProcessedMentors = (processedMentors + recommendedMentors).distinctBy { it.userId }
+
+                val currentCategory = _uiState.value.selectedCategory
+                val filteredCourses = if (currentCategory == AppCategory.OTHER) {
+                    allProcessedCourses
+                } else {
+                    allProcessedCourses.filter { it.category == currentCategory }
+                }
+
+                val filteredMentors = if (currentCategory == AppCategory.OTHER) {
+                    allProcessedMentors
+                } else {
+                    allProcessedMentors.filter { it.specialization == currentCategory }
+                }
 
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        currentUser = user,
-                        allCourses = courses,
-                        enrolledCourses = enrolledCourses,
-                        savedCourses = savedCourses,
-                        categories = categories,
+                        currentUser = homeContent.currentUser,
+                        courses = filteredCourses,
+                        allCourses = allProcessedCourses,
+                        enrolledCourses = processCourses(homeContent.enrolledCourses, userInterests),
+                        savedCourses = processCourses(homeContent.savedCourses, userInterests),
+                        categories = homeContent.categories,
                         recommendedCourses = recommendedCourses,
-                        allMentors = mentors,
+                        mentors = filteredMentors,
+                        allMentors = allProcessedMentors,
                         recommendedMentors = recommendedMentors,
                         boostedCourses = boostedCourses,
+                        lastCourseDocument = homeContent.lastCourseDocument,
+                        lastMentorDocument = homeContent.lastMentorDocument,
                         isOffline = false
                     )
                 }
-                // Apply filter after data is loaded
-                applyFilter(_uiState.value.selectedCategory)
 
             } catch (e: Exception) {
-                // Log to analytics/crash reporting
                 Log.e("HomeViewModel", "Error fetching home data", e)
-
                 val errorMessage = when (e) {
                     is IOException -> "Network error. Please check your connection."
                     else -> e.localizedMessage ?: "Failed to fetch home data"
                 }
-
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = errorMessage,
-                        isOffline = e is IOException // Set offline flag if network error
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = errorMessage, isOffline = e is IOException) }
             }
         }
     }
@@ -337,6 +269,128 @@ class HomeViewModel @Inject constructor(
                 fetchHomeData(forceRefresh = false, showLoading = false)
             }
             _uiState.update { it.copy(savingCourseIds = it.savingCourseIds - courseId) }
+        }
+    }
+
+    fun loadMoreCourses() {
+        val state = _uiState.value
+        val lastDoc = state.lastCourseDocument ?: return
+        if (state.isLoading || state.isPaginatingCourses) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPaginatingCourses = true) }
+            try {
+                val (rawCourses, nextDoc) = fetchDataRepository.fetchCourses(
+                    forceRefresh = true,
+                    limit = 20,
+                    lastVisible = lastDoc
+                )
+                
+                val user = state.currentUser
+                val userInterests = when (user) {
+                    is User.Student -> (user.favouriteSubjects ?: emptyList()) + (user.academicInterests ?: emptyList())
+                    is User.Mentor -> user.subjects ?: emptyList()
+                    else -> emptyList()
+                }.distinct().map { it.trim().replace(" ", "_").uppercase() }
+
+                val processedCourses = processCourses(rawCourses, userInterests)
+                
+                _uiState.update { currentState ->
+                    val updatedAllCourses = (currentState.allCourses + processedCourses).distinctBy { it.id }
+                    
+                    currentState.copy(
+                        isPaginatingCourses = false,
+                        allCourses = updatedAllCourses,
+                        lastCourseDocument = nextDoc
+                    )
+                }
+                applyFilter(_uiState.value.selectedCategory)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isPaginatingCourses = false, error = e.message) }
+            }
+        }
+    }
+
+    fun loadMoreMentors() {
+        val state = _uiState.value
+        val lastDoc = state.lastMentorDocument ?: return
+        if (state.isLoading || state.isPaginatingMentors) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPaginatingMentors = true) }
+            try {
+                val (rawMentors, nextDoc) = fetchDataRepository.fetchMentors(
+                    forceRefresh = true,
+                    limit = 20,
+                    lastVisible = lastDoc
+                )
+                
+                val user = state.currentUser
+                val userInterests = when (user) {
+                    is User.Student -> (user.favouriteSubjects ?: emptyList()) + (user.academicInterests ?: emptyList())
+                    is User.Mentor -> user.subjects ?: emptyList()
+                    else -> emptyList()
+                }.distinct().map { it.trim().replace("_", " ").uppercase() }
+
+                val processedMentors = processMentors(rawMentors, userInterests)
+
+                _uiState.update { currentState ->
+                    val updatedAllMentors = (currentState.allMentors + processedMentors).distinctBy { it.userId }
+                    
+                    currentState.copy(
+                        isPaginatingMentors = false,
+                        allMentors = updatedAllMentors,
+                        lastMentorDocument = nextDoc
+                    )
+                }
+                applyFilter(_uiState.value.selectedCategory)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isPaginatingMentors = false, error = e.message) }
+            }
+        }
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        searchJob?.cancel()
+        if (query.isBlank()) {
+            _uiState.update { it.copy(courseSearchResults = emptyList(), mentorSearchResults = emptyList(), isSearching = false) }
+            return
+        }
+
+        searchJob = viewModelScope.launch {
+            delay(500)
+            _uiState.update { it.copy(isSearching = true) }
+            
+            val user = _uiState.value.currentUser
+            val userInterests = when (user) {
+                is User.Student -> (user.favouriteSubjects ?: emptyList()) + (user.academicInterests ?: emptyList())
+                is User.Mentor -> user.subjects ?: emptyList()
+                else -> emptyList()
+            }.distinct().map { it.trim().replace(" ", "_").uppercase() }
+
+            // Perform both searches in parallel
+            val coursesJob = launch {
+                searchRepository.searchCourses(CourseFilters(query = query)).collect { response ->
+                    if (response is Response.Success) {
+                        val processed = processCourses(response.data, userInterests)
+                        _uiState.update { it.copy(courseSearchResults = processed) }
+                    }
+                }
+            }
+            
+            val mentorsJob = launch {
+                searchRepository.searchMentors(MentorFilters(query = query)).collect { response ->
+                    if (response is Response.Success) {
+                        val processed = processMentors(response.data, userInterests)
+                        _uiState.update { it.copy(mentorSearchResults = processed) }
+                    }
+                }
+            }
+            
+            coursesJob.join()
+            mentorsJob.join()
+            _uiState.update { it.copy(isSearching = false) }
         }
     }
 }

@@ -1,8 +1,6 @@
 package com.example.holoverse.payment.data.repository
 
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_ADMINS
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_USERS
 import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_TRANSACTIONS
 import com.example.holoverse.core.utils.Response
 import com.example.holoverse.payment.domain.model.Transaction
@@ -65,15 +63,8 @@ class PaymentRepositoryImpl @Inject constructor(
     }
 
     private suspend fun findUserRefAsync(userId: String): com.google.firebase.firestore.DocumentReference? {
-        val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId).get().await()
-        if (studentDoc.exists()) return studentDoc.reference
-        
-        val mentorDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(userId).get().await()
-        if (mentorDoc.exists()) return mentorDoc.reference
-        
-        val adminDoc = firestore.collection(COLLECTION_NAME_ADMINS).document(userId).get().await()
-        if (adminDoc.exists()) return adminDoc.reference
-        
+        val userRef = firestore.collection(COLLECTION_NAME_USERS).document(userId)
+        if (userRef.get().await().exists()) return userRef
         return null
     }
 
@@ -134,8 +125,9 @@ class PaymentRepositoryImpl @Inject constructor(
     override fun getAdminRevenue(): Flow<Response<Double>> = flow {
         emit(Response.Loading)
         try {
-            // Correct logic: sum all transactions where receiver is an admin
-            val adminsSnapshot = firestore.collection(COLLECTION_NAME_ADMINS).get().await()
+            val adminsSnapshot = firestore.collection(COLLECTION_NAME_USERS)
+                .whereEqualTo("accountType", "Admin")
+                .get().await()
             val adminIds = adminsSnapshot.documents.map { it.id }
             
             val transactionsSnapshot = firestore.collection(COLLECTION_NAME_TRANSACTIONS).get().await()
@@ -147,6 +139,20 @@ class PaymentRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get revenue"))
+        }
+    }
+
+    override suspend fun depositFunds(userId: String, amount: Double): Response<Boolean> {
+        return try {
+            val userRef = firestore.collection(COLLECTION_NAME_USERS).document(userId)
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(userRef)
+                val currentBalance = snapshot.getDouble("walletBalance") ?: 0.0
+                transaction.update(userRef, "walletBalance", currentBalance + amount)
+            }.await()
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Error(e.message ?: "Deposit failed")
         }
     }
 }

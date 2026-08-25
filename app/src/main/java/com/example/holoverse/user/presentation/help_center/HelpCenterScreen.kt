@@ -66,8 +66,6 @@ fun HelpCenterScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White
                     )
                 )
             }

@@ -28,6 +28,7 @@ import com.example.holoverse.navigation.AppNavHost
 import com.example.holoverse.navigation.AppNavigator
 import com.example.holoverse.core.ui.theme.HoloverseTheme
 import com.example.holoverse.core.utils.ConnectivityObserver
+import com.example.holoverse.core.utils.DummyDataPopulator
 import com.example.holoverse.core.utils.LanguageManager
 import com.example.holoverse.core.utils.SplashViewModel
 import com.example.holoverse.webrtc.data.datasource.SignalingClient
@@ -113,9 +114,9 @@ class MainActivity : AppCompatActivity() {
         languageManager.applyLanguage()
         askNotificationPermission()
 
-//        lifecycleScope.launch {
-//            DummyDataPopulator(firestore).populateData()
-//        }
+        lifecycleScope.launch {
+            DummyDataPopulator(firestore).populateData()
+        }
 
 
         installSplashScreen().apply {

@@ -10,7 +10,7 @@ import com.example.holoverse.chat.data.local.entities.MessageEntity
 
 @Database(
     entities = [ChatEntity::class, MessageEntity::class],
-    version = 11,
+    version = 13,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

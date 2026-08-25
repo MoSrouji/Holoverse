@@ -16,4 +16,5 @@ interface PaymentRepository {
     fun getTransactionsForUser(userId: String): Flow<Response<List<Transaction>>>
     fun getAllTransactions(): Flow<Response<List<Transaction>>>
     fun getAdminRevenue(): Flow<Response<Double>>
+    suspend fun depositFunds(userId: String, amount: Double): Response<Boolean>
 }

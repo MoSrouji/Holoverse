@@ -22,6 +22,9 @@ import com.example.holoverse.chat.domain.model.Poll
 import com.example.holoverse.chat.domain.repository.ChatRepository
 import com.example.holoverse.core.utils.NetworkConstant
 import com.example.holoverse.core.utils.Response
+import com.example.holoverse.material.domain.model.Material
+import com.example.holoverse.material.domain.model.MaterialType
+import com.example.holoverse.material.domain.repository.MaterialRepository
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
@@ -50,6 +53,7 @@ class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
     private val messageDao: MessageDao,
     private val authRepository: AuthRepository,
+    private val materialRepository: MaterialRepository,
     private val fcmApi: FcmApi,
     @ApplicationContext private val context: Context
 ) : ChatRepository {
@@ -133,6 +137,14 @@ class ChatRepositoryImpl @Inject constructor(
                             doc.toObject(Message::class.java)?.copy(id = doc.id)
                         }
                         repositoryScope.launch {
+                            val currentUser = authRepository.getCurrentUser()
+                            val currentUserId = currentUser?.userId
+
+                            messages.forEach { message ->
+                                if (currentUserId != null) {
+                                    saveMessageMaterials(currentUserId, message)
+                                }
+                            }
                             messageDao.insertMessages(messages.map { m -> m.toEntity(chatId) })
                         }
                     }
@@ -280,6 +292,7 @@ class ChatRepositoryImpl @Inject constructor(
                 )
                 val imagesMap = mutableMapOf<String, String>()
                 participantImageUrl?.let { imagesMap[participantId] = it }
+                courseImageUrl?.let { imagesMap[chatId] = it }
 
                 // Add mentor if provided and not the same as participant
                 if (mentorId != null && mentorId != participantId) {
@@ -307,6 +320,9 @@ class ChatRepositoryImpl @Inject constructor(
                 )
                 participantImageUrl?.let {
                     updateData["participantProfileImages.$participantId"] = it
+                }
+                courseImageUrl?.let {
+                    updateData["participantProfileImages.$chatId"] = it
                 }
 
                 // If creatorId is missing, set it (helpful for migration)
@@ -379,6 +395,20 @@ class ChatRepositoryImpl @Inject constructor(
 
         // 2. Save to local DB immediately
         messageDao.insertMessages(listOf(localMessage))
+
+        // Save materials for current user
+        saveMessageMaterials(
+            senderId, Message(
+                id = messageId,
+                senderName = senderName,
+                text = text,
+                imageUrl = imageUrl,
+                videoUrl = videoUrl,
+                glbUrl = glbUrl,
+                fileUrl = fileUrl,
+                fileName = fileName
+            )
+        )
 
         val lastMessageText = when {
             imageUrl != null -> "Image"
@@ -509,7 +539,10 @@ class ChatRepositoryImpl @Inject constructor(
             }
 
             if (recipients.isEmpty()) {
-                Log.w("ChatRepository", "No recipients found for call notification in chat: $chatId")
+                Log.w(
+                    "ChatRepository",
+                    "No recipients found for call notification in chat: $chatId"
+                )
                 return
             }
 
@@ -539,7 +572,10 @@ class ChatRepositoryImpl @Inject constructor(
                 )
 
                 firestore.collection("calls").document(inviteId).set(inviteData).await()
-                Log.d("ChatRepository", "Call invite created in Firestore: $inviteId for $recipientId")
+                Log.d(
+                    "ChatRepository",
+                    "Call invite created in Firestore: $inviteId for $recipientId"
+                )
 
                 // 2. Send FCM Notification
                 val recipientToken = authRepository.getFcmToken(recipientId)
@@ -843,6 +879,14 @@ class ChatRepositoryImpl @Inject constructor(
                             doc.toObject(Message::class.java)?.copy(id = doc.id)
                         }
                         repositoryScope.launch {
+                            val currentUser = authRepository.getCurrentUser()
+                            val currentUserId = currentUser?.userId
+
+                            messages.forEach { message ->
+                                if (currentUserId != null) {
+                                    saveMessageMaterials(currentUserId, message)
+                                }
+                            }
                             messageDao.insertMessages(messages.map { m -> m.toEntity(chatId) })
                         }
                     }
@@ -868,7 +912,7 @@ class ChatRepositoryImpl @Inject constructor(
                     callMessages.documents.forEach { batch.delete(it.reference) }
                 }.await()
             }
-            
+
             // Also cleanup local
             messageDao.deleteCallMessagesForChat(chatId)
         } catch (e: Exception) {
@@ -996,6 +1040,68 @@ class ChatRepositoryImpl @Inject constructor(
             restrictedParticipants = this.restrictedParticipants,
             isOnlyMentorMessaging = this.isOnlyMentorMessaging
         )
+    }
+
+    private fun saveMessageMaterials(uid: String, message: Message) {
+        val materials = mutableListOf<Material>()
+
+        message.imageUrl?.let {
+            materials.add(
+                Material(
+                    id = message.id + "_img",
+                    name = "Image from ${message.senderName}",
+                    type = MaterialType.PHOTO,
+                    url = it,
+                    thumbnailUrl = it,
+                    description = "Received in chat: ${message.text}"
+                )
+            )
+        }
+        message.videoUrl?.let {
+            materials.add(
+                Material(
+                    id = message.id + "_vid",
+                    name = "Video from ${message.senderName}",
+                    type = MaterialType.VIDEO,
+                    url = it,
+                    thumbnailUrl = null,
+                    description = "Received in chat: ${message.text}"
+                )
+            )
+        }
+        message.glbUrl?.let {
+            materials.add(
+                Material(
+                    id = message.id + "_glb",
+                    name = message.fileName ?: "3D Model from ${message.senderName}",
+                    type = MaterialType.MODEL,
+                    url = it,
+                    thumbnailUrl = null,
+                    description = "Received in chat: ${message.text}"
+                )
+            )
+        }
+        message.fileUrl?.let {
+            val isPdf = message.fileName?.endsWith(".pdf", ignoreCase = true) == true
+            if (isPdf || (message.imageUrl == null && message.videoUrl == null && message.glbUrl == null)) {
+                materials.add(
+                    Material(
+                        id = message.id + "_file",
+                        name = message.fileName ?: "File from ${message.senderName}",
+                        type = if (isPdf) MaterialType.PDF else MaterialType.PHOTO,
+                        url = it,
+                        thumbnailUrl = null,
+                        description = "Received in chat: ${message.text}"
+                    )
+                )
+            }
+        }
+
+        materials.forEach { material ->
+            repositoryScope.launch {
+                materialRepository.saveMaterial(uid, material)
+            }
+        }
     }
 
     fun cleanup() {

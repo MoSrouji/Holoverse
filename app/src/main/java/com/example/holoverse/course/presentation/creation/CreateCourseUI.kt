@@ -79,7 +79,6 @@ import com.example.holoverse.core.utils.Response
 import com.example.holoverse.course.domain.AdCardStyle
 import com.example.holoverse.course.domain.BoostedCourse
 import com.example.holoverse.course.domain.CourseSession
-import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.course.domain.Question
 import com.example.holoverse.course.domain.Quiz
 import kotlinx.coroutines.launch
@@ -142,9 +141,15 @@ fun CreateCourseScreen(
                 imageUrl = (uploadImageState as Response.Success<String>).data
                 Toast.makeText(context, "Image uploaded successfully!", Toast.LENGTH_SHORT).show()
             }
+
             is Response.Error -> {
-                Toast.makeText(context, (uploadImageState as Response.Error).message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    (uploadImageState as Response.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
+
             else -> {}
         }
     }
@@ -155,9 +160,15 @@ fun CreateCourseScreen(
                 Toast.makeText(context, "Course created successfully!", Toast.LENGTH_SHORT).show()
                 showBoostConfirmation = true
             }
+
             is Response.Error -> {
-                Toast.makeText(context, (createCourseState as Response.Error).message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    (createCourseState as Response.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
+
             else -> {}
         }
     }
@@ -171,7 +182,6 @@ fun CreateCourseScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
-        modifier = Modifier.background(backgroundBrush),
         topBar = {
             CreateCourseTopBar(
                 backgroundBrush = backgroundBrush,
@@ -209,7 +219,8 @@ fun CreateCourseScreen(
                         "3 Months" -> 90
                         else -> 7
                     }
-                    val endTimestamp = System.currentTimeMillis() + (durationDays * 24 * 60 * 60 * 1000L)
+                    val endTimestamp =
+                        System.currentTimeMillis() + (durationDays * 24 * 60 * 60 * 1000L)
                     val planPrice = when (selectedPlanDuration) {
                         "7 Days" -> 5.0
                         "1 Month" -> 15.0
@@ -478,7 +489,7 @@ private fun CreateCourseTopBar(
 }
 
 @Composable
-private fun CourseImagePicker(
+fun CourseImagePicker(
     imageUrl: String,
     uploadImageState: Response<String>?,
     onPickerLaunch: () -> Unit
@@ -535,7 +546,7 @@ private fun CourseImagePicker(
 }
 
 @Composable
-private fun BasicInfoSection(
+fun BasicInfoSection(
     name: String,
     onNameChange: (String) -> Unit,
     mentorCategory: AppCategory,
@@ -649,7 +660,7 @@ private fun BasicInfoSection(
 }
 
 @Composable
-private fun TimeSlotSection(
+fun TimeSlotSection(
     availableSlots: List<String>,
     selectedSlots: List<String>,
     onToggleSlot: (String) -> Unit
@@ -698,7 +709,7 @@ private fun TimeSlotSection(
 }
 
 @Composable
-private fun DescriptionSection(
+fun DescriptionSection(
     description: String,
     onDescriptionChange: (String) -> Unit
 ) {
@@ -730,7 +741,7 @@ private fun DescriptionSection(
 }
 
 @Composable
-private fun SyllabusHeader(onAddSession: () -> Unit) {
+fun SyllabusHeader(onAddSession: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -757,7 +768,7 @@ private fun SyllabusHeader(onAddSession: () -> Unit) {
 }
 
 @Composable
-private fun EmptySyllabusPlaceholder() {
+fun EmptySyllabusPlaceholder() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1130,7 +1141,8 @@ fun QuizDialog(
     var description by remember { mutableStateOf(quiz?.description ?: "") }
     var imageUrl by remember { mutableStateOf(quiz?.imageUrl ?: "") }
     var timeLimit by remember { mutableStateOf(quiz?.timeLimitMinutes?.toString() ?: "30") }
-    val questions = remember { mutableStateListOf<Question>().apply { quiz?.questions?.let { addAll(it) } } }
+    val questions =
+        remember { mutableStateListOf<Question>().apply { quiz?.questions?.let { addAll(it) } } }
 
     var showQuestionDialog by remember { mutableStateOf(false) }
     var editingQuestionIndex by remember { mutableStateOf<Int?>(null) }
@@ -1231,21 +1243,39 @@ fun QuizDialog(
                 questions.forEachIndexed { index, question ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.5f
+                            )
+                        )
                     ) {
                         Row(
                             modifier = Modifier.padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("${index + 1}. ${question.text}", modifier = Modifier.weight(1f), maxLines = 1)
+                            Text(
+                                "${index + 1}. ${question.text}",
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1
+                            )
                             IconButton(onClick = {
                                 editingQuestionIndex = index
                                 showQuestionDialog = true
                             }) {
-                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp), tint = HoloCyan)
+                                Icon(
+                                    Icons.Default.Edit,
+                                    null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = HoloCyan
+                                )
                             }
                             IconButton(onClick = { questions.removeAt(index) }) {
-                                Icon(Icons.Default.Delete, null, modifier = Modifier.size(16.dp), tint = Color.Red.copy(alpha = 0.6f))
+                                Icon(
+                                    Icons.Default.Delete,
+                                    null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = Color.Red.copy(alpha = 0.6f)
+                                )
                             }
                         }
                     }
@@ -1308,10 +1338,13 @@ fun QuestionDialog(
     onConfirm: (Question) -> Unit
 ) {
     var text by remember { mutableStateOf(question?.text ?: "") }
-    val options = remember { mutableStateListOf<String>().apply { 
-        if (question != null) addAll(question.options) else repeat(4) { add("") }
-    } }
-    val correctIndices = remember { mutableStateListOf<Int>().apply { question?.correctOptionIndices?.let { addAll(it) } } }
+    val options = remember {
+        mutableStateListOf<String>().apply {
+            if (question != null) addAll(question.options) else repeat(4) { add("") }
+        }
+    }
+    val correctIndices =
+        remember { mutableStateListOf<Int>().apply { question?.correctOptionIndices?.let { addAll(it) } } }
     var imageUrl by remember { mutableStateOf(question?.imageUrl ?: "") }
     var isUploading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -1345,7 +1378,11 @@ fun QuestionDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Add/Edit Question", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Add/Edit Question",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
 
                 HoloImagePicker(
                     imageUrl = imageUrl,
@@ -1365,14 +1402,20 @@ fun QuestionDialog(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Text("Options (Select correct ones):", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "Options (Select correct ones):",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
                 options.forEachIndexed { index, option ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.Checkbox(
                             checked = correctIndices.contains(index),
                             onCheckedChange = { checked ->
-                                if (checked) correctIndices.add(index) else correctIndices.remove(index)
+                                if (checked) correctIndices.add(index) else correctIndices.remove(
+                                    index
+                                )
                             }
                         )
                         OutlinedTextField(

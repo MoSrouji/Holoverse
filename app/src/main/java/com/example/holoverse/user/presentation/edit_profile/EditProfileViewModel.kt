@@ -35,6 +35,9 @@ class EditProfileViewModel @Inject constructor(
     private val _editProfileState = MutableStateFlow<Response<Boolean>>(Response.Success(false))
     val editProfileState: StateFlow<Response<Boolean>> = _editProfileState.asStateFlow()
 
+    private val _upgradeState = MutableStateFlow<Response<Boolean>>(Response.Success(false))
+    val upgradeState: StateFlow<Response<Boolean>> = _upgradeState.asStateFlow()
+
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
@@ -203,6 +206,20 @@ class EditProfileViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _editProfileState.value = Response.Error(e.message ?: "Update failed")
+            }
+        }
+    }
+
+    fun upgradeToMentor() {
+        viewModelScope.launch {
+            val user = _currentUser.value ?: return@launch
+            if (user !is User.Student) return@launch
+            
+            authRepository.upgradeToMentor(user.userId!!).collect { response ->
+                _upgradeState.value = response
+                if (response is Response.Success && response.data) {
+                    loadUserData() // Re-load to show mentor fields
+                }
             }
         }
     }

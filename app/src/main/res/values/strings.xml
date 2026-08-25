@@ -59,9 +59,7 @@
     <string name="hourlyRate">hourly rate</string>
     <string name="university">University Name</string>
     <string name="faculty">Faculty / College</string>
-    <string name="skip">Skip</string>
-    <string name="Warning">Warning</string>
-    <string name="skip_pressed_message">This form helps us make recommendations for you to get a better experience</string>
+
     <string name="categories_title">Categories</string>
     <string name="popular_courses">Popular Courses</string>
     <string name="top_mentor">Top Mentor</string>
@@ -70,6 +68,7 @@
 
     <string name="profile">Profile</string>
     <string name="edit_profile">Edit Profile</string>
+    <string name="upgrade_to_mentor">Upgrade to Mentor ($10)</string>
     <string name="payment_option">Payment Option</string>
     <string name="notifications">Notifications</string>
     <string name="no_notifications">No notifications yet</string>
@@ -81,6 +80,7 @@
     <string name="terms_conditions">Terms &amp; Conditions</string>
     <string name="help_center">Help Center</string>
     <string name="invite_friends">Invite Friends</string>
+    <string name="your_material">Your Material</string>
     <string name="invite_message">Join me on Holoverse! Download the app now and start learning. https://holoverse.example.com</string>
     <string name="logout">Logout</string>
 

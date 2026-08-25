@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,6 +34,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -83,9 +85,11 @@ fun EditProfileScreen(
 ) {
     val context = LocalContext.current
     val editProfileState by viewModel.editProfileState.collectAsState()
+    val upgradeState by viewModel.upgradeState.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
     val genderItems = listOf("Male", "Female")
     var isGenderMenuExpanded by remember { mutableStateOf(false) }
+    var showUpgradeDialog by remember { mutableStateOf(false) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -103,6 +107,20 @@ fun EditProfileScreen(
             }
             is Response.Error -> {
                 Toast.makeText(context, (editProfileState as Response.Error).message, Toast.LENGTH_LONG).show()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(upgradeState) {
+        when (upgradeState) {
+            is Response.Success -> {
+                if ((upgradeState as Response.Success<Boolean>).data) {
+                    Toast.makeText(context, "Successfully upgraded to Mentor!", Toast.LENGTH_SHORT).show()
+                }
+            }
+            is Response.Error -> {
+                Toast.makeText(context, (upgradeState as Response.Error).message, Toast.LENGTH_LONG).show()
             }
             else -> {}
         }
@@ -354,11 +372,47 @@ fun EditProfileScreen(
                         viewModel.onEvent(ValidationEvent.Submit)
                     }
                 )
+
+                if (currentUser is User.Student) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    AuthenticationButton(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(50.dp),
+                        textId = R.string.upgrade_to_mentor,
+                        onClick = {
+                            showUpgradeDialog = true
+                        }
+                    )
+                }
                 
-                // Note: The ValidationResultEvent.Success collection in ViewModel or here should trigger updateProfile()
+                Spacer(modifier = Modifier.height(32.dp))
             }
 
-            if (editProfileState is Response.Loading) {
+            if (showUpgradeDialog) {
+                AlertDialog(
+                    onDismissRequest = { showUpgradeDialog = false },
+                    title = { Text("Upgrade to Mentor") },
+                    text = { Text("Are you sure you want to upgrade to Mentor? This will cost $10 from your wallet.") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                viewModel.upgradeToMentor()
+                                showUpgradeDialog = false
+                            }
+                        ) {
+                            Text("Confirm ($10)")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showUpgradeDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+
+            if (editProfileState is Response.Loading || upgradeState is Response.Loading) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

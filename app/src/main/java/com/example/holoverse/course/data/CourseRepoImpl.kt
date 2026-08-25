@@ -1,6 +1,7 @@
 package com.example.holoverse.course.data
 
 import android.util.Log
+import com.example.holoverse.course.domain.AdCardStyle
 import com.example.holoverse.course.domain.BoostedCourse
 import com.example.holoverse.course.domain.Courses
 import com.example.holoverse.course.domain.QuizResult
@@ -134,9 +135,15 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
     override suspend fun boostCourse(boostedCourse: BoostedCourse): Flow<Response<Boolean>> = flow {
         emit(Response.Loading)
         try {
-            firestore.collection("boostedCourses")
+            firestore.collection("courses")
                 .document(boostedCourse.courseId)
-                .set(boostedCourse)
+                .update(
+                    mapOf(
+                        "isBoosted" to true,
+                        "boostExpiry" to boostedCourse.endTimestamp,
+                        "adCardStyle" to boostedCourse.adCardStyle.name
+                    )
+                )
                 .await()
             emit(Response.Success(true))
         } catch (e: Exception) {
@@ -149,8 +156,27 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
     override suspend fun getBoostedCourses(): Flow<Response<List<BoostedCourse>>> = flow {
         emit(Response.Loading)
         try {
-            val snapshot = firestore.collection("boostedCourses").get().await()
-            val boostedCourses = snapshot.toObjects(BoostedCourse::class.java)
+            val now = System.currentTimeMillis()
+            val snapshot = firestore.collection("courses")
+                .whereEqualTo("isBoosted", true)
+                .whereGreaterThan("boostExpiry", now)
+                .get()
+                .await()
+            
+            val boostedCourses = snapshot.documents.mapNotNull { doc ->
+                val course = doc.toObject(Courses::class.java)
+                course?.let {
+                    BoostedCourse(
+                        courseId = doc.id,
+                        courseName = it.name,
+                        courseImageUrl = it.imageUrl,
+                        courseDescription = it.description,
+                        instructorName = it.instructorName,
+                        adCardStyle = try { AdCardStyle.valueOf(doc.getString("adCardStyle") ?: "STYLE_1") } catch(e: Exception) { AdCardStyle.STYLE_1 },
+                        endTimestamp = doc.getLong("boostExpiry") ?: 0L
+                    )
+                }
+            }
             emit(Response.Success(boostedCourses))
         } catch (e: Exception) {
             if (e is CancellationException) throw e
@@ -162,7 +188,9 @@ class CourseRepoImpl(private val firestore: FirebaseFirestore) : CourseRepo {
     override suspend fun deleteBoostedCourse(courseId: String): Flow<Response<Boolean>> = flow {
         emit(Response.Loading)
         try {
-            firestore.collection("boostedCourses").document(courseId).delete().await()
+            firestore.collection("courses").document(courseId)
+                .update(mapOf("isBoosted" to false))
+                .await()
             emit(Response.Success(true))
         } catch (e: Exception) {
             if (e is CancellationException) throw e

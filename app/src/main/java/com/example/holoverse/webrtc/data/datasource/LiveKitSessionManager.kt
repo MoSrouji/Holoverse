@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.Surface
 import com.example.holoverse.pdf.presentation.PdfManager
 import com.example.holoverse.webrtc.domain.model.Participant
+import com.example.holoverse.webrtc.presentation.WebRtcCallService
 import com.example.holoverse.whiteboard.presentation.WhiteboardManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.livekit.android.ConnectOptions
@@ -122,6 +123,12 @@ class LiveKitSessionManager @Inject constructor(
         // Always disconnect before a new join attempt to ensure hardware state is reset
         disconnect()
 
+        // Set audio mode to communication for VoIP AFTER disconnect
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+
+        // Start Foreground Service to ensure hardware priority on Android 14+
+        WebRtcCallService.start(context)
+
         isDisconnecting = false
         currentRoomId = roomId
         currentInviteId = inviteId
@@ -153,8 +160,8 @@ class LiveKitSessionManager @Inject constructor(
             // Wait for connection to stabilize, then enable hardware
             newScope.launch {
                 try {
-                    Log.d(TAG, "Waiting 1s before enabling camera and microphone...")
-                    delay(1000.milliseconds)
+                    Log.d(TAG, "Waiting 2s before enabling camera and microphone...")
+                    delay(2000.milliseconds) // Increased delay for Android 14+ stability
                     Log.d(TAG, "Enabling microphone...")
                     room.localParticipant.setMicrophoneEnabled(true)
                     Log.d(TAG, "Enabling camera...")
@@ -295,6 +302,9 @@ class LiveKitSessionManager @Inject constructor(
         isDisconnecting = true
 
         stopSyntheticMode()
+        
+        // Stop the foreground service
+        WebRtcCallService.stop(context)
 
         val inviteId = currentInviteId
         val roomId = currentRoomId
@@ -528,7 +538,7 @@ class LiveKitSessionManager @Inject constructor(
         syntheticLoopJob = scope.launch(Dispatchers.Default) {
             val paint =
                 android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.FILTER_BITMAP_FLAG)
-            val clearPaint = android.graphics.Paint().apply { color = Color.BLACK } // Better for FIT mode
+            val clearPaint = android.graphics.Paint().apply { color = Color.WHITE }
 
             while (_callMode.value != com.example.holoverse.webrtc.domain.model.CallMode.VIDEO) {
                 // Determine target FPS based on mode

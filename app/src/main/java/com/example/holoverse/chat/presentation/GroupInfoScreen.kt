@@ -70,7 +70,6 @@ fun GroupInfoScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = if (darkTheme) Color.White else Color.Black
                 ),
                 modifier = Modifier.background(headerBrush)
             )
@@ -152,7 +151,6 @@ fun GroupInfoScreen(
                                         text = chat.participantNames[chat.id] ?: "Group Name",
                                         style = MaterialTheme.typography.headlineMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (darkTheme) Color.White else Color.Black
                                     )
                                     if (isMentor) {
                                         IconButton(onClick = { showEditNameDialog = true }) {
@@ -245,7 +243,6 @@ fun GroupInfoScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(start = 8.dp, top = 8.dp),
-                            color = if (darkTheme) Color.White else Color.Black
                         )
                     }
 

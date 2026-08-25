@@ -208,7 +208,6 @@ fun ConversationScreen(
                             Text(
                                 text = uiState.selectedChatPartnerName.ifEmpty { stringResource(R.string.chat_fallback) },
                                 style = MaterialTheme.typography.titleMedium,
-                                color = if (darkTheme) Color.White else Color.Black
                             )
                         }
                     },
@@ -223,7 +222,6 @@ fun ConversationScreen(
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back),
-                                tint = if (darkTheme) Color.White else Color.Black
                             )
                         }
                     },
@@ -239,7 +237,6 @@ fun ConversationScreen(
                                 Icon(
                                     imageVector = Icons.Default.Videocam,
                                     contentDescription = stringResource(R.string.video_call),
-                                    tint = if (darkTheme) Color.White else Color.Black
                                 )
                             }
                         }

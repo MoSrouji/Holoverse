@@ -47,9 +47,7 @@
     <string name="hourlyRate">Tariffa oraria</string>
     <string name="university">Nome dell\'Università</string>
     <string name="faculty">Facoltà / College</string>
-    <string name="skip">Salta</string>
-    <string name="Warning">Avvertimento</string>
-    <string name="skip_pressed_message">Questo modulo ci aiuta a darti consigli migliori per un\'esperienza ottimale</string>
+
     <string name="categories_title">Categorie</string>
     <string name="popular_courses">Corsi popolari</string>
     <string name="top_mentor">Miglior Mentore</string>
@@ -58,6 +56,7 @@
 
     <string name="profile">Profilo</string>
     <string name="edit_profile">Modifica profilo</string>
+    <string name="upgrade_to_mentor">Passa a mentore ($10)</string>
     <string name="payment_option">Opzione di pagamento</string>
     <string name="notifications">Notifiche</string>
     <string name="no_notifications">Non ci sono ancora notifiche</string>
@@ -69,6 +68,7 @@
     <string name="terms_conditions">Termini e Condizioni</string>
     <string name="help_center">Centro Assistenza</string>
     <string name="invite_friends">Invita amici</string>
+    <string name="your_material">Il tuo materiale</string>
     <string name="invite_message">Unisciti a me su Holoverse! Scarica l\'app ora e inizia a imparare. https://holoverse.example.com</string>
     <string name="logout">Esci</string>
 

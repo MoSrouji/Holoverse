@@ -3,9 +3,8 @@ package com.example.holoverse.auth.data.repository
 import android.util.Log
 import com.example.holoverse.auth.domain.entities.User
 import com.example.holoverse.auth.domain.repository.AuthRepository
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_ADMINS
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_MENTORS
-import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_STUDENTS
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_USERS
+import com.example.holoverse.core.utils.NetworkConstant.COLLECTION_NAME_TRANSACTIONS
 import com.example.holoverse.core.utils.PreferenceManager
 import com.example.holoverse.core.utils.Response
 import com.example.holoverse.payment.domain.model.TransactionType
@@ -18,6 +17,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
@@ -41,7 +41,7 @@ class AuthRepositoryImpl @Inject constructor(
 
             val savedUser = when (userDto) {
                 is User.Student -> {
-                    val userDoc = firestore.collection(COLLECTION_NAME_STUDENTS)
+                    val userDoc = firestore.collection(COLLECTION_NAME_USERS)
                         .document(userId)
 
                     if (userDoc.get().await().exists()) {
@@ -58,7 +58,7 @@ class AuthRepositoryImpl @Inject constructor(
                 }
 
                 is User.Mentor -> {
-                    val userDoc = firestore.collection(COLLECTION_NAME_MENTORS)
+                    val userDoc = firestore.collection(COLLECTION_NAME_USERS)
                         .document(userId)
                     if (userDoc.get().await().exists()) {
                         // Clean up auth user if document exists
@@ -74,7 +74,11 @@ class AuthRepositoryImpl @Inject constructor(
 
                     // Mentor Signup Fee ($10)
                     try {
-                        val adminSnapshot = firestore.collection(COLLECTION_NAME_ADMINS).limit(1).get().await()
+                        val adminSnapshot = firestore.collection(COLLECTION_NAME_USERS)
+                            .whereEqualTo("accountType", "Admin")
+                            .limit(1)
+                            .get()
+                            .await()
                         val adminId = adminSnapshot.documents.firstOrNull()?.id
                         if (adminId != null) {
                             paymentRepository.transferFunds(
@@ -149,7 +153,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val userId =
                     firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
 
-                val teacherDoc = firestore.collection(COLLECTION_NAME_MENTORS)
+                val teacherDoc = firestore.collection(COLLECTION_NAME_USERS)
                     .document(userId)
 
                 // Verify document exists in single operation
@@ -204,7 +208,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val userId =
                     firebaseAuth.currentUser?.uid ?: throw Exception("User not authenticated")
 
-                val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS)
+                val studentDoc = firestore.collection(COLLECTION_NAME_USERS)
                     .document(userId)
 
                 val snapshot = studentDoc.get().await()
@@ -253,21 +257,12 @@ class AuthRepositoryImpl @Inject constructor(
         emit(Response.Loading)
         try {
             val user = firebaseAuth.currentUser ?: throw Exception("User not authenticated")
+            val userId = user.uid
             user.updateEmail(newEmail).await()
             
-            // Also update in Firestore based on user type
-            val userId = user.uid
-            val studentDoc = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId)
-            val mentorDoc = firestore.collection(COLLECTION_NAME_MENTORS).document(userId)
-            val adminDoc = firestore.collection(COLLECTION_NAME_ADMINS).document(userId)
-            
-            if (studentDoc.get().await().exists()) {
-                studentDoc.update("email", newEmail).await()
-            } else if (mentorDoc.get().await().exists()) {
-                mentorDoc.update("email", newEmail).await()
-            } else if (adminDoc.get().await().exists()) {
-                adminDoc.update("email", newEmail).await()
-            }
+            // Also update in Firestore
+            val userRef = firestore.collection(COLLECTION_NAME_USERS).document(userId)
+            userRef.update("email", newEmail).await()
             
             // Refresh local cache
             val updatedUser = getCurrentUser()
@@ -305,34 +300,23 @@ class AuthRepositoryImpl @Inject constructor(
         val uid = currentUser.uid
 
         return try {
-            // Check students collection first
-            val studentDoc =
-                firestore.collection(COLLECTION_NAME_STUDENTS).document(uid).get().await()
-            if (studentDoc.exists()) {
-                return studentDoc.toObject(User.Student::class.java)?.copy(userId = uid)
-            }
+            val userDoc = firestore.collection(COLLECTION_NAME_USERS).document(uid).get().await()
+            if (!userDoc.exists()) return null
 
-            // If not found, check teachers collection
-            val teacherDoc =
-                firestore.collection(COLLECTION_NAME_MENTORS).document(uid).get().await()
-            if (teacherDoc.exists()) {
-                val mentor = teacherDoc.toObject(User.Mentor::class.java)
-                // Fix for AppCategory deserialization
-                val specString = teacherDoc.getString("specialization")
-                return mentor?.copy(
-                    userId = uid,
-                    specialization = if (specString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(specString) else mentor.specialization
-                )
+            val typeString = userDoc.getString("accountType")
+            when (typeString) {
+                "Student" -> userDoc.toObject(User.Student::class.java)?.copy(userId = uid)
+                "Mentor" -> {
+                    val mentor = userDoc.toObject(User.Mentor::class.java)
+                    val specString = userDoc.getString("specialization")
+                    mentor?.copy(
+                        userId = uid,
+                        specialization = if (specString != null) com.example.holoverse.core.domain.model.AppCategory.fromString(specString) else mentor.specialization
+                    )
+                }
+                "Admin" -> userDoc.toObject(User.Admin::class.java)?.copy(userId = uid)
+                else -> null
             }
-
-            // If not found, check admins collection
-            val adminDoc =
-                firestore.collection(COLLECTION_NAME_ADMINS).document(uid).get().await()
-            if (adminDoc.exists()) {
-                return adminDoc.toObject(User.Admin::class.java)?.copy(userId = uid)
-            }
-
-            null
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -354,31 +338,8 @@ class AuthRepositoryImpl @Inject constructor(
             val userId =
                 firebaseAuth.currentUser?.uid ?: return Response.Error("User not authenticated")
 
-            // Try updating in students collection
-            val studentRef = firestore.collection(COLLECTION_NAME_STUDENTS).document(userId)
-            val studentDoc = studentRef.get().await()
-            if (studentDoc.exists()) {
-                studentRef.update("fcmToken", token).await()
-                return Response.Success(true)
-            }
-
-            // Try updating in mentors collection
-            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(userId)
-            val mentorDoc = mentorRef.get().await()
-            if (mentorDoc.exists()) {
-                mentorRef.update("fcmToken", token).await()
-                return Response.Success(true)
-            }
-
-            // Try updating in admins collection
-            val adminRef = firestore.collection(COLLECTION_NAME_ADMINS).document(userId)
-            val adminDoc = adminRef.get().await()
-            if (adminDoc.exists()) {
-                adminRef.update("fcmToken", token).await()
-                return Response.Success(true)
-            }
-
-            Response.Error("User document not found")
+            firestore.collection(COLLECTION_NAME_USERS).document(userId).update("fcmToken", token).await()
+            Response.Success(true)
         } catch (e: Exception) {
             Response.Error(e.message ?: "Failed to update FCM token")
         }
@@ -386,22 +347,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun getFcmToken(userId: String): String? {
         return try {
-            // Check students
-            val studentDoc =
-                firestore.collection(COLLECTION_NAME_STUDENTS).document(userId).get().await()
-            if (studentDoc.exists()) return studentDoc.getString("fcmToken")
-
-            // Check mentors
-            val mentorDoc =
-                firestore.collection(COLLECTION_NAME_MENTORS).document(userId).get().await()
-            if (mentorDoc.exists()) return mentorDoc.getString("fcmToken")
-
-            // Check admins
-            val adminDoc =
-                firestore.collection(COLLECTION_NAME_ADMINS).document(userId).get().await()
-            if (adminDoc.exists()) return adminDoc.getString("fcmToken")
-
-            null
+            firestore.collection(COLLECTION_NAME_USERS).document(userId).get().await().getString("fcmToken")
         } catch (e: Exception) {
             null
         }
@@ -409,12 +355,8 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun followMentor(followerId: String, mentorId: String): Response<Boolean> {
         return try {
-            val currentUser =
-                getCachedUser() ?: getCurrentUser() ?: return Response.Error("Not authenticated")
-            val collection =
-                if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
-            val followerRef = firestore.collection(collection).document(followerId)
-            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId)
+            val followerRef = firestore.collection(COLLECTION_NAME_USERS).document(followerId)
+            val mentorRef = firestore.collection(COLLECTION_NAME_USERS).document(mentorId)
 
             firestore.runBatch { batch ->
                 // Update Follower
@@ -434,12 +376,8 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun unfollowMentor(followerId: String, mentorId: String): Response<Boolean> {
         return try {
-            val currentUser =
-                getCachedUser() ?: getCurrentUser() ?: return Response.Error("Not authenticated")
-            val collection =
-                if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
-            val followerRef = firestore.collection(collection).document(followerId)
-            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId)
+            val followerRef = firestore.collection(COLLECTION_NAME_USERS).document(followerId)
+            val mentorRef = firestore.collection(COLLECTION_NAME_USERS).document(mentorId)
 
             firestore.runBatch { batch ->
                 // Update Follower
@@ -459,10 +397,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun isFollowing(followerId: String, mentorId: String): Boolean {
         return try {
-            val currentUser = getCachedUser() ?: getCurrentUser() ?: return false
-            val collection =
-                if (currentUser is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
-            val followerDoc = firestore.collection(collection).document(followerId).get().await()
+            val followerDoc = firestore.collection(COLLECTION_NAME_USERS).document(followerId).get().await()
             val followingList = followerDoc.get("following") as? List<*>
             followingList?.contains(mentorId) == true
         } catch (e: Exception) {
@@ -472,13 +407,9 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun enrollInCourse(userId: String, courseId: String, instructorId: String): Response<Boolean> {
         return try {
-            val user =
-                getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
-            val collection =
-                if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
-            val userRef = firestore.collection(collection).document(userId)
+            val userRef = firestore.collection(COLLECTION_NAME_USERS).document(userId)
             val courseRef = firestore.collection("courses").document(courseId)
-            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(instructorId)
+            val mentorRef = firestore.collection(COLLECTION_NAME_USERS).document(instructorId)
 
             firestore.runBatch { batch ->
                 // Update User
@@ -506,9 +437,7 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val user =
                 getCachedUser() ?: getCurrentUser() ?: throw Exception("User not authenticated")
-            val collection =
-                if (user is User.Student) COLLECTION_NAME_STUDENTS else COLLECTION_NAME_MENTORS
-            val userRef = firestore.collection(collection).document(userId)
+            val userRef = firestore.collection(COLLECTION_NAME_USERS).document(userId)
 
             val isSaved = when (user) {
                 is User.Student -> user.savedCourses?.contains(courseId) == true
@@ -534,7 +463,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun addCourseToMentor(mentorId: String, courseId: String): Response<Boolean> {
         return try {
-            val mentorRef = firestore.collection(COLLECTION_NAME_MENTORS).document(mentorId)
+            val mentorRef = firestore.collection(COLLECTION_NAME_USERS).document(mentorId)
             mentorRef.update("coursesCreated", FieldValue.arrayUnion(courseId)).await()
             
             // Refresh local cache if the current user is this mentor
@@ -553,7 +482,8 @@ class AuthRepositoryImpl @Inject constructor(
     override fun getSupportAdmin(): Flow<Response<User.Admin>> = flow {
         emit(Response.Loading)
         try {
-            val snapshot = firestore.collection(COLLECTION_NAME_ADMINS)
+            val snapshot = firestore.collection(COLLECTION_NAME_USERS)
+                .whereEqualTo("accountType", "Admin")
                 .limit(1)
                 .get()
                 .await()
@@ -566,6 +496,75 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             emit(Response.Error(e.message ?: "Failed to get support admin"))
+        }
+    }
+
+    override suspend fun upgradeToMentor(userId: String): Flow<Response<Boolean>> = flow {
+        emit(Response.Loading)
+        try {
+            val userRef = firestore.collection(COLLECTION_NAME_USERS).document(userId)
+            
+            // Find Admin
+            val adminSnapshot = firestore.collection(COLLECTION_NAME_USERS)
+                .whereEqualTo("accountType", "Admin")
+                .limit(1)
+                .get()
+                .await()
+            
+            val adminId = adminSnapshot.documents.firstOrNull()?.id ?: "admin_default_id"
+            val adminRef = firestore.collection(COLLECTION_NAME_USERS).document(adminId)
+
+            firestore.runTransaction { transaction ->
+                val userDoc = transaction.get(userRef)
+                val adminDoc = transaction.get(adminRef)
+
+                if (!userDoc.exists()) throw Exception("User not found")
+                if (userDoc.getString("accountType") != "Student") throw Exception("Only students can upgrade to mentor")
+                
+                val walletBalance = userDoc.getDouble("walletBalance") ?: 0.0
+                if (walletBalance < 10.0) throw Exception("Insufficient balance. $10 required.")
+
+                val adminBalance = adminDoc.getDouble("walletBalance") ?: 0.0
+
+                // 1. Transfer $10 to Admin
+                transaction.update(userRef, "walletBalance", walletBalance - 10.0)
+                transaction.update(adminRef, "walletBalance", adminBalance + 10.0)
+
+                // 2. Update User to Mentor
+                val mentorData = mapOf(
+                    "accountType" to "Mentor",
+                    "specialization" to com.example.holoverse.core.domain.model.AppCategory.OTHER.name,
+                    "followersCount" to 0,
+                    "totalStudentsTaught" to 0,
+                    "averageRating" to 0.0,
+                    "reviewsCount" to 0
+                )
+                transaction.update(userRef, mentorData)
+
+                // 3. Create Transaction Record
+                val transactionId = UUID.randomUUID().toString()
+                val paymentTransaction = com.example.holoverse.payment.domain.model.Transaction(
+                    id = transactionId,
+                    senderId = userId,
+                    receiverId = adminId,
+                    amount = 10.0,
+                    type = TransactionType.MENTOR_UPGRADE,
+                    timestamp = System.currentTimeMillis(),
+                    metadata = mapOf("reason" to "Student to Mentor Upgrade")
+                )
+                
+                val transRef = firestore.collection(COLLECTION_NAME_TRANSACTIONS).document(transactionId)
+                transaction.set(transRef, paymentTransaction)
+            }.await()
+
+            // 4. Update Local Cache
+            val updatedUser = getCurrentUser()
+            updatedUser?.let { preferenceManager.saveUser(it) }
+
+            emit(Response.Success(true))
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            emit(Response.Error(e.message ?: "Upgrade failed"))
         }
     }
 }

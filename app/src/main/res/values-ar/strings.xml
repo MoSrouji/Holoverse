@@ -46,9 +46,7 @@
     <string name="hourlyRate">الأجر الساعي</string>
     <string name="university">اسم الجامعة</string>
     <string name="faculty">الكلية</string>
-    <string name="skip">تخطي</string>
-    <string name="Warning">تحذير</string>
-    <string name="skip_pressed_message">هذا النموذج يساعدنا في تقديم توصيات أفضل لك</string>
+
     <string name="categories_title">التصنيفات</string>
     <string name="popular_courses">الدورات الشائعة</string>
     <string name="top_mentor">أفضل المرشدين</string>
@@ -57,6 +55,7 @@
 
     <string name="profile">الملف الشخصي</string>
     <string name="edit_profile">تعديل الملف الشخصي</string>
+    <string name="upgrade_to_mentor">ترقية إلى معلم (10 دولار)</string>
     <string name="payment_option">خيار الدفع</string>
     <string name="notifications">التنبيهات</string>
     <string name="no_notifications">لا توجد إشعارات بعد</string>
@@ -68,6 +67,7 @@
     <string name="terms_conditions">الشروط والأحكام</string>
     <string name="help_center">مركز المساعدة</string>
     <string name="invite_friends">دعوة الأصدقاء</string>
+    <string name="your_material">موادك</string>
     <string name="invite_message">انضم إلي في Holoverse! قم بتحميل التطبيق الآن وابدأ التعلم. https://holoverse.example.com</string>
     <string name="logout">تسجيل الخروج</string>
 

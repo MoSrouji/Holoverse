@@ -163,7 +163,7 @@ fun StudentPreferenceInfoInput(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
@@ -171,21 +171,6 @@ fun StudentPreferenceInfoInput(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "back",
                         tint = contentColor
-                    )
-                }
-
-                TextButton(
-                    onClick = {
-                        viewModel.firebaseSignUp(
-                            userDto = registrationViewModel.studentState.value,
-                            password = registrationViewModel.password.value
-                        )
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.skip),
-                        color = if (darkTheme) HoloCyan else MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             }

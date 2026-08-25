@@ -176,7 +176,7 @@ fun TeacherProfessionalInfoInput(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
@@ -184,18 +184,6 @@ fun TeacherProfessionalInfoInput(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "back",
                         tint = contentColor
-                    )
-                }
-
-                TextButton(
-                    onClick = {
-                        showPaymentDialog = true
-                    },
-                ) {
-                    Text(
-                        text = stringResource(R.string.skip),
-                        color = if (darkTheme) HoloCyan else MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             }

@@ -26,7 +26,9 @@ class CallNotificationManager @Inject constructor(
 
     companion object {
         const val CHANNEL_ID = "incoming_calls"
+        const val ONGOING_CHANNEL_ID = "active_calls"
         const val NOTIFICATION_ID = 1001
+        const val ONGOING_NOTIFICATION_ID = 1002
         const val ACTION_ANSWER = "com.example.holoverse.ACTION_ANSWER_CALL"
         const val ACTION_DECLINE = "com.example.holoverse.ACTION_DECLINE_CALL"
         const val EXTRA_CALL_ID = "call_id"
@@ -42,32 +44,66 @@ class CallNotificationManager @Inject constructor(
             // Check if user disabled in system
             val existingChannel = notificationManager.getNotificationChannel(CHANNEL_ID)
             if (existingChannel != null && existingChannel.importance == NotificationManager.IMPORTANCE_NONE) {
-                return
-            }
+                // Channel is disabled, but we might still want to create the ongoing one
+            } else {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    "Incoming Calls",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Shows notifications for incoming video calls"
+                    enableLights(true)
+                    enableVibration(true)
+                    vibrationPattern = longArrayOf(0, 500, 500, 500)
+                    lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
 
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Incoming Calls",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Shows notifications for incoming video calls"
-                enableLights(true)
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 500, 500, 500)
-                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
-
-                if (ringtoneUri != null) {
-                    setSound(
-                        android.net.Uri.parse(ringtoneUri),
-                        android.media.AudioAttributes.Builder()
-                            .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build()
-                    )
+                    if (ringtoneUri != null) {
+                        setSound(
+                            android.net.Uri.parse(ringtoneUri),
+                            android.media.AudioAttributes.Builder()
+                                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                .build()
+                        )
+                    }
                 }
+                notificationManager.createNotificationChannel(channel)
             }
-            notificationManager.createNotificationChannel(channel)
+
+            // Create ongoing call channel (lower importance to avoid pop-up during call, but visible in drawer)
+            val ongoingChannel = NotificationChannel(
+                ONGOING_CHANNEL_ID,
+                "Active Calls",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Shows notification when a call is in progress"
+                setShowBadge(false)
+            }
+            notificationManager.createNotificationChannel(ongoingChannel)
         }
+    }
+
+    fun getOngoingCallNotification(): android.app.Notification {
+        createNotificationChannel()
+        
+        val intent = Intent(context, MainActivity::class.java).apply {
+            action = "com.example.holoverse.OPEN_ACTIVE_CALL"
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 3, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(context, ONGOING_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("HoloVerse Call")
+            .setContentText("Call in progress...")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .build()
     }
 
     fun showIncomingCallNotification(callId: String, roomId: String, callerName: String, callerImageUrl: String?) {

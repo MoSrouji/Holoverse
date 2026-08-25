@@ -72,7 +72,6 @@ fun UserManagementScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = if (darkTheme) Color.White else Color.Black
                 ),
                 modifier = Modifier.background(headerBrush)
             )

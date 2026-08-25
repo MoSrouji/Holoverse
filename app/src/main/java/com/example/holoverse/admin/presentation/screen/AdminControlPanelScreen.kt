@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -87,6 +89,8 @@ fun AdminControlPanelScreen(
         onTimeframeSelected = viewModel::onTimeframeSelected,
         onNavigateToUserManagement = onNavigateToUserManagement,
         onNavigateToBroadcast = onNavigateToBroadcast,
+        onRunMigration = viewModel::runMigration,
+        onPopulateDummyData = viewModel::populateDummyData,
         darkTheme = darkTheme
     )
 }
@@ -99,6 +103,8 @@ fun AdminControlPanelContent(
     onTimeframeSelected: (Timeframe) -> Unit,
     onNavigateToUserManagement: () -> Unit,
     onNavigateToBroadcast: () -> Unit,
+    onRunMigration: () -> Unit,
+    onPopulateDummyData: () -> Unit,
     darkTheme: Boolean
 ) {
     val headerBrush = remember(darkTheme) { Brush(darkTheme) }
@@ -119,7 +125,6 @@ fun AdminControlPanelContent(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = if (darkTheme) Color.White else Color.Black
                 ),
                 modifier = Modifier.background(headerBrush)
             )
@@ -156,6 +161,14 @@ fun AdminControlPanelContent(
 
                     item {
                         RecentTransactionsSection(uiState.recentTransactions)
+                    }
+
+                    item {
+                        MigrationSection(uiState, onRunMigration)
+                    }
+
+                    item {
+                        DummyDataSection(uiState, onPopulateDummyData)
                     }
 
                     item {
@@ -731,6 +744,129 @@ fun ActivitySection(uiState: AdminUiState) {
 }
 
 @Composable
+fun MigrationSection(uiState: AdminUiState, onRunMigration: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "Database Migration",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.error
+            )
+            Text(
+                "Migrate legacy students, teachers, and boosted courses to the new unified structure for better performance.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Button(
+                onClick = onRunMigration,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isMigrating,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                if (uiState.isMigrating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                } else {
+                    Text("Run Database Migration")
+                }
+            }
+
+            if (uiState.migrationSuccess == true) {
+                Text(
+                    "Migration completed successfully!",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF4CAF50),
+                    fontWeight = FontWeight.Bold
+                )
+            } else if (uiState.migrationSuccess == false) {
+                Text(
+                    "Migration failed: ${uiState.error}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DummyDataSection(uiState: AdminUiState, onPopulateDummyData: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.1f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                "Dummy Data Generation",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+            Text(
+                "Reset and re-populate the database with high-density testing data (100+ courses, 20+ mentors).",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Button(
+                onClick = onPopulateDummyData,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isPopulating,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                if (uiState.isPopulating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                } else {
+                    Text("Reset & Populate Dummy Data")
+                }
+            }
+
+            if (uiState.populationSuccess == true) {
+                Text(
+                    "Data population completed successfully!",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF4CAF50),
+                    fontWeight = FontWeight.Bold
+                )
+            } else if (uiState.populationSuccess == false) {
+                Text(
+                    "Population failed: ${uiState.error}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun ActivityItem(icon: ImageVector, title: String, subtitle: String, color: Color) {
     Row(
         modifier = Modifier
@@ -777,6 +913,8 @@ fun AdminControlPanelPreview() {
             onTimeframeSelected = {},
             onNavigateToUserManagement = {},
             onNavigateToBroadcast = {},
+            onRunMigration = {},
+            onPopulateDummyData = {},
             darkTheme = true
         )
     }

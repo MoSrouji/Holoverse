@@ -16,5 +16,7 @@ interface AdminRepository {
     fun getTotalRevenue(): Flow<Response<Double>>
     fun getRecentTransactions(): Flow<Response<List<Transaction>>>
     fun getAllUsers(): Flow<Response<List<User>>>
+    suspend fun runMigration(): Response<Boolean>
+    suspend fun populateDummyData(): Response<Boolean>
 }
 
